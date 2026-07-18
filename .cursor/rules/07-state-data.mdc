@@ -1,0 +1,16 @@
+---
+description: State management
+alwaysApply: true
+---
+
+Server state -> TanStack Query
+
+Global state only for
+
+- Auth
+- Theme
+- Notifications
+
+Avoid prop drilling.
+
+Prefer optimistic updates.

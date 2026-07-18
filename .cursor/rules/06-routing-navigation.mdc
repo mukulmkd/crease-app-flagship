@@ -1,0 +1,12 @@
+---
+description: Routing
+alwaysApply: true
+---
+
+Use Next.js App Router.
+
+Organize routes by feature.
+
+Use nested layouts.
+
+Provide loading.tsx and error.tsx where appropriate.

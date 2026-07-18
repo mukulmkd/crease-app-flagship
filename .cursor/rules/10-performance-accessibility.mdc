@@ -1,0 +1,16 @@
+---
+description: Performance and accessibility
+alwaysApply: true
+---
+
+Lazy load heavy components.
+
+Use semantic HTML.
+
+Provide aria-labels.
+
+Support keyboard navigation.
+
+Meet WCAG AA.
+
+Optimize for Lighthouse.

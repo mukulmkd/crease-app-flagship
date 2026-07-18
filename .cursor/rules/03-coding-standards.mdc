@@ -1,0 +1,16 @@
+---
+description: Coding standards
+alwaysApply: true
+---
+
+Prefer small reusable components.
+
+Avoid files >250 lines.
+
+Use descriptive names.
+
+Avoid duplicated code.
+
+Prefer composition over inheritance.
+
+No inline business logic in JSX.

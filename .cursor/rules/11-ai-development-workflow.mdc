@@ -1,0 +1,16 @@
+---
+description: AI workflow
+alwaysApply: true
+---
+
+When implementing screens from Google Stitch:
+
+- Treat Stitch as visual source of truth.
+- Do not copy generated HTML.
+- Rebuild using reusable React components.
+- Follow project architecture.
+- Reuse existing components first.
+- Separate presentation from business logic.
+- Preserve UX while improving maintainability.
+
+Always explain architectural decisions in generated code comments when non-obvious.

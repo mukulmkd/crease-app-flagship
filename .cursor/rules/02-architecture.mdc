@@ -1,0 +1,17 @@
+---
+description: Architecture
+alwaysApply: true
+---
+
+Feature-first architecture.
+
+app/
+components/
+features/
+services/
+hooks/
+lib/
+types/
+
+Business logic belongs in services.
+Components remain presentational.

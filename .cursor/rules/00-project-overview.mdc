@@ -1,0 +1,39 @@
+---
+description: Project overview
+alwaysApply: true
+---
+
+# Crease
+
+Crease is a mobile-first Progressive Web App for amateur and semi-professional cricket teams.
+
+Primary Roles
+
+- Admin
+- Captain
+- Vice Captain
+- Player
+
+Core Modules
+
+- Authentication (Mobile OTP)
+- Teams
+- Polls
+- Availability
+- Transport
+- Tournaments
+- Match Fees
+- Team Kitty
+- Expenses
+- Payments
+- Notifications
+- Reports
+
+Guiding principles
+
+- Mobile first
+- PWA first
+- Responsive desktop
+- Clean architecture
+- Reusable components
+- No duplicated business logic

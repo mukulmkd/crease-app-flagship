@@ -1,0 +1,18 @@
+---
+description: Approved technology stack
+alwaysApply: true
+---
+
+Use only:
+
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Lucide React
+- Supabase
+- TanStack Query
+- React Hook Form
+- Zod
+
+Never introduce another UI framework without approval.

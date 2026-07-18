@@ -1,0 +1,22 @@
+---
+description: API and database
+alwaysApply: true
+---
+
+Never call Supabase directly from UI.
+
+Flow
+
+Component
+↓
+Hook
+↓
+Service
+↓
+Supabase
+
+Validate every payload.
+
+Use typed models.
+
+Enable Row Level Security.

@@ -1,0 +1,14 @@
+---
+description: Forms
+alwaysApply: true
+---
+
+Use React Hook Form + Zod.
+
+Inline validation.
+
+Disable submit while pending.
+
+Mobile-friendly inputs.
+
+Focus first invalid field.

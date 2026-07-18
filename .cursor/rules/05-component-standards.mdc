@@ -1,0 +1,19 @@
+---
+description: Components
+alwaysApply: true
+---
+
+Extract reusable components.
+
+Common shared components
+
+- AppHeader
+- AppCard
+- SectionHeader
+- StatusChip
+- EmptyState
+- ErrorState
+- LoadingCard
+- FormField
+
+Reuse before creating new components.

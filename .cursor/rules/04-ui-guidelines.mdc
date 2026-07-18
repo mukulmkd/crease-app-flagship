@@ -1,0 +1,18 @@
+---
+description: UI guidelines
+alwaysApply: true
+---
+
+Use Tailwind + shadcn/ui.
+
+Mobile first.
+
+Bottom navigation on phones.
+
+Sidebar on desktop.
+
+Support light/dark mode.
+
+Include loading, empty and error states.
+
+Large touch targets.
