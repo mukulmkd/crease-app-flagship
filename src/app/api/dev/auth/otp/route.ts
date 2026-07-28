@@ -18,12 +18,11 @@ type Body = {
 };
 
 /**
- * Dev-only OTP bypass when SMS provider is not configured.
- * Enabled only when NODE_ENV=development and AUTH_DEV_FIXED_OTP is set.
- * Never deploy with AUTH_DEV_FIXED_OTP in production.
+ * Fixed OTP bypass when SMS is not configured.
+ * Opt-in via AUTH_DEV_FIXED_OTP (must equal the known fixed code).
+ * Works in local and Vercel — remove the env vars to disable.
  */
 function isServerDevAuthEnabled(): boolean {
-  if (process.env.NODE_ENV === "production") return false;
   const configured = process.env.AUTH_DEV_FIXED_OTP?.trim();
   return Boolean(configured) && configured === DEV_AUTH_FIXED_OTP;
 }

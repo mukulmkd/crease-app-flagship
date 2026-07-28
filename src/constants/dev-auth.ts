@@ -1,7 +1,8 @@
 /**
  * Dev-only phone OTP fixtures for Ranches Thunders MVP.
  * Used by seed script + optional AUTH_DEV_FIXED_OTP bypass (no SMS provider).
- * Never enable AUTH_DEV_FIXED_OTP in production.
+ * Opt-in via env on local and Vercel; remove AUTH_DEV_FIXED_OTP /
+ * NEXT_PUBLIC_AUTH_DEV_OTP to disable.
  */
 
 import { MVP_TEAM } from "@/constants/domain/enums";
