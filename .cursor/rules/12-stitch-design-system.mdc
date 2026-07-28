@@ -1,0 +1,18 @@
+---
+description: Google Stitch is visual source of truth for Crease UI
+alwaysApply: true
+---
+
+# Stitch design source
+
+Project: **Crease Cricket Team Management**
+ID: `projects/5487252279778690236`
+Design system: **Athletic Precision**
+
+When implementing or updating UI:
+
+- Pull screens / design system via Stitch MCP first.
+- Do not copy generated HTML — rebuild with reusable React components.
+- Match tokens in `src/styles/globals.css` and `src/constants/design-tokens.ts`.
+- Touch targets ≥ 48px. Radius DEFAULT 8px. Font: Roboto Flex.
+- Primary `#0d631b`, urgency/secondary `#b51a1b`, surface `#f9f9f9`.

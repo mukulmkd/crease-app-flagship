@@ -1,0 +1,316 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/**
+ * Crease design tokens — source: Google Stitch
+ * Project: Crease Cricket Team Management (projects/5487252279778690236)
+ * Design system: Athletic Precision (ROUND_EIGHT / Material 3)
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-container: var(--secondary-container);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-tint: var(--surface-tint);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+
+  /* Stitch ROUND_EIGHT shape language */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 1.75rem;
+  --radius-4xl: 2rem;
+
+  /* Stitch 4px base spacing */
+  --spacing-ds-0: 0px;
+  --spacing-ds-1: 0.25rem;
+  --spacing-ds-2: 0.5rem;
+  --spacing-ds-3: 0.75rem;
+  --spacing-ds-4: 1rem;
+  --spacing-ds-5: 1.25rem;
+  --spacing-ds-6: 1.5rem;
+  --spacing-ds-8: 2rem;
+  --spacing-ds-10: 2.5rem;
+  --spacing-ds-12: 3rem;
+  --spacing-ds-16: 4rem;
+
+  /* Stitch Athletic Precision type scale (Roboto Flex) */
+  --text-display: 2rem;
+  --text-display--line-height: 2.5rem;
+  --text-display--font-weight: 700;
+  --text-headline: 1.75rem;
+  --text-headline--line-height: 2.25rem;
+  --text-headline--font-weight: 700;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.75rem;
+  --text-title--font-weight: 500;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-body--letter-spacing: 0.03125rem;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.25rem;
+  --text-body-sm--letter-spacing: 0.015625rem;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.25rem;
+  --text-label--font-weight: 500;
+  --text-caption: 0.6875rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--letter-spacing: 0.03125rem;
+  --text-overline: 0.6875rem;
+  --text-overline--line-height: 1rem;
+  /* Stat figures — Athletic Precision scoreboard density */
+  --text-stat: 1.5rem;
+  --text-stat--line-height: 2rem;
+  --text-stat--font-weight: 700;
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Exact Stitch namedColors (Athletic Precision / project theme) */
+  --background: #f9f9f9;
+  --foreground: #1a1c1c;
+  --surface: #f9f9f9;
+  --surface-dim: #dadada;
+  --surface-bright: #f9f9f9;
+  --surface-tint: #1b6d24;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f3f3f3;
+  --surface-container: #eeeeee;
+  --surface-container-high: #e8e8e8;
+  --surface-container-highest: #e2e2e2;
+  --card: #ffffff;
+  --card-foreground: #1a1c1c;
+  --popover: #ffffff;
+  --popover-foreground: #1a1c1c;
+
+  --primary: #0d631b;
+  --primary-foreground: #ffffff;
+  --primary-container: #2e7d32;
+  --on-primary-container: #cbffc2;
+
+  /* Leather ball red — urgency / critical match events */
+  --secondary: #b51a1b;
+  --secondary-foreground: #ffffff;
+  --secondary-container: #d93630;
+
+  /* Supporting grass green */
+  --tertiary: #1f6223;
+  --tertiary-foreground: #ffffff;
+  --tertiary-container: #3a7b39;
+  --on-tertiary-container: #c8ffbf;
+
+  --muted: #eeeeee;
+  --muted-foreground: #40493d;
+  --accent: #e8f5e9;
+  --accent-foreground: #0d631b;
+
+  --destructive: #ba1a1a;
+  --destructive-foreground: #ffffff;
+  --success: #0d631b;
+  --success-foreground: #ffffff;
+  --warning: #f9a825;
+  --warning-foreground: #1a1c1c;
+  --info: #1565c0;
+  --info-foreground: #ffffff;
+
+  --border: #bfcaba;
+  --input: #e2e2e2;
+  --ring: #0d631b;
+  --outline: #707a6c;
+  --outline-variant: #bfcaba;
+
+  --chart-1: #0d631b;
+  --chart-2: #2e7d32;
+  --chart-3: #b51a1b;
+  --chart-4: #f9a825;
+  --chart-5: #40493d;
+
+  --sidebar: #f3f3f3;
+  --sidebar-foreground: #1a1c1c;
+  --sidebar-primary: #0d631b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8f5e9;
+  --sidebar-accent-foreground: #0d631b;
+  --sidebar-border: #bfcaba;
+  --sidebar-ring: #0d631b;
+}
+
+.dark {
+  /* Stitch dark guidance: mint primary + tonal surfaces */
+  --background: #121412;
+  --foreground: #e2e3e2;
+  --surface: #121412;
+  --surface-dim: #0d0f0d;
+  --surface-bright: #282b28;
+  --surface-tint: #88d982;
+  --surface-container-lowest: #0d0f0d;
+  --surface-container-low: #1a1c1a;
+  --surface-container: #1e211e;
+  --surface-container-high: #282b28;
+  --surface-container-highest: #333633;
+  --card: #1a1c1a;
+  --card-foreground: #e2e3e2;
+  --popover: #1a1c1a;
+  --popover-foreground: #e2e3e2;
+
+  --primary: #88d982;
+  --primary-foreground: #00390a;
+  --primary-container: #2e7d32;
+  --on-primary-container: #cbffc2;
+
+  --secondary: #ffb4ab;
+  --secondary-foreground: #690005;
+  --secondary-container: #93000b;
+
+  --tertiary: #91d78a;
+  --tertiary-foreground: #00390a;
+  --tertiary-container: #0c5216;
+  --on-tertiary-container: #c8ffbf;
+
+  --muted: #282b28;
+  --muted-foreground: #bfcaba;
+  --accent: #1e3a22;
+  --accent-foreground: #88d982;
+
+  --destructive: #ffb4ab;
+  --destructive-foreground: #690005;
+  --success: #88d982;
+  --success-foreground: #00390a;
+  --warning: #ffcc80;
+  --warning-foreground: #3e2723;
+  --info: #90caf9;
+  --info-foreground: #0d47a1;
+
+  --border: #40493d;
+  --input: #40493d;
+  --ring: #88d982;
+  --outline: #8a9385;
+  --outline-variant: #40493d;
+
+  --chart-1: #88d982;
+  --chart-2: #a3f69c;
+  --chart-3: #ffb4ab;
+  --chart-4: #ffcc80;
+  --chart-5: #bfcaba;
+
+  --sidebar: #1a1c1a;
+  --sidebar-foreground: #e2e3e2;
+  --sidebar-primary: #88d982;
+  --sidebar-primary-foreground: #00390a;
+  --sidebar-accent: #1e3a22;
+  --sidebar-accent-foreground: #88d982;
+  --sidebar-border: #40493d;
+  --sidebar-ring: #88d982;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth font-sans;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Stitch: 48×48dp minimum interactive area */
+  .touch-target {
+    min-height: 3rem;
+    min-width: 3rem;
+  }
+
+  .ease-emphasized {
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+}

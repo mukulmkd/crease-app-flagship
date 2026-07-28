@@ -1,0 +1,25 @@
+---
+description: Team fund and expenses
+alwaysApply: true
+---
+
+# Team Fund (MVP)
+
+Admin manages Ranches Thunders fund tracker.
+
+## Capabilities
+
+- Seed / import historical offline balances as opening transactions
+- Add expenses → balance updates immediately
+- View running balance and history
+
+## Contributions
+
+- Admin may manually ask players to contribute **₹300** each when funds are low
+- Sending the ask is **manual** in MVP (Admin taps send → push + WhatsApp)
+- No automatic contribution debiting in MVP
+
+## Permissions
+
+- Admin: mutate fund / expenses / asks
+- Player: view balance and own contribution status (if tracked)

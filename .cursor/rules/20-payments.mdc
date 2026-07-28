@@ -1,0 +1,36 @@
+---
+description: Weekend payments and settlement
+alwaysApply: true
+---
+
+# Payments & Settlement (MVP)
+
+## Weekend rollup
+
+On **Sunday 7:00 PM IST**, system notifies the weekend fee calculation (Sat and/or Sun) and asks players to:
+
+1. Pay via UPI
+2. Copy UTR
+3. Upload payment screenshot (compress aggressively; keep legible)
+4. Mark payment done in-app
+
+## Amount
+
+Per player per match:
+
+- Match fee share (warmup fee or tournament allocation ÷ participants)
+- \+ ₹100 if carpool opted
+
+## Reminders
+
+- **10:00 AM** and **7:00 PM IST** daily listing unpaid players
+- Continue until settlement fully paid / offline-marked
+
+## Admin
+
+- May mark player payment(s) as paid **offline**
+- Confirms settlement complete when all lines cleared
+
+## Storage
+
+- Screenshots in Supabase Storage with size limits + server/client compression before upload

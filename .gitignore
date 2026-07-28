@@ -12,26 +12,47 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/blob-report
 
 # next.js
 /.next/
 /out/
+.turbo
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+*.key
+*.p12
+*.p8
 
-# debug
+# debug / logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
-# env files (can opt-in for committing if needed)
-.env*
+# env — keep only the committed template
+.env
+.env.*
+!.env.example
+
+# Cursor MCP secrets (API keys)
+.cursor/mcp.json
+
+# local tooling / editors
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 
 # vercel
 .vercel
@@ -39,3 +60,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase CLI local state (also listed in supabase/.gitignore)
+supabase/.temp
+supabase/.branches
+
+# PWA generated (next-pwa writes these on build)
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/swe-worker-*.js
+public/swe-worker-*.js.map
+public/fallback-*.js

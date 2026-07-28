@@ -1,0 +1,51 @@
+---
+description: Weekend matches — Admin create/confirm flow
+alwaysApply: true
+---
+
+# Weekend Matches (MVP)
+
+Matches are the operational center of Crease.
+
+## Schedule
+
+- Admin creates matches for the upcoming weekend
+- Allowed days: **Saturday**, **Sunday**, or **both** (one match row per day)
+- Each created match is one event
+
+## Classification
+
+- `warmup` — friendly / practice game
+- `tournament` — Admin must select a tournament
+  - If none exists, create via **bottom sheet**: name, number of matches, tournament fees
+  - Tournament fees are allocated per match, then divided equally among players who played that match
+
+## Create fields (TBD allowed)
+
+- Opposition
+- Warmup vs Tournament (+ tournament)
+- Ground location (Google Maps URL)
+- Time: **6:30 AM** or **9:30 AM** (IST)
+- Match fees (INR)
+
+Placeholders / nulls are allowed until Admin fills them.
+
+## Confirm
+
+While draft/pending:
+
+1. System initializes **availability poll** and **carpool poll**
+2. Admin verifies details → **Confirm**
+3. On confirm: WhatsApp group notify + PWA push asking players to participate
+4. Admin may also vote (Admin is a player)
+
+## Squad targets
+
+- Ideal playing squad: **minimum 11**
+- Cap: **maximum 12** availability “yes” for the match
+
+## Freeze
+
+- At **match day − 1**, polls freeze for players
+- Only Admin may change votes / add players after freeze
+- Admin edits after freeze re-trigger notification flow

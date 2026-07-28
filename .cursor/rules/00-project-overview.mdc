@@ -1,39 +1,47 @@
 ---
-description: Project overview
+description: Project overview — Ranches Thunders MVP
 alwaysApply: true
 ---
 
-# Crease
+# Crease (MVP)
 
-Crease is a mobile-first Progressive Web App for amateur and semi-professional cricket teams.
+Crease is a mobile-first Progressive Web App for **Ranches Thunders**.
 
-Primary Roles
+People install it on iPhone or Android. The UI must feel like a native utility app and strictly follow the Stitch Athletic Precision design.
 
-- Admin
-- Captain
-- Vice Captain
-- Player
+## Roles (exactly two)
 
-Core Modules
+- **Admin** — team admin; drawn only from the player pool; can also play and vote
+- **Player** — active squad member
 
-- Authentication (Mobile OTP)
-- Teams
-- Polls
-- Availability
-- Transport
-- Tournaments
-- Match Fees
-- Team Kitty
-- Expenses
-- Payments
-- Notifications
-- Reports
+No Captain, Vice Captain, Coach, or other roles in MVP.
 
-Guiding principles
+## Access rule
 
-- Mobile first
-- PWA first
-- Responsive desktop
-- Clean architecture
-- Reusable components
+A user must be an **active team member** (added by Admin). Otherwise every screen returns access denied.
+
+## MVP scope
+
+- Single team: **Ranches Thunders**
+- Mobile OTP login (dummy OTP for local/dev) + **KMSI** until explicit sign-out
+- Weekend match creation (Sat / Sun / both)
+- Warmup vs Tournament matches
+- Auto availability + carpool polls on confirm
+- WhatsApp group + PWA push notifications (scheduled + event-driven)
+- Weekend fee settlement (UPI, UTR, compressed screenshot)
+- Team fund tracker, expenses, manual ₹300 contribution asks
+
+## Out of MVP
+
+- Multi-team product surface
+- Extra roles
+- Full analytics / reports suite
+- Automated fund contribution collection (manual notify only)
+
+## Guiding principles
+
+- Mobile first, PWA first
+- Stitch design fidelity
+- Clean architecture (UI → Hook → Service → Repository → Supabase)
 - No duplicated business logic
+- Services enforce authorization; UI only hides actions

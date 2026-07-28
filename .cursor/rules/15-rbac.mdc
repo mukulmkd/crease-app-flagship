@@ -1,0 +1,52 @@
+---
+description: RBAC — Admin and Player only
+alwaysApply: true
+---
+
+# RBAC (MVP)
+
+Authorization is enforced in the **Service** layer.
+
+Never trust the UI. Never trust the client. Repositories never authorize.
+
+## Roles
+
+| Role | Notes |
+|------|--------|
+| Admin | From player pool; may also play and vote |
+| Player | Active member |
+
+No other roles.
+
+## Admin can
+
+- Add / remove / suspend players
+- Create / edit weekend matches and tournaments
+- Confirm matches (triggers polls + notifications)
+- Edit polls after freeze (match day − 1)
+- Mark offline payments paid
+- Manage team fund, expenses, contribution asks
+- Confirm weekend settlement progress
+
+## Player can
+
+- Complete / edit own profile (editable fields only)
+- Vote on availability + carpool polls (until freeze)
+- View who opted in
+- Pay weekend fees (UPI → UTR + screenshot)
+- Receive notifications
+
+## Route protection
+
+- Unauthenticated → login
+- Authenticated but not an active member → access denied
+- Forbidden action → permission denied (service + UI)
+
+## Service rules
+
+Every mutating operation verifies:
+
+1. Authenticated user
+2. Active membership on Ranches Thunders
+3. Role / permission for the action
+4. Entity ownership (`team_id` / `match_id`)

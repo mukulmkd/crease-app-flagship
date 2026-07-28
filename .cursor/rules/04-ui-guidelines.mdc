@@ -1,18 +1,23 @@
 ---
-description: UI guidelines
+description: UI guidelines — native PWA feel
 alwaysApply: true
 ---
 
+# UI Guidelines (MVP)
+
 Use Tailwind + shadcn/ui.
 
-Mobile first.
-
-Bottom navigation on phones.
-
-Sidebar on desktop.
+Mobile first. Bottom navigation on phones. Sidebar on desktop.
 
 Support light/dark mode.
 
 Include loading, empty and error states.
 
-Large touch targets.
+Large touch targets (≥ 48px).
+
+## Native app feel
+
+- Stitch Athletic Precision is mandatory
+- Chrome should feel like iOS/Android utilities (clear hierarchy, tonal surfaces, no decorative clutter)
+- Prefer bottom sheets for create-tournament and confirm flows
+- One-tap poll controls

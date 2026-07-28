@@ -1,0 +1,29 @@
+---
+description: Match polls — availability and carpool
+alwaysApply: true
+---
+
+# Match Polls (MVP)
+
+Every confirmed match has exactly two polls:
+
+1. **Availability** — playing / not playing
+2. **Carpool** — carpool vs coming on own
+
+## Rules
+
+- One vote per member per poll; latest wins until freeze
+- Players change votes freely until **match day − 1**
+- After freeze: Admin-only edits
+- Everyone (Admin + Player) can see who opted in so far
+- Max 12 available; soft target min 11
+
+## Carpool fee
+
+- Carpool = **₹100** per player for to-and-fro
+- Added on top of match fee share at settlement
+
+## Repository / service
+
+- Repository: CRUD only
+- Service: freeze rules, squad caps, notification triggers

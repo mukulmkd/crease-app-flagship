@@ -5,10 +5,10 @@ alwaysApply: true
 
 When implementing screens from Google Stitch:
 
-- Treat Stitch as visual source of truth.
+- Treat Stitch project `projects/5487252279778690236` (Athletic Precision) as visual source of truth.
 - Do not copy generated HTML.
-- Rebuild using reusable React components.
-- Follow project architecture.
+- Rebuild using reusable React components from `src/components`.
+- Follow project architecture under `src/`.
 - Reuse existing components first.
 - Separate presentation from business logic.
 - Preserve UX while improving maintainability.

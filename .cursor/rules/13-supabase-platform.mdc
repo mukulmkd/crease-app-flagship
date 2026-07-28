@@ -1,0 +1,30 @@
+---
+description: Supabase platform layer — plug-in contract for all modules
+alwaysApply: true
+---
+
+# Supabase platform
+
+Import platform primitives from `@/lib/platform`.
+
+## Required flow
+
+UI → Hook → Service → Repository → Supabase
+
+Never call Supabase from UI, hooks, or services directly.
+
+## Plug-in checklist for a new module
+
+1. Extend `BaseRepository` — CRUD only, map rows to domain models
+2. Register via `createBrowserRepository` / `createServerRepository`
+3. Extend `BaseService` — validation, authz, orchestration; compose repos
+4. Expose TanStack Query hooks under `features/<module>/hooks`
+5. Use `AppError` + `logger` — no ad-hoc error types for domain failures
+6. Use `TypedSupabaseClient` / `Database` types — regenerate after migrations
+
+## Do not
+
+- Put business rules in repositories
+- Put SQL or Supabase clients in components
+- Expose `SUPABASE_SERVICE_ROLE_KEY` as `NEXT_PUBLIC_*`
+- Authorize from `user_metadata` (prefer membership / `app_metadata`)

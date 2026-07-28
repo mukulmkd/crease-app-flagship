@@ -13,6 +13,8 @@ Hook
 ↓
 Service
 ↓
+Repository
+↓
 Supabase
 
 Validate every payload.
@@ -20,3 +22,7 @@ Validate every payload.
 Use typed models.
 
 Enable Row Level Security.
+
+Repositories own all Supabase client usage.
+Services own validation and orchestration.
+Admin / service-role clients are server-only.

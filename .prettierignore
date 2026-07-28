@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+build
+public/sw.js
+public/workbox-*.js
+public/swe-worker-*.js
+coverage
+package-lock.json

@@ -1,0 +1,56 @@
+---
+description: Permission constants — Admin vs Player
+alwaysApply: true
+---
+
+# Permissions (MVP)
+
+Permissions are named constants. Never scatter string literals.
+
+Use `hasPermission(permission)` — never compare `role === "admin"` ad hoc in UI/services beyond the helper.
+
+## Naming
+
+```
+TEAM_MEMBER_ADD
+TEAM_MEMBER_REMOVE
+TEAM_SETTINGS_EDIT
+
+MATCH_CREATE
+MATCH_EDIT
+MATCH_CONFIRM
+MATCH_POLL_OVERRIDE
+
+TOURNAMENT_CREATE
+TOURNAMENT_EDIT
+
+POLL_VOTE
+POLL_VIEW_RESULTS
+
+PAYMENT_SUBMIT
+PAYMENT_MARK_OFFLINE
+SETTLEMENT_MANAGE
+
+FUND_VIEW
+FUND_EXPENSE_ADD
+FUND_CONTRIBUTION_ASK
+
+NOTIFICATION_SEND
+```
+
+## Mapping (summary)
+
+| Permission | Admin | Player |
+|------------|-------|--------|
+| TEAM_MEMBER_* / SETTINGS | yes | no |
+| MATCH_* / TOURNAMENT_* | yes | no |
+| MATCH_POLL_OVERRIDE | yes | no |
+| POLL_VOTE / VIEW | yes | yes |
+| PAYMENT_SUBMIT | yes | yes |
+| PAYMENT_MARK_OFFLINE / SETTLEMENT | yes | no |
+| FUND_* mutate | yes | view only |
+| NOTIFICATION_SEND (manual) | yes | no |
+
+## UI
+
+Hide actions the user cannot perform. Services must still reject forbidden calls.

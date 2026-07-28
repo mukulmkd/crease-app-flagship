@@ -3,15 +3,33 @@ description: Architecture
 alwaysApply: true
 ---
 
-Feature-first architecture.
+Feature-first architecture under `src/`.
 
-app/
-components/
-features/
-services/
-hooks/
-lib/
-types/
+src/
+  app/
+  components/
+    common/
+    layout/
+    navigation/
+    cards/
+    dialogs/
+    forms/
+    charts/
+    tables/
+    feedback/
+    ui/
+  features/
+  hooks/
+  services/
+  repositories/
+  lib/
+  providers/
+  types/
+  constants/
+  utils/
+  styles/
 
 Business logic belongs in services.
+Data access belongs in repositories.
 Components remain presentational.
+Never call Supabase from UI — Component → Hook → Service → Repository → Supabase.

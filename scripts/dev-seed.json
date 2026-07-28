@@ -1,0 +1,38 @@
+{
+  "team": {
+    "id": "a0000000-0000-4000-8000-000000000001",
+    "name": "Ranches Thunders",
+    "slug": "ranches-thunders"
+  },
+  "otp": "123456",
+  "personas": [
+    {
+      "phone": "+919999900001",
+      "localPhone": "9999900001",
+      "fullName": "Demo Admin",
+      "email": "demo.admin@crease.dev",
+      "membershipRole": "admin"
+    },
+    {
+      "phone": "+919999900002",
+      "localPhone": "9999900002",
+      "fullName": "Rohit Sharma",
+      "email": "rohit.sharma@crease.dev",
+      "membershipRole": "admin"
+    },
+    {
+      "phone": "+919999900003",
+      "localPhone": "9999900003",
+      "fullName": "Virat Kohli",
+      "email": "virat.kohli@crease.dev",
+      "membershipRole": "player"
+    },
+    {
+      "phone": "+919999900004",
+      "localPhone": "9999900004",
+      "fullName": "Jasprit Bumrah",
+      "email": "jasprit.bumrah@crease.dev",
+      "membershipRole": "player"
+    }
+  ]
+}

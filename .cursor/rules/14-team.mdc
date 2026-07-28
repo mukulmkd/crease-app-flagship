@@ -1,0 +1,42 @@
+---
+description: Team module — single-team MVP
+alwaysApply: true
+---
+
+# Team Module (MVP)
+
+MVP has exactly one team: **Ranches Thunders**.
+
+Do not build multi-team switching UX. Schema may keep `team_id` for future tenancy, but product behavior is single-team.
+
+## Lifecycle
+
+- Seeded at migrate time; Admin may update settings (logo, WhatsApp notify config, UPI id)
+- Never hard-delete the team
+- Archive only if product later needs it (not MVP UI)
+
+## Membership
+
+- Admin adds players; until then, login may succeed but app access is denied
+- A user belongs to Ranches Thunders via `team_memberships`
+- Roles on membership: `admin` | `player`
+- Admins are players too (`role = admin` still participates in polls/payments)
+- Store role/status/joined_at on membership — never on the global user alone
+
+## Ownership
+
+- At least one Admin must remain
+- Transfer admin before demoting/removing the last Admin
+
+## Settings (team-owned)
+
+- Display name / logo
+- WhatsApp group notify hook (existing group)
+- UPI payment destination for settlements
+- Default match fee / carpool fee constants (carpool = ₹100 to-and-fro)
+
+## Validation
+
+- No duplicate active memberships for the same user
+- Inactive / non-member → access denied
+- Do not allow creating additional teams in MVP services

@@ -1,0 +1,32 @@
+---
+description: Player access, profile, auth KMSI
+alwaysApply: true
+---
+
+# Player Access & Auth (MVP)
+
+## Login
+
+- Mobile OTP only
+- Dev/local: dummy fixed OTP
+- **KMSI**: session persists until explicit sign-out (`signOut`)
+
+## Gate
+
+1. Not authenticated → `/login`
+2. Authenticated but **not** active member of Ranches Thunders → access denied
+3. Active member with incomplete profile → force `/complete-profile`
+4. Else → app
+
+## Profile
+
+- Mandatory basic profile on first login
+- Later: edit allowed fields only (name, avatar, etc.)
+- Phone is identity; treat as largely immutable after verify
+
+## Participation
+
+- Vote availability + carpool
+- Change votes until freeze
+- Pay settlements
+- Admin who is also player uses the same player flows

@@ -1,0 +1,30 @@
+---
+description: Notification schedules — push + WhatsApp
+alwaysApply: true
+---
+
+# Notifications (MVP)
+
+Channels:
+
+1. **PWA push** (in-app + web push)
+2. **Existing WhatsApp group** (team-configured webhook / integration)
+
+## Triggers
+
+| When | What |
+|------|------|
+| Match confirmed | Ask players to vote availability + carpool |
+| Daily **12:00** & **21:00** IST until match day − 1 | If strength &lt; 11, remind to vote |
+| Vote flips yes → no | Ask others if available |
+| Match day − 1 at **18:00** IST | Squad + carpool summary |
+| Sunday **19:00** IST | Weekend fee calculation + pay CTA |
+| Daily **10:00** & **19:00** IST while unpaid | List of unpaid players |
+| Admin edits frozen poll | Re-notify participation changes |
+| Admin fund ask | ₹300 contribution request |
+
+## Implementation notes
+
+- Prefer scheduled jobs (Supabase Cron / Edge Functions) in **Asia/Kolkata**
+- Persist notification rows for in-app inbox
+- Never block core mutations if WhatsApp delivery fails — log and retry

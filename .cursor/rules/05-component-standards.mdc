@@ -5,15 +5,21 @@ alwaysApply: true
 
 Extract reusable components.
 
-Common shared components
+Design-system shared components
 
-- AppHeader
-- AppCard
+- Typography (Display, Title, Heading, Body…)
 - SectionHeader
 - StatusChip
-- EmptyState
-- ErrorState
-- LoadingCard
+- UserAvatar
+- AppCard
 - FormField
+- SegmentedControl
+- EmptyState / LoadingState / ErrorState / LoadingCard
+- AppDialog / BottomSheet / AppDrawer
+- DataTable
+- toast helpers
+
+Primitives live in `components/ui` (shadcn).
+Compose higher-level UI in common / cards / forms / dialogs / feedback / tables.
 
 Reuse before creating new components.

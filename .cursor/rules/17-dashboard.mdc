@@ -1,0 +1,37 @@
+---
+description: Dashboard — command center for weekend ops
+alwaysApply: true
+---
+
+# Dashboard (MVP)
+
+Command center for Ranches Thunders — summarize, do not manage.
+
+## Purpose
+
+Within ~5 seconds show:
+
+- Next weekend match(es)
+- Poll status (availability / carpool counts vs 11–12)
+- Pending payments
+- Team fund balance
+- Recent notifications
+- Admin quick actions (create match, add expense, ask contribution)
+
+## Widgets (MVP)
+
+- Next match(es)
+- Availability strength
+- Carpool summary
+- Pending weekend payments
+- Team fund balance
+- Notifications
+- Quick actions (role-aware)
+
+## Rules
+
+- Widgets load independently via query hooks
+- No Supabase in widgets
+- Loading / empty / error / success on every widget
+- Mobile stack; desktop grid
+- No large management tables on Home
