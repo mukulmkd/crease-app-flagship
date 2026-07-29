@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 
-import { BrandMark } from "@/components/common/brand-mark";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
@@ -15,7 +14,7 @@ type AppHeaderProps = {
 };
 
 /**
- * Desktop header — brand lockup + page title + chrome actions.
+ * Desktop header — page title + chrome actions. Branding lives in the sidebar.
  */
 function AppHeader({
   title = "Crease",
@@ -30,16 +29,13 @@ function AppHeader({
         className,
       )}
     >
-      <div className="flex min-w-0 items-center gap-4">
-        <BrandMark className="shrink-0" />
-        <div className="min-w-0 border-l border-outline-variant/40 pl-4">
-          <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
-            Overview
-          </p>
-          <p className="truncate text-title font-semibold tracking-tight">
-            {title}
-          </p>
-        </div>
+      <div className="min-w-0">
+        <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
+          Overview
+        </p>
+        <p className="truncate text-title font-semibold tracking-tight">
+          {title}
+        </p>
       </div>
 
       <div className="flex items-center gap-1">

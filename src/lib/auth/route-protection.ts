@@ -27,12 +27,17 @@ function isPublicPath(path: string) {
 
 /**
  * Pure route-protection rules — used by middleware; unit-testable without Next.
+ *
+ * Gate order: auth → active membership → profile → app.
  */
 export function resolveRouteGuard(input: {
   path: string;
   user: { app_metadata?: unknown; user_metadata?: unknown } | null;
+  /** null = membership not checked yet / N/A (no user). */
+  isActiveMember?: boolean | null;
 }): RouteGuardDecision {
   const { path, user } = input;
+  const isActiveMember = input.isActiveMember ?? null;
 
   if (isPublicPath(path)) {
     return { action: "allow" };
@@ -42,7 +47,9 @@ export function resolveRouteGuard(input: {
   const isLogin = path === AUTH_ROUTES.login;
   const isOtp = path === AUTH_ROUTES.otp;
   const isCompleteProfile = path === AUTH_ROUTES.completeProfile;
-  const isAuthFlow = isSplash || isLogin || isOtp || isCompleteProfile;
+  const isAccessDenied = path === AUTH_ROUTES.accessDenied;
+  const isAuthFlow =
+    isSplash || isLogin || isOtp || isCompleteProfile || isAccessDenied;
 
   const appMeta = (user?.app_metadata ?? {}) as Record<string, unknown>;
   const userMeta = (user?.user_metadata ?? {}) as Record<string, unknown>;
@@ -57,13 +64,36 @@ export function resolveRouteGuard(input: {
     };
   }
 
-  if (user && !onboardingDone && !isCompleteProfile && !isSplash && !isOtp) {
-    if (isLogin || !isAuthFlow) {
+  // Invite-only: signed-in but not an active Ranches Thunders member.
+  if (
+    user &&
+    isActiveMember === false &&
+    !isAccessDenied &&
+    !isLogin &&
+    !isOtp
+  ) {
+    return { action: "redirect", pathname: AUTH_ROUTES.accessDenied };
+  }
+
+  if (
+    user &&
+    isActiveMember !== false &&
+    !onboardingDone &&
+    !isCompleteProfile &&
+    !isSplash &&
+    !isOtp
+  ) {
+    if (isLogin || isAccessDenied || !isAuthFlow) {
       return { action: "redirect", pathname: AUTH_ROUTES.completeProfile };
     }
   }
 
-  if (user && onboardingDone && (isLogin || isOtp || isCompleteProfile)) {
+  if (
+    user &&
+    isActiveMember !== false &&
+    onboardingDone &&
+    (isLogin || isOtp || isCompleteProfile || isAccessDenied)
+  ) {
     return { action: "redirect", pathname: POST_AUTH_ROUTE };
   }
 

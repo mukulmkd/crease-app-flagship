@@ -7,29 +7,47 @@ alwaysApply: true
 
 ## Weekend rollup
 
-On **Sunday 7:00 PM IST**, system notifies the weekend fee calculation (Sat and/or Sun) and asks players to:
+On **Sunday 7:00 PM IST**, system generates fees for **completed** weekend
+matches that have a **finalized playing squad** and a **saved carpool
+assignment**, then sends exactly **one** weekend payment notification to the
+charged players (in-app + individual WhatsApp). The eligible set may contain
+Saturday only, Sunday only, or both. **Cancelled** matches attract no fees.
 
 1. Pay via UPI
 2. Copy UTR
 3. Upload payment screenshot (compress aggressively; keep legible)
 4. Mark payment done in-app
 
+Sunday 19:00 may bill Saturday only if Sunday is not yet completed. Admin may
+regenerate charges after Sunday completes, but manual generation is silent and
+must not send another payment notification.
+
 ## Amount
 
-Per player per match:
+Per **squad member** per match (from post-match assignment, not poll votes):
 
-- Match fee share (warmup fee or tournament allocation ÷ participants)
-- \+ ₹100 if carpool opted
+- Match fee share (`matchFees ÷ squad size`)
+- \+ ₹100 if passenger on a ride
+- Driver credit ₹100 × passenger count
 
-## Reminders
+Weekend netting: credits offset that user’s other dues the same weekend; leftover
+credit becomes a `settlement_reimbursements` row (money owed to the driver).
 
-- **10:00 AM** and **7:00 PM IST** daily listing unpaid players
-- Continue until settlement fully paid / offline-marked
+## Notification idempotency
+
+- `weekend_settlements.notified_at` is claimed by the Sunday Cron
+- Cron retries and concurrent invocations must not duplicate the notification
+- There are no recurring unpaid payment reminders in MVP
 
 ## Admin
 
+- After kickoff: assign drivers/passengers (or save nobody carpooled), then
+  **complete** or **cancel** the match (no Cron auto-complete)
+- Generate settlement manually from `/payments` (same completed + assigned rules)
 - May mark player payment(s) as paid **offline**
-- Confirms settlement complete when all lines cleared
+- Settles driver reimbursements offline with UTR + screenshot
+- Confirms settlement complete when charges and reimbursements are cleared
+- Re-generate must not reset paid / offline_paid / waived charges
 
 ## Storage
 

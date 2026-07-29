@@ -11,22 +11,22 @@ Command center for Ranches Thunders — summarize, do not manage.
 
 Within ~5 seconds show:
 
-- Next weekend match(es)
+- Next weekend match(es) as a dominant **match ticket** (`MatchTicket`)
 - Poll status (availability / carpool counts vs 11–12)
 - Pending payments
 - Team fund balance
 - Recent notifications
-- Admin quick actions (create match, add expense, ask contribution)
+- Admin quick actions (create match, add expense, ask contribution) as secondary chips
 
 ## Widgets (MVP)
 
-- Next match(es)
+- Next match ticket (`#082417` clubhouse surface)
 - Availability strength
 - Carpool summary
 - Pending weekend payments
 - Team fund balance
 - Notifications
-- Quick actions (role-aware)
+- Quick actions (role-aware, never competing with the ticket)
 
 ## Rules
 
@@ -35,3 +35,12 @@ Within ~5 seconds show:
 - Loading / empty / error / success on every widget
 - Mobile stack; desktop grid
 - No large management tables on Home
+- Prefer a compact status rail over equal-weight card grids
+- **Admin-only** team snapshot rail: carpool riders, unpaid weekend fees, team fund balance
+- Players do not see the Admin status rail (they use match tickets + Payments for their own fees)
+- Render **one ticket per weekend day** (Sat and/or Sun) — never collapse a weekend to a single fixture
+- Home sections: **This weekend** then **More upcoming matches** (later weekends)
+- Tickets respect `polls_enabled` — voting only when confirmed and polls are on
+- Home reads `useDashboardSnapshot()`; weekend scoping is service logic, not JSX filtering
+- Each confirmed-match ticket provides real one-tap availability + travel voting
+- Poll buttons mutate in place; only the dedicated arrow navigates to match detail

@@ -14,7 +14,22 @@ import {
   hasPermission,
   PERMISSIONS,
 } from "@/constants/domain/team-permissions";
+import {
+  formatMatchDate,
+  formatMatchTime,
+  matchOpposition,
+} from "@/features/team/lib/match-format";
 import { useMatches, useMyMembership } from "@/features/team/hooks";
+import { todayIsoDate } from "@/utils";
+import type { Match } from "@/types/models";
+
+function isUpcomingMatch(match: Match, today: string): boolean {
+  return match.matchDate >= today && match.status !== "cancelled";
+}
+
+function isPastMatch(match: Match, today: string): boolean {
+  return match.matchDate < today || match.status === "completed";
+}
 
 function MatchesListView() {
   const membershipQuery = useMyMembership();
@@ -37,14 +52,21 @@ function MatchesListView() {
     );
   }
 
+  const today = todayIsoDate();
   const matches = matchesQuery.data?.items ?? [];
+  const upcoming = matches
+    .filter((match) => isUpcomingMatch(match, today))
+    .sort((a, b) => a.matchDate.localeCompare(b.matchDate));
+  const past = matches
+    .filter((match) => isPastMatch(match, today))
+    .sort((a, b) => b.matchDate.localeCompare(a.matchDate));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <SectionHeader
           title="Matches"
-          description="Weekend fixtures for Ranches Thunders"
+          description="Upcoming and past weekend fixtures"
         />
         {canCreate ? (
           <Button
@@ -62,7 +84,7 @@ function MatchesListView() {
           title="No matches yet"
           description={
             canCreate
-              ? "Create Saturday and/or Sunday matches for the upcoming weekend."
+              ? "Create Saturday and/or Sunday matches for any upcoming weekend."
               : "Your admin will publish weekend matches here."
           }
           actionLabel={canCreate ? "Create match" : undefined}
@@ -75,6 +97,61 @@ function MatchesListView() {
           }
         />
       ) : (
+        <>
+          <MatchSection
+            title="Upcoming"
+            emptyTitle="No upcoming matches"
+            emptyDescription={
+              canCreate
+                ? "Create fixtures for this weekend or a later weekend."
+                : "Nothing scheduled yet."
+            }
+            matches={upcoming}
+            highlight
+          />
+          <MatchSection
+            title="Past"
+            emptyTitle="No past matches"
+            emptyDescription="Completed weekends will appear here."
+            matches={past}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+type MatchSectionProps = {
+  title: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  matches: Match[];
+  highlight?: boolean;
+};
+
+function MatchSection({
+  title,
+  emptyTitle,
+  emptyDescription,
+  matches,
+  highlight = false,
+}: MatchSectionProps) {
+  return (
+    <section
+      aria-labelledby={`${title.toLowerCase()}-matches`}
+      className="space-y-3"
+    >
+      <h2
+        id={`${title.toLowerCase()}-matches`}
+        className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+      >
+        {title}
+        {matches.length > 0 ? ` · ${matches.length}` : ""}
+      </h2>
+
+      {matches.length === 0 ? (
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      ) : (
         <ul className="space-y-3">
           {matches.map((match) => (
             <li key={match.id}>
@@ -82,8 +159,9 @@ function MatchesListView() {
                 <AppCard
                   interactive
                   variant={
-                    match.status === "confirmed" ||
-                    match.status === "pending_confirm"
+                    highlight &&
+                    (match.status === "confirmed" ||
+                      match.status === "pending_confirm")
                       ? "hero"
                       : "default"
                   }
@@ -91,11 +169,15 @@ function MatchesListView() {
                   <AppCardContent className="space-y-2 py-4">
                     <div className="flex items-start justify-between gap-2">
                       <Body className="font-semibold tracking-tight">
-                        {match.matchDate}
+                        {formatMatchDate(match.matchDate)}
                       </Body>
                       <StatusChip
                         status={
-                          match.status === "confirmed" ? "success" : "pending"
+                          match.status === "confirmed"
+                            ? "success"
+                            : match.status === "cancelled"
+                              ? "danger"
+                              : "pending"
                         }
                       >
                         {MATCH_STATUS_LABELS[match.status]}
@@ -103,19 +185,15 @@ function MatchesListView() {
                     </div>
                     <BodySm>
                       {MATCH_CLASSIFICATION_LABELS[match.classification]}
-                      {match.opposition
-                        ? ` · vs ${match.opposition}`
-                        : " · TBD"}
+                      {" · "}
+                      {matchOpposition(match)}
                     </BodySm>
                     <BodySm>
-                      {match.startTime === "06:30:00"
-                        ? "6:30 AM"
-                        : match.startTime === "09:30:00"
-                          ? "9:30 AM"
-                          : "Time TBD"}
+                      {formatMatchTime(match.startTime)}
                       {match.matchFeesInr != null
                         ? ` · ₹${match.matchFeesInr}`
                         : ""}
+                      {match.pollsEnabled ? " · Polls on" : " · Polls off"}
                     </BodySm>
                   </AppCardContent>
                 </AppCard>
@@ -124,7 +202,7 @@ function MatchesListView() {
           ))}
         </ul>
       )}
-    </div>
+    </section>
   );
 }
 

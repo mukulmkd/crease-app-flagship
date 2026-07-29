@@ -6,5 +6,9 @@ export type {
   CreateTournamentDto,
   CreateMatchDto,
   CreateWeekendMatchesDto,
+  UpdateMatchDto,
+  CastAvailabilityVoteDto,
+  CastCarpoolVoteDto,
+  OverrideVoteDto,
   CreateNotificationDto,
 } from "@/types/dto/identity";

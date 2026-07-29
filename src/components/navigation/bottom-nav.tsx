@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 
 import { isActivePath } from "@/components/navigation/nav-link";
 import { typography } from "@/constants/design-tokens";
-import { primaryNav } from "@/constants/navigation";
+import { hasPermission } from "@/constants/domain/team-permissions";
+import { primaryNav, secondaryNav } from "@/constants/navigation";
+import { useMyMembership } from "@/features/team/hooks";
 import { cn } from "@/utils";
 
 type BottomNavProps = {
@@ -13,23 +15,28 @@ type BottomNavProps = {
 };
 
 /**
- * Mobile bottom navigation — Athletic Precision tonal active state.
- * Icons use a primary-container pill when selected; labels use caption scale.
+ * Mobile bottom navigation — restrained lime active state.
  */
 function BottomNav({ className }: BottomNavProps) {
   const pathname = usePathname();
-  const items = primaryNav.filter((item) => item.mobile);
+  const membership = useMyMembership();
+  const role = membership.data?.role;
+  const items = [...primaryNav, ...secondaryNav].filter(
+    (item) =>
+      item.mobile && (!item.permission || hasPermission(role, item.permission)),
+  );
 
   return (
     <nav
       data-slot="bottom-nav"
       aria-label="Primary"
       className={cn(
-        "safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant/40 bg-surface-container/95 backdrop-blur-sm supports-backdrop-filter:bg-surface-container/90 md:hidden",
+        "safe-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant bg-surface-container-lowest md:hidden",
         className,
       )}
     >
-      <ul className="flex items-stretch justify-around px-1 pt-1">
+      {/* Fixed row height keeps the bar in sync with --bottom-nav-height. */}
+      <ul className="flex h-16 items-stretch justify-around px-1">
         {items.map((item) => {
           const active = isActivePath(pathname, item.href);
           const Icon = item.icon;
@@ -40,8 +47,7 @@ function BottomNav({ className }: BottomNavProps) {
                 prefetch
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "ease-emphasized touch-target flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 transition-colors duration-200",
-                  typography.navLabel,
+                  "ease-emphasized touch-target flex h-full min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 transition-colors duration-200",
                   active
                     ? "text-primary"
                     : "text-muted-foreground active:text-foreground",
@@ -51,13 +57,20 @@ function BottomNav({ className }: BottomNavProps) {
                   className={cn(
                     "flex size-10 items-center justify-center rounded-full transition-colors duration-200",
                     active
-                      ? "bg-primary-container text-on-primary-container"
+                      ? "bg-accent text-accent-foreground"
                       : "bg-transparent",
                   )}
                 >
                   <Icon className="size-5" aria-hidden />
                 </span>
-                <span className="truncate">{item.label}</span>
+                <span
+                  className={cn(
+                    typography.navLabel,
+                    "block max-w-full overflow-hidden text-[0.6rem] leading-3 text-ellipsis whitespace-nowrap",
+                  )}
+                >
+                  {item.mobileLabel ?? item.label}
+                </span>
               </Link>
             </li>
           );

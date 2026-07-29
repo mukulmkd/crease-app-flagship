@@ -7,4 +7,7 @@ export {
   getDashboardService,
   getTeamService,
   getMatchService,
+  getPaymentService,
+  getFundService,
+  getNotificationService,
 } from "@/lib/query/services";

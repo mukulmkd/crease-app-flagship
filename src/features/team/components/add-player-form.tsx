@@ -6,16 +6,9 @@ import { z } from "zod";
 
 import { BodySm } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
-import { FormField } from "@/components/forms";
+import { FormField, SegmentedControl } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAddTeamMember } from "@/features/team/hooks";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
 
@@ -87,15 +80,15 @@ function AddPlayerForm({ onAdded }: { onAdded?: () => void }) {
           control={form.control}
           name="role"
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="role" className="h-12 w-full">
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="player">Player</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
+            <SegmentedControl
+              aria-label="Member role"
+              value={field.value}
+              onValueChange={field.onChange}
+              options={[
+                { value: "player", label: "Player" },
+                { value: "admin", label: "Admin" },
+              ]}
+            />
           )}
         />
       </FormField>
@@ -107,9 +100,9 @@ function AddPlayerForm({ onAdded }: { onAdded?: () => void }) {
       <Button
         type="submit"
         className="touch-target h-12 w-full"
-        disabled={addMember.isPending}
+        loading={addMember.isPending}
       >
-        {addMember.isPending ? "Adding…" : "Add player"}
+        Add player
       </Button>
     </form>
   );

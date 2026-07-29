@@ -12,7 +12,7 @@ type BrandMarkProps = {
 };
 
 /**
- * Crease brand lockup — Athletic Precision mark + wordmark.
+ * Crease brand lockup — scorebook crease mark + condensed wordmark.
  * Prefer this over ad-hoc “C” squares so chrome stays consistent.
  */
 function BrandMark({
@@ -26,14 +26,19 @@ function BrandMark({
       <span
         aria-hidden
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground",
+          "relative flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#082417] text-primary-foreground",
           markClassName,
         )}
       >
-        C
+        <span className="h-5 w-5 border-x-2 border-b-2 border-[#c9f64b]">
+          <span className="mx-auto block h-full w-px bg-[#c9f64b]" />
+        </span>
       </span>
       {showWordmark ? (
-        <span className="text-sm font-bold tracking-wide text-foreground uppercase">
+        <span
+          data-brand-wordmark
+          className="font-heading text-xl font-extrabold tracking-[0.06em] text-primary uppercase"
+        >
           Crease
         </span>
       ) : (

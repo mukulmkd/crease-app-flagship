@@ -1,5 +1,5 @@
-import { ShellPlaceholder } from "@/components/layout/shell-placeholder";
+import { ProfileShell } from "@/features/profile";
 
-export default function Page() {
-  return <ShellPlaceholder title="Profile" />;
+export default function ProfilePage() {
+  return <ProfileShell />;
 }

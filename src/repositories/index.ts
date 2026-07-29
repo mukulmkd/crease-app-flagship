@@ -38,6 +38,16 @@ export {
 export type { NotificationListFilter } from "@/repositories/notification.repository";
 
 export {
+  PaymentRepository,
+  createBrowserPaymentRepository,
+} from "@/repositories/payment.repository";
+
+export {
+  FundRepository,
+  createBrowserFundRepository,
+} from "@/repositories/fund.repository";
+
+export {
   AuditLogRepository,
   createBrowserAuditLogRepository,
 } from "@/repositories/audit-log.repository";

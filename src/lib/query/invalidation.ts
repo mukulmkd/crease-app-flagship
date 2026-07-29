@@ -20,6 +20,11 @@ export const invalidateQueries = {
       queryKey: queryKeys.matches.detail(matchId),
     });
   },
+  matchPolls(client: QueryClient, matchId: string) {
+    return client.invalidateQueries({
+      queryKey: queryKeys.matches.polls(matchId),
+    });
+  },
   tournaments(client: QueryClient) {
     return client.invalidateQueries({ queryKey: queryKeys.tournaments.all() });
   },
@@ -30,5 +35,11 @@ export const invalidateQueries = {
   },
   dashboard(client: QueryClient) {
     return client.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
+  },
+  payments(client: QueryClient) {
+    return client.invalidateQueries({ queryKey: queryKeys.payments.all() });
+  },
+  fund(client: QueryClient) {
+    return client.invalidateQueries({ queryKey: queryKeys.fund.all() });
   },
 };

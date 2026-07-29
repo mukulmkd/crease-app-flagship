@@ -3,6 +3,7 @@ export const AUTH_ROUTES = {
   login: "/login",
   otp: "/otp",
   completeProfile: "/complete-profile",
+  accessDenied: "/access-denied",
 } as const;
 
 export const POST_AUTH_ROUTE = "/home";
@@ -11,6 +12,7 @@ export const AUTH_PUBLIC_ROUTES = [
   AUTH_ROUTES.splash,
   AUTH_ROUTES.login,
   AUTH_ROUTES.otp,
+  AUTH_ROUTES.accessDenied,
 ] as const;
 
 /** Supabase SMS OTP default length */

@@ -6,6 +6,7 @@ import { mapProfile } from "@/repositories/shared/mappers";
 import type { TablesUpdate } from "@/types/database";
 import type { ProfileId } from "@/types/common";
 import type { Profile } from "@/types/models";
+import { AVATARS_BUCKET } from "@/utils/avatar";
 
 /**
  * Profiles CRUD — MVP (no soft-delete column).
@@ -53,6 +54,28 @@ export class UserRepository extends BaseRepository {
       .single();
     this.assertOk(error, "user.update");
     return mapProfile(this.requireData(data, "user.update"));
+  }
+
+  /** Upload compressed avatar JPEG under `{userId}/{timestamp}.jpg`. */
+  async uploadAvatar(userId: string, blob: Blob): Promise<string> {
+    const path = `${userId}/${Date.now()}.jpg`;
+    const { error } = await this.client.storage
+      .from(AVATARS_BUCKET)
+      .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    if (error) {
+      throw new AppError("EXTERNAL", error.message, 502, error);
+    }
+    return path;
+  }
+
+  /** Delete a previous avatar object in the avatars bucket. */
+  async deleteAvatar(path: string): Promise<void> {
+    const { error } = await this.client.storage
+      .from(AVATARS_BUCKET)
+      .remove([path]);
+    if (error) {
+      throw new AppError("EXTERNAL", error.message, 502, error);
+    }
   }
 }
 

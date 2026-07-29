@@ -85,3 +85,11 @@ MVP is **single-team**. Rows still carry `team_id` pointing at Ranches Thunders 
 - Admin ⊆ player capabilities for participation
 - `hasPermission()` in UI and services
 - Non-members: hard deny
+
+---
+
+## UI system
+
+Visual source of truth: Stitch **Modern Cricket Club** (`assets/11807811405223687109`). See [UI.md](../UI.md) and `.cursor/rules/12-stitch-design-system.mdc`.
+
+Agents must keep `globals.css` and `design-tokens.ts` aligned, use Barlow Condensed for display/stats and Manrope for UI, and rebuild Stitch screens as React components — never paste HTML.

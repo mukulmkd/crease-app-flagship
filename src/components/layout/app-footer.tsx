@@ -32,7 +32,6 @@ function AppFooter({ className }: AppFooterProps) {
           <Link href="/notifications" className="hover:text-foreground">
             Notifications
           </Link>
-          <span className="text-outline">PWA ready</span>
         </nav>
       </div>
     </footer>

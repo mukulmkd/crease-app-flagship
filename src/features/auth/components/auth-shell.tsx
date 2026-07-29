@@ -5,6 +5,7 @@ import { ArrowLeft, HelpCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/common/brand-mark";
 import { cn } from "@/utils";
 
 type AuthShellProps = {
@@ -17,7 +18,7 @@ type AuthShellProps = {
 };
 
 /**
- * Unauthenticated chrome — Stitch auth screens (no app shell nav).
+ * Unauthenticated Modern Cricket Club chrome (no app navigation).
  */
 function AuthShell({
   children,
@@ -32,8 +33,6 @@ function AuthShell({
       data-slot="auth-shell"
       className={cn(
         "relative flex min-h-dvh flex-col bg-background",
-        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-48 before:bg-[radial-gradient(ellipse_at_top_right,oklch(0.92_0.04_145)_0%,transparent_55%)]",
-        "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-40 after:bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.94_0.03_25)_0%,transparent_50%)]",
         className,
       )}
     >
@@ -44,15 +43,14 @@ function AuthShell({
               <ArrowLeft aria-hidden />
             </Link>
           </Button>
-        ) : (
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-            C
-          </span>
-        )}
+        ) : null}
 
-        <p className="flex-1 text-center text-base font-bold text-primary">
-          {title ?? "Crease"}
-        </p>
+        <BrandMark
+          href={null}
+          className={showBack ? "flex-1 justify-center" : "flex-1"}
+          markClassName="size-9"
+        />
+        <span className="sr-only">{title ?? "Crease"}</span>
 
         {showHelp ? (
           <Button

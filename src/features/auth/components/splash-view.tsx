@@ -2,9 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CircleDot } from "lucide-react";
 
-import { Progress } from "@/components/ui/progress";
 import { AUTH_ROUTES, POST_AUTH_ROUTE } from "@/constants/auth";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -54,27 +52,39 @@ function SplashView() {
   ]);
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-8">
-      <div className="flex flex-1 flex-col items-center justify-center gap-5">
-        <div className="flex size-28 items-center justify-center rounded-full border border-outline-variant/60">
-          <CircleDot
-            className="size-14 text-primary"
-            strokeWidth={1.5}
-            aria-hidden
-          />
+    <div className="flex min-h-dvh flex-col bg-surface-container-lowest px-8 text-primary">
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <div className="flex size-28 items-center justify-center rounded-full border border-primary/20">
+          <span className="relative block size-14" aria-hidden>
+            <span className="absolute top-3 left-2 h-4 w-9 -rotate-45 rounded-sm border-[3px] border-primary" />
+            <span className="absolute top-7 left-7 h-4 w-4 rounded-full border-[3px] border-primary bg-surface-container-lowest" />
+            <span className="absolute right-1 bottom-2 h-1 w-6 rotate-45 rounded-full bg-primary" />
+          </span>
         </div>
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">
+        <div className="-mt-1 text-center">
+          <h1 className="font-heading text-3xl leading-none font-bold tracking-tight">
             Crease
           </h1>
-          <p className="mt-2 text-caption font-medium tracking-[0.2em] text-muted-foreground uppercase">
-            Athletic Precision
+          <p className="mt-2 text-[0.6rem] font-semibold tracking-[0.24em] text-primary/45 uppercase">
+            Ranches Thunders
           </p>
         </div>
       </div>
 
-      <div className="safe-bottom w-full max-w-xs pb-10">
-        <Progress value={progress} aria-label="Loading" />
+      <div className="safe-bottom mx-auto w-full max-w-56 pb-12">
+        <div
+          role="progressbar"
+          aria-label="Loading Crease"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+          className="h-px overflow-hidden bg-primary/15"
+        >
+          <div
+            className="h-full bg-primary transition-[width] duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>
   );

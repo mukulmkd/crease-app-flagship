@@ -19,6 +19,7 @@ import {
   NOTIFICATION_TYPES,
   POLL_STATUSES,
   POLL_TYPES,
+  REIMBURSEMENT_STATUSES,
   SETTLEMENT_STATUSES,
   TOURNAMENT_STATUSES,
 } from "@/constants/domain/enums";
@@ -35,6 +36,7 @@ export const availabilityVoteSchema = z.enum(AVAILABILITY_VOTES);
 export const carpoolVoteSchema = z.enum(CARPOOL_VOTES);
 export const settlementStatusSchema = z.enum(SETTLEMENT_STATUSES);
 export const chargeStatusSchema = z.enum(CHARGE_STATUSES);
+export const reimbursementStatusSchema = z.enum(REIMBURSEMENT_STATUSES);
 export const fundTxnDirectionSchema = z.enum(FUND_TXN_DIRECTIONS);
 export const contributionAskStatusSchema = z.enum(CONTRIBUTION_ASK_STATUSES);
 export const notificationTypeSchema = z.enum(NOTIFICATION_TYPES);

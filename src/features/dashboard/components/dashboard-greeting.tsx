@@ -1,6 +1,5 @@
 "use client";
 
-import { BodySm, Overline, Title } from "@/components/common";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPhoneDisplay } from "@/lib/auth/utils";
 import { cn } from "@/utils";
@@ -43,17 +42,10 @@ function DashboardGreeting({ className }: DashboardGreetingProps) {
   const greeting = timeOfDayGreeting();
 
   return (
-    <header
-      data-slot="dashboard-greeting"
-      className={cn("space-y-1", className)}
-    >
-      <Overline className="text-primary">{greeting}</Overline>
-      <Title className="text-headline font-bold tracking-tight">
-        {firstName}
-      </Title>
-      <BodySm className="max-w-prose">
-        Today&apos;s activity, pending actions, and what&apos;s next.
-      </BodySm>
+    <header data-slot="dashboard-greeting" className={cn("py-0.5", className)}>
+      <h1 className="text-xs font-medium text-muted-foreground">
+        {greeting}, {firstName}
+      </h1>
     </header>
   );
 }

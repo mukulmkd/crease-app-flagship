@@ -4,7 +4,9 @@ import type { TypedSupabaseClient } from "@/lib/supabase/types";
 import { BaseRepository } from "@/repositories/base.repository";
 import {
   mapMatch,
+  mapMatchCarpoolRide,
   mapMatchPoll,
+  mapMatchSquadMember,
   mapPollVote,
   mapTournament,
 } from "@/repositories/shared/mappers";
@@ -18,7 +20,14 @@ import type {
   TournamentId,
 } from "@/types/common";
 import type { MatchStatus, PollType } from "@/constants/domain/enums";
-import type { Match, MatchPoll, PollVote, Tournament } from "@/types/models";
+import type {
+  Match,
+  MatchCarpoolRide,
+  MatchPoll,
+  MatchSquadMember,
+  PollVote,
+  Tournament,
+} from "@/types/models";
 
 export type MatchListFilter = RepositoryListParams & {
   teamId?: TeamId | string;
@@ -49,6 +58,20 @@ export class MatchRepository extends BaseRepository {
     const match = await this.findMatchById(id);
     if (!match) throw new AppError("NOT_FOUND", "Match not found", 404);
     return match;
+  }
+
+  async findMatchByDate(
+    teamId: TeamId | string,
+    matchDate: string,
+  ): Promise<Match | null> {
+    const { data, error } = await this.client
+      .from("matches")
+      .select("*")
+      .eq("team_id", teamId)
+      .eq("match_date", matchDate)
+      .maybeSingle();
+    this.assertOk(error, "match.findByDate");
+    return data ? mapMatch(data) : null;
   }
 
   async listMatches(filter: MatchListFilter = {}): Promise<Paginated<Match>> {
@@ -187,6 +210,30 @@ export class MatchRepository extends BaseRepository {
     return (data ?? []).map(mapPollVote);
   }
 
+  async findVote(
+    pollId: PollId | string,
+    userId: string,
+  ): Promise<PollVote | null> {
+    const { data, error } = await this.client
+      .from("poll_votes")
+      .select("*")
+      .eq("poll_id", pollId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    this.assertOk(error, "poll.findVote");
+    return data ? mapPollVote(data) : null;
+  }
+
+  async countAvailabilityYes(pollId: PollId | string): Promise<number> {
+    const { count, error } = await this.client
+      .from("poll_votes")
+      .select("*", { count: "exact", head: true })
+      .eq("poll_id", pollId)
+      .eq("availability", "yes");
+    this.assertOk(error, "poll.countAvailabilityYes");
+    return count ?? 0;
+  }
+
   async upsertVote(input: TablesInsert<"poll_votes">): Promise<PollVote> {
     const { data, error } = await this.client
       .from("poll_votes")
@@ -195,6 +242,126 @@ export class MatchRepository extends BaseRepository {
       .single();
     this.assertOk(error, "poll.upsertVote");
     return mapPollVote(this.requireData(data, "poll.upsertVote"));
+  }
+
+  async listSquadMembers(
+    matchId: MatchId | string,
+  ): Promise<MatchSquadMember[]> {
+    const { data, error } = await this.client
+      .from("match_squad_members")
+      .select("*")
+      .eq("match_id", matchId)
+      .order("created_at", { ascending: true });
+    this.assertOk(error, "squad.list");
+    return (data ?? []).map(mapMatchSquadMember);
+  }
+
+  async replaceSquadMembers(
+    matchId: MatchId | string,
+    userIds: string[],
+  ): Promise<MatchSquadMember[]> {
+    const { error: deleteError } = await this.client
+      .from("match_squad_members")
+      .delete()
+      .eq("match_id", matchId);
+    this.assertOk(deleteError, "squad.clear");
+
+    if (userIds.length === 0) return [];
+
+    const { data, error } = await this.client
+      .from("match_squad_members")
+      .insert(
+        userIds.map((userId) => ({
+          match_id: String(matchId),
+          user_id: userId,
+        })),
+      )
+      .select("*");
+    this.assertOk(error, "squad.insert");
+    return (data ?? []).map(mapMatchSquadMember);
+  }
+
+  async clearSquadMembers(matchId: MatchId | string): Promise<void> {
+    const { error } = await this.client
+      .from("match_squad_members")
+      .delete()
+      .eq("match_id", matchId);
+    this.assertOk(error, "squad.clear");
+  }
+
+  async listCarpoolRides(
+    matchId: MatchId | string,
+  ): Promise<MatchCarpoolRide[]> {
+    const { data: rides, error } = await this.client
+      .from("match_carpool_rides")
+      .select("*")
+      .eq("match_id", matchId)
+      .order("created_at", { ascending: true });
+    this.assertOk(error, "carpool.listRides");
+
+    if (!rides?.length) return [];
+
+    const rideIds = rides.map((r) => r.id);
+    const { data: passengers, error: passengerError } = await this.client
+      .from("match_carpool_passengers")
+      .select("*")
+      .in("ride_id", rideIds);
+    this.assertOk(passengerError, "carpool.listPassengers");
+
+    const byRide = new Map<string, string[]>();
+    for (const row of passengers ?? []) {
+      const list = byRide.get(row.ride_id) ?? [];
+      list.push(row.passenger_user_id);
+      byRide.set(row.ride_id, list);
+    }
+
+    return rides.map((ride) =>
+      mapMatchCarpoolRide(ride, byRide.get(ride.id) ?? []),
+    );
+  }
+
+  async replaceCarpoolRides(
+    matchId: MatchId | string,
+    rides: { driverUserId: string; passengerUserIds: string[] }[],
+  ): Promise<MatchCarpoolRide[]> {
+    const { error: deleteError } = await this.client
+      .from("match_carpool_rides")
+      .delete()
+      .eq("match_id", matchId);
+    this.assertOk(deleteError, "carpool.clearRides");
+
+    if (rides.length === 0) return [];
+
+    const inserted: MatchCarpoolRide[] = [];
+    for (const ride of rides) {
+      const { data, error } = await this.client
+        .from("match_carpool_rides")
+        .insert({
+          match_id: String(matchId),
+          driver_user_id: ride.driverUserId,
+        })
+        .select("*")
+        .single();
+      this.assertOk(error, "carpool.insertRide");
+      const rideRow = this.requireData(data, "carpool.insertRide");
+
+      if (ride.passengerUserIds.length > 0) {
+        const { error: passengerError } = await this.client
+          .from("match_carpool_passengers")
+          .insert(
+            ride.passengerUserIds.map((passengerUserId) => ({
+              ride_id: rideRow.id,
+              match_id: String(matchId),
+              passenger_user_id: passengerUserId,
+            })),
+          );
+        this.assertOk(passengerError, "carpool.insertPassengers");
+      }
+
+      inserted.push(mapMatchCarpoolRide(rideRow, ride.passengerUserIds));
+    }
+
+    return inserted;
   }
 }
 

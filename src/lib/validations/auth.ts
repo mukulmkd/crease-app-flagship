@@ -23,9 +23,24 @@ export const otpVerifySchema = z.object({
 });
 
 export const profileCompletionSchema = z.object({
-  name: z.string().trim().min(2, "Enter your full name").max(100),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Enter your full name")
+    .max(100, "Name is too long"),
+  phone: localPhoneSchema,
+});
+
+/** Editable profile fields after onboarding — phone stays identity-bound. */
+export const updateOwnProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Enter your full name")
+    .max(100, "Name is too long"),
 });
 
 export type LoginFormInput = z.infer<typeof loginFormSchema>;
 export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;
 export type ProfileCompletionInput = z.infer<typeof profileCompletionSchema>;
+export type UpdateOwnProfileInput = z.infer<typeof updateOwnProfileSchema>;

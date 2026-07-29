@@ -1,16 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { resolveRouteGuard } from "@/lib/auth/route-protection";
-import { isSupabaseConfigured } from "@/lib/env";
-import { logger } from "@/lib/logging/logger";
-import type { Database } from "@/types/database";
-import { canTeamPermission } from "@/lib/rbac/team-permissions";
+import { MVP_TEAM } from "@/constants/domain/enums";
+import type { MembershipRole } from "@/constants/domain/enums";
 import {
   TEAM_PERMISSIONS,
   type TeamPermission,
 } from "@/constants/domain/team-permissions";
-import type { MembershipRole } from "@/constants/domain/enums";
+import { resolveRouteGuard } from "@/lib/auth/route-protection";
+import { isSupabaseConfigured } from "@/lib/env";
+import { logger } from "@/lib/logging/logger";
+import { canTeamPermission } from "@/lib/rbac/team-permissions";
+import type { Database } from "@/types/database";
 
 /**
  * Session refresh + route protection at the network boundary.
@@ -46,8 +47,28 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let isActiveMember: boolean | null = null;
+  if (user) {
+    try {
+      const { data: membership } = await supabase
+        .from("team_memberships")
+        .select("id")
+        .eq("team_id", MVP_TEAM.id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+      isActiveMember = Boolean(membership);
+    } catch (error) {
+      logger.warn("membership.guard_lookup_failed", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+      // Fail closed for app access when membership cannot be verified.
+      isActiveMember = false;
+    }
+  }
+
   const path = request.nextUrl.pathname;
-  const decision = resolveRouteGuard({ path, user });
+  const decision = resolveRouteGuard({ path, user, isActiveMember });
 
   if (decision.action === "redirect") {
     logger.debug("route_guard.redirect", {
@@ -63,7 +84,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // RBAC — team route guarding (membership + permission).
-  if (user) {
+  if (user && isActiveMember) {
     const guard = resolveTeamRoutePermissionGuard(path);
     if (guard) {
       const { teamId, required } = guard;
@@ -78,8 +99,7 @@ export async function updateSession(request: NextRequest) {
 
         if (!membership) {
           const redirectUrl = request.nextUrl.clone();
-          redirectUrl.pathname = "/team";
-          redirectUrl.searchParams.set("redirect", path);
+          redirectUrl.pathname = "/access-denied";
           return NextResponse.redirect(redirectUrl);
         }
 
@@ -95,7 +115,6 @@ export async function updateSession(request: NextRequest) {
           message: error instanceof Error ? error.message : "unknown",
           path,
         });
-        // Fail-open (avoid blocking dev routes).
       }
     }
   }
@@ -106,18 +125,10 @@ export async function updateSession(request: NextRequest) {
 function resolveTeamRoutePermissionGuard(
   path: string,
 ): { teamId: string; required: TeamPermission } | null {
-  // Supported routes:
-  // - /team
-  // - /team/new
-  // - /team/:teamId
-  // - /team/:teamId/members
-  // - /team/:teamId/invite
-  // - /team/:teamId/settings
   const match = path.match(/^\/team\/([^/]+)(?:\/(members|invite|settings))?$/);
   if (!match) return null;
 
   const teamId = match[1]!;
-  // Exclude non-team routes nested under /team.
   if (teamId === "new") return null;
   const section = match[2];
 

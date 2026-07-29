@@ -8,18 +8,22 @@ alwaysApply: true
 Channels:
 
 1. **PWA push** (in-app + web push)
-2. **Existing WhatsApp group** (team-configured webhook / integration)
+2. **WhatsApp** via team `whatsapp_notify_url` webhook
+   - Group fan-outs: `{ text }`
+   - Individual reminders: `{ text, phones: string[] }` (E.164 from profiles)
 
 ## Triggers
 
 | When | What |
 |------|------|
 | Match confirmed | Ask players to vote availability + carpool |
-| Daily **12:00** & **21:00** IST until match day − 1 | If strength &lt; 11, remind to vote |
+| Daily **12:00** & **21:00** IST until match day − 1 | If strength &lt; 11, remind non-voters (in-app + individual WA) |
+| Each pre-freeze 13th+ yes vote | Alert Admin only; no squad fan-out |
 | Vote flips yes → no | Ask others if available |
-| Match day − 1 at **18:00** IST | Squad + carpool summary |
-| Sunday **19:00** IST | Weekend fee calculation + pay CTA |
-| Daily **10:00** & **19:00** IST while unpaid | List of unpaid players |
+| Match day − 1 at **18:00** IST | Finalize + notify at 11–12; invalid strength waits for Admin |
+| Admin confirms 11–12 | In-app + WhatsApp squad-final notification |
+| Match day **14:00** IST | Admin-only: assign carpool rides (in-app + individual WA) |
+| Sunday **19:00** IST | One weekend payment notification (Sat, Sun, or both) |
 | Admin edits frozen poll | Re-notify participation changes |
 | Admin fund ask | ₹300 contribution request |
 
@@ -28,3 +32,9 @@ Channels:
 - Prefer scheduled jobs (Supabase Cron / Edge Functions) in **Asia/Kolkata**
 - Persist notification rows for in-app inbox
 - Never block core mutations if WhatsApp delivery fails — log and retry
+- RLS: members read only their own rows; only Admin may insert from a session
+- Team fan-out from the app goes through `broadcastTeamNotificationAction`
+ (Server Action → membership re-check → service-role **batch** insert)
+- Never loop per-member notification inserts from a browser service
+- Player-triggered fan-out (availability flip) is fire-and-forget — do not make
+ the voter wait on it

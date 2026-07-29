@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 import { AppFooter } from "@/components/layout/app-footer";
@@ -8,7 +8,6 @@ import { AppHeader } from "@/components/layout/app-header";
 import { TopAppBar } from "@/components/layout/top-app-bar";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { DesktopNav } from "@/components/navigation/desktop-nav";
-import { MobileNav } from "@/components/navigation/mobile-nav";
 import { useUnreadNotificationCount } from "@/features/notifications";
 import { cn } from "@/utils";
 
@@ -63,9 +62,6 @@ function AppShell({
   const pathname = usePathname();
   const unreadQuery = useUnreadNotificationCount();
   const resolvedCount = notificationCount ?? unreadQuery.data ?? 0;
-  // Open only while still on the path that opened the drawer — auto-closes on navigate.
-  const [menuPath, setMenuPath] = useState<string | null>(null);
-  const mobileNavOpen = menuPath === pathname;
   const resolvedTitle = resolveShellTitle(pathname, title);
 
   return (
@@ -90,9 +86,7 @@ function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <TopAppBar
           title={resolvedTitle}
-          showMenuButton
           notificationCount={resolvedCount}
-          onMenuClick={() => setMenuPath(pathname)}
           className="lg:hidden"
         />
         <AppHeader title={resolvedTitle} notificationCount={resolvedCount} />
@@ -102,7 +96,8 @@ function AppShell({
           tabIndex={-1}
           className={cn(
             "mx-auto w-full max-w-6xl flex-1 scroll-smooth px-4 py-4 outline-none",
-            "pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:px-6 md:pb-6",
+            "pb-bottom-nav md:px-6 md:pb-6",
+            pathname === "/home" && "max-w-md py-2 md:max-w-6xl md:py-6",
           )}
         >
           {children}
@@ -111,11 +106,6 @@ function AppShell({
         <AppFooter />
         <BottomNav />
       </div>
-
-      <MobileNav
-        open={mobileNavOpen}
-        onOpenChange={(open) => setMenuPath(open ? pathname : null)}
-      />
     </div>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Smartphone } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { FormField } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { OTP_LENGTH, DEFAULT_COUNTRY_CODE } from "@/constants/auth";
+import { DEFAULT_COUNTRY_CODE } from "@/constants/auth";
 import { getClientDevAuthOtp } from "@/constants/dev-auth";
 import {
   getMutationErrorMessage,
@@ -16,7 +16,7 @@ import {
 import { loginFormSchema, type LoginFormInput } from "@/lib/validations/auth";
 
 /**
- * Stitch login — phone + Send OTP.
+ * Modern Cricket Club login — member-only mobile OTP.
  */
 function LoginForm() {
   const sendOtp = useSendOtp();
@@ -33,16 +33,22 @@ function LoginForm() {
   const devOtp = getClientDevAuthOtp();
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-6">
-      <div className="space-y-2 pt-2">
-        <h1 className="text-headline font-bold tracking-tight">
-          Enter your number
+    <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-7">
+      <div className="space-y-4 pt-8">
+        <div aria-hidden className="flex items-center gap-2">
+          <span className="h-1 w-12 bg-primary" />
+          <span className="h-1 w-4 bg-[#c9f64b]" />
+        </div>
+        <h1 className="font-heading text-5xl leading-[0.95] font-extrabold tracking-tight uppercase">
+          Your team.
+          <br />
+          Match ready.
         </h1>
-        <p className="text-body-sm text-muted-foreground">
-          We will send a {OTP_LENGTH}-digit code to verify.
+        <p className="max-w-sm text-base leading-6 text-muted-foreground">
+          Weekend matches, squad availability and payments — in one place.
         </p>
         {devOtp ? (
-          <p className="rounded-md bg-muted/60 px-3 py-2 text-caption text-muted-foreground">
+          <p className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-caption text-muted-foreground">
             Dev logins:{" "}
             <span className="font-mono text-foreground">9999900001</span>{" "}
             (admin) …{" "}
@@ -56,8 +62,9 @@ function LoginForm() {
         label="Mobile number"
         htmlFor="phone"
         error={form.formState.errors.phone?.message}
+        required
       >
-        <div className="flex h-14 items-center overflow-hidden rounded-2xl bg-surface-container-highest">
+        <div className="flex h-14 items-center overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/15">
           <span className="flex h-full items-center gap-1 border-r border-outline-variant/50 px-4 text-sm font-semibold text-foreground">
             {DEFAULT_COUNTRY_CODE}
           </span>
@@ -80,9 +87,17 @@ function LoginForm() {
         </div>
       </FormField>
 
-      <div className="flex flex-1 flex-col items-center justify-center py-6">
-        <div className="flex size-28 items-center justify-center rounded-3xl bg-surface-container text-muted-foreground">
-          <Smartphone className="size-14" strokeWidth={1.25} aria-hidden />
+      <div className="mt-auto overflow-hidden rounded-2xl bg-[#082417] p-5 text-white">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="mt-0.5 size-5 text-[#c9f64b]" aria-hidden />
+          <div>
+            <p className="font-heading text-xl font-bold uppercase">
+              Members only
+            </p>
+            <p className="mt-1 text-sm leading-5 text-white/70">
+              Only active Ranches Thunders members can enter.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -95,10 +110,10 @@ function LoginForm() {
       <Button
         type="submit"
         size="lg"
-        className="h-14 w-full rounded-full text-base"
-        disabled={sendOtp.isPending}
+        className="h-14 w-full text-base"
+        loading={sendOtp.isPending}
       >
-        {sendOtp.isPending ? "Sending…" : "Send OTP"}
+        Send OTP
         <ArrowRight aria-hidden />
       </Button>
     </form>

@@ -19,6 +19,7 @@ export type AuthStateCallback = (
 export type CompleteProfilePayload = {
   onboardingKey: string;
   name: string;
+  avatarUrl?: string | null;
 };
 
 /**
@@ -31,9 +32,10 @@ export class AuthRepository extends BaseRepository {
 
   async signInWithOtp(phone: string): Promise<void> {
     logger.debug("auth.repository.signInWithOtp");
+    // Invite-only: Admin must create the Auth user first (add player).
     const { error } = await this.client.auth.signInWithOtp({
       phone,
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: false },
     });
     if (error) {
       throw new AppError("EXTERNAL", error.message, 502, error);
@@ -71,12 +73,16 @@ export class AuthRepository extends BaseRepository {
 
   async updateUserProfile(payload: CompleteProfilePayload): Promise<User> {
     logger.debug("auth.repository.updateUserProfile");
+    const metadata: Record<string, unknown> = {
+      [payload.onboardingKey]: true,
+      name: payload.name,
+      full_name: payload.name,
+    };
+    if (payload.avatarUrl !== undefined) {
+      metadata.avatar_url = payload.avatarUrl;
+    }
     const { data, error } = await this.client.auth.updateUser({
-      data: {
-        [payload.onboardingKey]: true,
-        name: payload.name,
-        full_name: payload.name,
-      },
+      data: metadata,
     });
     if (error) {
       throw new AppError("EXTERNAL", error.message, 502, error);
@@ -85,17 +91,40 @@ export class AuthRepository extends BaseRepository {
       throw new AppError("INTERNAL", "Profile update returned no user", 500);
     }
 
+    const profilePatch: {
+      full_name: string;
+      profile_completed_at: string;
+      avatar_url?: string | null;
+    } = {
+      full_name: payload.name,
+      profile_completed_at: new Date().toISOString(),
+    };
+    if (payload.avatarUrl !== undefined) {
+      profilePatch.avatar_url = payload.avatarUrl;
+    }
+
     const { error: profileError } = await this.client
       .from("profiles")
-      .update({
-        full_name: payload.name,
-        profile_completed_at: new Date().toISOString(),
-      })
+      .update(profilePatch)
       .eq("id", data.user.id);
     if (profileError) {
       throw new AppError("EXTERNAL", profileError.message, 502, profileError);
     }
 
+    return data.user;
+  }
+
+  async updateAvatarMetadata(avatarUrl: string | null): Promise<User> {
+    logger.debug("auth.repository.updateAvatarMetadata");
+    const { data, error } = await this.client.auth.updateUser({
+      data: { avatar_url: avatarUrl },
+    });
+    if (error) {
+      throw new AppError("EXTERNAL", error.message, 502, error);
+    }
+    if (!data.user) {
+      throw new AppError("INTERNAL", "Avatar update returned no user", 500);
+    }
     return data.user;
   }
 

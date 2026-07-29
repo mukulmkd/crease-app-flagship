@@ -15,7 +15,7 @@ MVP roles: **Admin** and **Player** only. Admins are players who also manage the
 
 Data flow: **Component → Hook → Service → Repository → Supabase**
 
-Docs: [docs/PRODUCT.md](docs/PRODUCT.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DATABASE.md](docs/DATABASE.md)
+Docs: [PRODUCT](docs/PRODUCT.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [DATABASE](docs/DATABASE.md) · [UI](docs/UI.md) · [PENDING](PENDING.md)
 
 ## Setup
 
@@ -53,4 +53,4 @@ Enable `AUTH_DEV_FIXED_OTP` / `NEXT_PUBLIC_AUTH_DEV_OTP` in `.env.local` for loc
 - WhatsApp group + PWA push schedules (IST)
 - Weekend UPI settlement (UTR + compressed screenshot)
 - Team fund + expenses + manual ₹300 asks
-- Stitch Athletic Precision UI
+- Stitch Modern Cricket Club UI (Barlow Condensed + Manrope)

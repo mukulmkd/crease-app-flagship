@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, Clock, Info, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -63,10 +64,11 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
   const canResend = secondsLeft <= 0 && !resend.isPending;
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-6">
-      <div className="space-y-2 pt-2">
-        <h1 className="text-headline font-bold tracking-tight">
-          Verify Number
+    <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-7">
+      <div className="space-y-3 pt-8">
+        <div aria-hidden className="h-1 w-16 bg-[#c9f64b]" />
+        <h1 className="font-heading text-4xl font-extrabold tracking-tight uppercase">
+          Check your phone
         </h1>
         <p className="text-body-sm text-muted-foreground">
           Enter the code sent to{" "}
@@ -75,12 +77,12 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
           </span>
         </p>
         {getClientDevAuthOtp() ? (
-          <p className="rounded-md bg-muted/60 px-3 py-2 text-caption text-muted-foreground">
-            Dev OTP: use{" "}
+          <p className="flex items-center gap-2 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-3 text-sm text-muted-foreground">
+            <Info className="size-4 shrink-0 text-primary" aria-hidden />
+            Demo OTP:{" "}
             <span className="font-mono font-medium text-foreground">
               {getClientDevAuthOtp()}
-            </span>{" "}
-            for seeded numbers
+            </span>
           </p>
         ) : null}
       </div>
@@ -101,7 +103,7 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
                 <InputOTPSlot
                   key={index}
                   index={index}
-                  className="size-12 rounded-xl border-0 bg-surface-container-highest text-lg"
+                  className="size-12 rounded-xl border border-outline-variant bg-surface-container-lowest text-lg focus-within:border-primary focus-within:bg-accent"
                 />
               ))}
             </InputOTPGroup>
@@ -129,12 +131,13 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
         <button
           type="button"
           className={cn(
-            "font-medium",
-            canResend
+            "inline-flex items-center gap-1.5 font-medium",
+            canResend || resend.isPending
               ? "text-primary"
               : "cursor-not-allowed text-muted-foreground/60",
           )}
           disabled={!canResend}
+          aria-busy={resend.isPending || undefined}
           onClick={() => {
             if (!phone) return;
             resend.mutate(phone, {
@@ -142,16 +145,20 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
             });
           }}
         >
-          Resend Code
+          {resend.isPending ? (
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+          ) : null}
+          {resend.isPending ? "Sending…" : "Resend Code"}
         </button>
+        <Button asChild type="button" variant="link" className="h-10">
+          <Link href="/login">Change number</Link>
+        </Button>
       </div>
 
-      <div className="relative mt-auto overflow-hidden rounded-2xl bg-surface-container-high">
-        <div className="flex min-h-36 items-end bg-gradient-to-br from-primary/80 to-primary-container p-4">
-          <p className="text-sm font-medium text-primary-foreground">
-            Secure verification for your Crease account
-          </p>
-        </div>
+      <div className="mt-auto border-y border-outline-variant py-4">
+        <p className="text-center text-sm text-muted-foreground">
+          Secure verification for Ranches Thunders
+        </p>
       </div>
 
       {(verify.isError || resend.isError) && (
@@ -163,10 +170,10 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
       <Button
         type="submit"
         size="lg"
-        className="h-14 w-full rounded-full text-base"
-        disabled={verify.isPending}
+        className="h-14 w-full text-base"
+        loading={verify.isPending}
       >
-        {verify.isPending ? "Verifying…" : "Verify & Continue"}
+        Verify & Continue
         <ArrowRight aria-hidden />
       </Button>
     </form>

@@ -2,7 +2,7 @@
 
 ## Vision
 
-Crease is a mobile-first Progressive Web App for **Ranches Thunders** — weekend match ops, polls, carpool, fee settlement, and team funds — with a native-quality UI matching Stitch Athletic Precision.
+Crease is a mobile-first Progressive Web App for **Ranches Thunders** — weekend match ops, polls, carpool, fee settlement, and team funds — with a native-quality UI matching Stitch **Modern Cricket Club**.
 
 ## Target users
 
@@ -40,7 +40,7 @@ Users who are not active members get **access denied** on every app screen.
 4. Enter opposition, Maps link, time (6:30 / 9:30 AM), match fees — TBD allowed
 5. System prepares availability + carpool polls; Admin confirms → WhatsApp + push
 6. Track strength (min 11 ideal, max 12); scheduled reminders until match day − 1
-7. Freeze polls on match day − 1 (Admin override only)
+7. Freeze **availability** on match day − 1 (Admin may freeze earlier; carpool stays open until kickoff)
 8. Match day − 1 6 PM: squad + carpool summary
 9. Sunday 7 PM: weekend fee calculation + pay CTA
 10. Payment reminders until settled; Admin may mark offline paid
@@ -54,13 +54,13 @@ Users who are not active members get **access denied** on every app screen.
 ### Player
 
 - OTP login + mandatory profile completion
-- Vote availability + carpool; change until freeze
+- Vote availability + carpool; change availability until freeze, carpool until kickoff
 - Pay via UPI, submit UTR + compressed screenshot
 
 ## Design
 
 - Top-tier 2026 utility-app UX
-- Strict Stitch Athletic Precision fidelity
+- Strict Stitch Modern Cricket Club fidelity (Barlow Condensed + Manrope)
 - Large touch targets, clear hierarchy, native chrome patterns
 
 ## Explicitly out of MVP

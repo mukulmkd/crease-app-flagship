@@ -9,13 +9,18 @@ import {
   Settings,
 } from "lucide-react";
 
+import type { Permission } from "@/constants/domain/team-permissions";
+import { PERMISSIONS } from "@/constants/domain/team-permissions";
+
 export type NavItem = {
   id: string;
   label: string;
+  mobileLabel?: string;
   href: string;
   icon: LucideIcon;
   mobile?: boolean;
   desktop?: boolean;
+  permission?: Permission;
 };
 
 export const primaryNav: NavItem[] = [
@@ -57,8 +62,10 @@ export const secondaryNav: NavItem[] = [
   {
     id: "payments",
     label: "Payments",
+    mobileLabel: "Pay",
     href: "/payments",
     icon: CreditCard,
+    mobile: true,
     desktop: true,
   },
   {
@@ -73,7 +80,9 @@ export const secondaryNav: NavItem[] = [
     label: "Settings",
     href: "/settings",
     icon: Settings,
+    mobile: true,
     desktop: true,
+    permission: PERMISSIONS.TEAM_SETTINGS_EDIT,
   },
 ];
 

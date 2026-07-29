@@ -1,1 +1,5 @@
-export { useUnreadNotificationCount } from "@/features/notifications/hooks/use-notification-queries";
+export {
+  useUnreadNotificationCount,
+  useNotifications,
+  useMarkNotificationRead,
+} from "@/features/notifications/hooks/use-notification-queries";

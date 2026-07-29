@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/utils";
+import { cn, resolveAvatarUrl } from "@/utils";
 
 const sizeMap = {
   sm: "sm" as const,
@@ -33,17 +33,20 @@ function UserAvatar({
   size = "md",
   className,
 }: UserAvatarProps) {
+  const src = resolveAvatarUrl(imageUrl);
+
   return (
     <Avatar
       size={sizeMap[size]}
       className={cn(
-        size === "xl" && "size-12",
+        // `Avatar` sizes via `data-[size=…]`, which outranks a bare `size-*` class.
+        size === "xl" && "text-lg data-[size=lg]:size-24",
         "after:border-primary/10",
         className,
       )}
       aria-label={name}
     >
-      {imageUrl ? <AvatarImage src={imageUrl} alt={name} /> : null}
+      {src ? <AvatarImage src={src} alt={name} /> : null}
       <AvatarFallback className="bg-primary/10 font-semibold text-primary">
         {getInitials(name)}
       </AvatarFallback>

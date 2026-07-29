@@ -67,6 +67,13 @@ export class NotificationRepository extends BaseRepository {
     return mapNotification(this.requireData(data, "notification.create"));
   }
 
+  async createMany(rows: TablesInsert<"notifications">[]): Promise<number> {
+    if (rows.length === 0) return 0;
+    const { error } = await this.client.from("notifications").insert(rows);
+    this.assertOk(error, "notification.createMany");
+    return rows.length;
+  }
+
   async update(
     id: NotificationId | string,
     input: TablesUpdate<"notifications">,

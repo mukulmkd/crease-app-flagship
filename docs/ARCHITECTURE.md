@@ -16,7 +16,7 @@
 - UI → Hook → Service → Repository → Supabase
 - Services own validation + authorization
 - Repositories own CRUD only
-- Stitch design via reusable components (never paste Stitch HTML)
+- Stitch Modern Cricket Club via reusable components (never paste Stitch HTML)
 
 ## Folder structure
 
@@ -66,8 +66,23 @@ Scheduled in **Asia/Kolkata** (Supabase Cron + Edge Functions):
 - Strength reminders 12:00 / 21:00
 - Eve summary 18:00 (match day − 1)
 - Sunday 19:00 settlement
-- Unpaid reminders 10:00 / 19:00
+- One weekend payment notification Sunday 19:00 (retry-safe)
 - Event-driven: confirm, vote flip, frozen-poll edit, fund ask
+
+## Scheduled jobs (Edge Functions)
+
+Functions under `supabase/functions/`:
+
+| Function                       | IST schedule                    | Purpose                                                                           |
+| ------------------------------ | ------------------------------- | --------------------------------------------------------------------------------- |
+| `freeze-polls`                 | Daily 18:00 (+ optional hourly) | Freeze availability for tomorrow; freeze carpool after kickoff (no auto-complete) |
+| `carpool-assignment-reminders` | Daily 14:00 IST                 | Admin-only: assign post-match carpool rides                                       |
+| `strength-reminders`           | 12:00 & 21:00                   | Remind non-voters when yes &lt; 11                                                |
+| `weekend-settlement`           | Sun 19:00                       | Generate charges + pay CTA                                                        |
+| `unpaid-reminders`             | Disabled                        | Deprecated no-op; payment CTA is Sunday-only                                      |
+
+Auth: `Authorization: Bearer $CRON_SECRET` or `x-cron-secret`.  
+Migration `20260729120000_enable_cron_extensions.sql` enables `pg_cron` + `pg_net`. Wire Dashboard Cron (or `cron.schedule` + `net.http_post`) after deploy. Secrets: `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`.
 
 ## Database
 

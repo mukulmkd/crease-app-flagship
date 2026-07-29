@@ -11,6 +11,8 @@ export { TeamService, createBrowserTeamService } from "@/services/team.service";
 export {
   MatchService,
   createBrowserMatchService,
+  type MatchPollsSnapshot,
+  type MatchPollSummary,
 } from "@/services/match.service";
 
 export {
@@ -18,3 +20,15 @@ export {
   createBrowserDashboardService,
   type DashboardSnapshot,
 } from "@/services/dashboard.service";
+
+export {
+  PaymentService,
+  createBrowserPaymentService,
+} from "@/services/payment.service";
+
+export { FundService, createBrowserFundService } from "@/services/fund.service";
+
+export {
+  NotificationService,
+  createBrowserNotificationService,
+} from "@/services/notification.service";

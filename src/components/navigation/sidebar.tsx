@@ -4,7 +4,9 @@ import { BrandMark } from "@/components/common/brand-mark";
 import { NavLink } from "@/components/navigation/nav-link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { hasPermission } from "@/constants/domain/team-permissions";
 import { primaryNav, secondaryNav } from "@/constants/navigation";
+import { useMyMembership } from "@/features/team/hooks";
 import { cn } from "@/utils";
 
 type SidebarProps = {
@@ -17,6 +19,9 @@ type SidebarProps = {
  * Desktop / tablet left navigation — Stitch Athletic Precision rail.
  */
 function Sidebar({ collapsed = false, className }: SidebarProps) {
+  const membership = useMyMembership();
+  const role = membership.data?.role;
+
   return (
     <aside
       data-slot="sidebar"
@@ -56,7 +61,11 @@ function Sidebar({ collapsed = false, className }: SidebarProps) {
             </p>
             <nav className="flex flex-col gap-1" aria-label="Secondary">
               {secondaryNav
-                .filter((item) => item.desktop)
+                .filter(
+                  (item) =>
+                    item.desktop &&
+                    (!item.permission || hasPermission(role, item.permission)),
+                )
                 .map((item) => (
                   <NavLink key={item.id} item={item} collapsed={collapsed} />
                 ))}

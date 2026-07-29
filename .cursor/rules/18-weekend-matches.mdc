@@ -9,9 +9,15 @@ Matches are the operational center of Crease.
 
 ## Schedule
 
-- Admin creates matches for the upcoming weekend
+- Admin creates matches for the upcoming weekend **or any future weekend**
 - Allowed days: **Saturday**, **Sunday**, or **both** (one match row per day)
-- Each created match is one event
+- Exactly one match per team/calendar day. Never create a second match for an
+  occupied date; keep the other weekend day available when unused.
+- Enforce with service conflict checks and database uniqueness on
+  `(team_id, match_date)`, not UI alone.
+- Each day is configured **independently** (classification, opposition, maps, time, fees, tournament, polls flag) — never clubbed into one shared form
+- UI: weekend picker + `WeekendDaySection` per day + `CreateTournamentSheet` bottom sheet
+- **`polls_enabled`**: default on for this weekend, off for later weekends; confirm only opens polls when enabled
 
 ## Classification
 
@@ -22,10 +28,12 @@ Matches are the operational center of Crease.
 
 ## Create fields (TBD allowed)
 
+Per selected day:
+
 - Opposition
 - Warmup vs Tournament (+ tournament)
 - Ground location (Google Maps URL)
-- Time: **6:30 AM** or **9:30 AM** (IST)
+- Time: **6:30 AM** or **9:30 AM** (IST) via segmented control
 - Match fees (INR)
 
 Placeholders / nulls are allowed until Admin fills them.
@@ -35,17 +43,29 @@ Placeholders / nulls are allowed until Admin fills them.
 While draft/pending:
 
 1. System initializes **availability poll** and **carpool poll**
-2. Admin verifies details → **Confirm**
+2. Admin verifies details on a clubhouse fixture poster → **Confirm**
 3. On confirm: WhatsApp group notify + PWA push asking players to participate
 4. Admin may also vote (Admin is a player)
 
 ## Squad targets
 
-- Ideal playing squad: **minimum 11**
-- Cap: **maximum 12** availability “yes” for the match
+- Availability is an **open pool** (more than 12 may vote yes)
+- Final **playing squad**: **minimum 11**, **maximum 12** selected members
+- At freeze: auto-finalize when yes is 11–12; Admin picks when oversubscribed;
+  below 11 stays open until Admin recruits and confirms 11–12
+- Before freeze, each 13th+ yes vote alerts Admin to curate the XI/XII
 
 ## Freeze
 
-- At **match day − 1**, polls freeze for players
-- Only Admin may change votes / add players after freeze
-- Admin edits after freeze re-trigger notification flow
+- At **match day − 1** (Cron 18:00 IST), availability freezes only with 11+
+  yes votes; below 11 remains open and alerts Admin
+- Oversubscribed freeze is silent; only Admin confirmation sends squad-final
+  notifications
+- Admin may freeze availability earlier once desired strength is met
+- Auto / Admin finalize sets `squad_finalized_at` + `match_squad_members`
+- Admin may unfreeze availability before kickoff (clears finalized squad)
+- **Carpool** stays open until match kickoff; Cron freezes the poll after start
+- Admin assigns post-match rides, then marks **completed** or **cancelled**
+  (Cron does **not** auto-complete)
+- Only Admin may change votes after each poll freezes
+- Admin edits after freeze re-trigger notification flow (availability flip)

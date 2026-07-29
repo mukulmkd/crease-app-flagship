@@ -1,38 +1,33 @@
 /**
  * Design tokens mirrored from Google Stitch
  * Project: Crease Cricket Team Management — projects/5487252279778690236
- * Canonical DS: Athletic Precision ROUND_EIGHT
- * Asset: assets/6d86c10d6d484fecb655a86c604b00bc
- *
- * Prefer ROUND_EIGHT over the ROUND_FOUR sibling asset — project theme
- * uses 8px default radius and leather-ball red as secondary/urgency.
+ * Canonical DS: Modern Cricket Club ROUND_EIGHT
+ * Asset: assets/11807811405223687109
  */
 
 export const stitchProject = {
   id: "5487252279778690236",
   name: "projects/5487252279778690236",
   title: "Crease Cricket Team Management",
-  designSystem: "Athletic Precision",
-  designSystemAssetId: "6d86c10d6d484fecb655a86c604b00bc",
+  designSystem: "Modern Cricket Club",
+  designSystemAssetId: "11807811405223687109",
   roundness: "ROUND_EIGHT",
 } as const;
 
 export const brandColors = {
-  /** Cricket pitch green (Stitch primary) */
-  primary: "#0d631b",
-  primaryContainer: "#2e7d32",
-  onPrimaryContainer: "#cbffc2",
-  surfaceTint: "#1b6d24",
-  /** Leather ball red (Stitch secondary / urgency) */
-  urgency: "#b51a1b",
-  secondaryContainer: "#d93630",
-  /** Tertiary grass green (supporting accents) */
-  tertiary: "#1f6223",
-  tertiaryContainer: "#3a7b39",
+  primary: "#0b5d2a",
+  primaryContainer: "#0f7a38",
+  onPrimaryContainer: "#ffffff",
+  surfaceTint: "#0b5d2a",
+  urgency: "#c83e35",
+  secondaryContainer: "#f4d8d3",
+  /** Electric lime — selected/positive accents only. */
+  tertiary: "#c9f64b",
+  tertiaryContainer: "#dff995",
   /** Theme / PWA meta */
-  themeLight: "#2e7d32",
-  themeDark: "#0d631b",
-  splash: "#f9f9f9",
+  themeLight: "#0b5d2a",
+  themeDark: "#082417",
+  splash: "#f5f2e8",
 } as const;
 
 export const radii = {
@@ -60,21 +55,24 @@ export const spacing = {
   marginDesktop: "24px",
   touchTarget: "48px",
   listRow: "56px",
+  /** Mirrors --bottom-nav-height in globals.css (row + home-indicator inset). */
+  bottomNavRow: "64px",
+  bottomNavMinInset: "12px",
 } as const;
 
 /** Tailwind class tokens for Stitch type roles */
 export const typography = {
-  display: "text-display font-bold tracking-tight",
-  headline: "text-headline font-bold tracking-tight",
-  title: "text-title font-medium tracking-tight",
-  body: "text-body font-normal tracking-[0.5px]",
-  bodySm: "text-body-sm font-normal tracking-[0.25px]",
-  label: "text-label font-medium tracking-[0.1px]",
-  caption: "text-caption font-medium tracking-[0.5px]",
-  overline: "text-caption font-medium uppercase tracking-[0.5px]",
+  display: "font-heading text-display font-extrabold uppercase tracking-tight",
+  headline: "font-heading text-headline font-bold uppercase tracking-[-0.01em]",
+  title: "font-heading text-title font-bold uppercase tracking-[-0.01em]",
+  body: "text-body font-normal",
+  bodySm: "text-body-sm font-normal",
+  label: "text-label font-semibold",
+  caption: "text-caption font-semibold tracking-[0.04em]",
+  overline: "text-caption font-semibold uppercase tracking-[0.12em]",
   /** Dense metrics / scoreboard figures */
-  statValue: "text-stat font-bold tracking-tight",
-  navLabel: "text-caption font-medium tracking-[0.5px]",
+  statValue: "font-heading text-stat font-bold tracking-tight tabular-nums",
+  navLabel: "text-caption font-semibold tracking-[0.02em]",
 } as const;
 
 /**
@@ -97,5 +95,5 @@ export const motion = {
 } as const;
 
 export const touchTarget = {
-  min: "3rem", // 48px — Stitch Athletic Precision
+  min: "3rem", // 48px — Stitch Modern Cricket Club
 } as const;

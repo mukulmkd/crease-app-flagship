@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
+import {
+  Bell,
+  ChevronDown,
+  CreditCard,
+  Loader2,
+  LogOut,
+  Settings,
+  UserRound,
+} from "lucide-react";
 
 import { UserAvatar } from "@/components/common/user-avatar";
 import { toast } from "@/components/feedback/toast";
@@ -19,24 +27,29 @@ import {
   getMutationErrorMessage,
   useSignOut,
 } from "@/features/auth/hooks/use-auth-mutations";
+import { useMyProfile } from "@/features/profile/hooks";
+import { useMyMembership } from "@/features/team/hooks";
+import { membershipRoleLabel } from "@/features/team/lib/status";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPhoneDisplay } from "@/lib/auth/utils";
 import { cn } from "@/utils";
 
 type ProfileMenuProps = {
-  /** Override display name; defaults to session profile. */
+  /** Override display name; defaults to profile / session. */
   name?: string;
-  /** Override role label; defaults to membership role metadata. */
+  /** Override role label; defaults to membership role. */
   role?: string;
   imageUrl?: string | null;
   className?: string;
 };
 
 function resolveDisplayName(
+  profileName: string | null | undefined,
   user: ReturnType<typeof useAuth>["user"],
   override?: string,
 ): string {
   if (override?.trim()) return override.trim();
+  if (profileName?.trim()) return profileName.trim();
   const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
   const fromMeta =
     (typeof meta.full_name === "string" && meta.full_name) ||
@@ -50,34 +63,26 @@ function resolveDisplayName(
   return "Player";
 }
 
-function resolveRoleLabel(
-  user: ReturnType<typeof useAuth>["user"],
-  override?: string,
-): string {
-  if (override?.trim()) return override.trim();
-  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
-  const role = typeof meta.role === "string" ? meta.role : null;
-  if (!role) return "Member";
-  return role
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 /**
- * Profile overflow menu — profile/settings links + sign out.
+ * Profile overflow menu — account shortcuts + sign out.
  */
 function ProfileMenu({ name, role, imageUrl, className }: ProfileMenuProps) {
   const { user } = useAuth();
   const signOut = useSignOut();
+  const profileQuery = useMyProfile();
+  const membershipQuery = useMyMembership();
 
-  const displayName = resolveDisplayName(user, name);
-  const roleLabel = resolveRoleLabel(user, role);
-  const avatarUrl =
-    imageUrl ??
-    (typeof user?.user_metadata?.avatar_url === "string"
-      ? user.user_metadata.avatar_url
-      : null);
+  const displayName = resolveDisplayName(
+    profileQuery.data?.fullName,
+    user,
+    name,
+  );
+  const roleLabel =
+    role?.trim() ||
+    (membershipQuery.data?.role
+      ? membershipRoleLabel(membershipQuery.data.role)
+      : "Member");
+  const avatarUrl = imageUrl ?? profileQuery.data?.avatarUrl ?? null;
 
   const handleSignOut = () => {
     signOut.mutate(undefined, {
@@ -133,6 +138,18 @@ function ProfileMenu({ name, role, imageUrl, className }: ProfileMenuProps) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
+            <Link href="/payments">
+              <CreditCard />
+              Payments
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/notifications">
+              <Bell />
+              Alerts
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link href="/settings">
               <Settings />
               Settings
@@ -148,7 +165,11 @@ function ProfileMenu({ name, role, imageUrl, className }: ProfileMenuProps) {
             handleSignOut();
           }}
         >
-          <LogOut />
+          {signOut.isPending ? (
+            <Loader2 className="animate-spin" aria-hidden />
+          ) : (
+            <LogOut />
+          )}
           {signOut.isPending ? "Signing out…" : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>

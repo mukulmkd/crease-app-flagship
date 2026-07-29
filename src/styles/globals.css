@@ -7,7 +7,7 @@
 /**
  * Crease design tokens — source: Google Stitch
  * Project: Crease Cricket Team Management (projects/5487252279778690236)
- * Design system: Athletic Precision (ROUND_EIGHT / Material 3)
+ * Design system: Modern Cricket Club (ROUND_EIGHT)
  */
 @theme inline {
   --color-background: var(--background);
@@ -69,7 +69,7 @@
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
 
   /* Stitch ROUND_EIGHT shape language */
   --radius-sm: 0.25rem;
@@ -93,22 +93,22 @@
   --spacing-ds-12: 3rem;
   --spacing-ds-16: 4rem;
 
-  /* Stitch Athletic Precision type scale (Roboto Flex) */
-  --text-display: 2rem;
-  --text-display--line-height: 2.5rem;
-  --text-display--font-weight: 700;
-  --text-headline: 1.75rem;
-  --text-headline--line-height: 2.25rem;
+  /* Stitch Modern Cricket Club type scale */
+  --text-display: clamp(2.5rem, 10vw, 3rem);
+  --text-display--line-height: 1.05;
+  --text-display--font-weight: 800;
+  --text-headline: clamp(1.75rem, 7vw, 2rem);
+  --text-headline--line-height: 1.125;
   --text-headline--font-weight: 700;
   --text-title: 1.375rem;
   --text-title--line-height: 1.75rem;
-  --text-title--font-weight: 500;
+  --text-title--font-weight: 700;
   --text-body: 1rem;
   --text-body--line-height: 1.5rem;
-  --text-body--letter-spacing: 0.03125rem;
+  --text-body--letter-spacing: 0;
   --text-body-sm: 0.875rem;
   --text-body-sm--line-height: 1.25rem;
-  --text-body-sm--letter-spacing: 0.015625rem;
+  --text-body-sm--letter-spacing: 0;
   --text-label: 0.875rem;
   --text-label--line-height: 1.25rem;
   --text-label--font-weight: 500;
@@ -117,8 +117,8 @@
   --text-caption--letter-spacing: 0.03125rem;
   --text-overline: 0.6875rem;
   --text-overline--line-height: 1rem;
-  /* Stat figures — Athletic Precision scoreboard density */
-  --text-stat: 1.5rem;
+  /* Condensed scoreboard figures */
+  --text-stat: 1.75rem;
   --text-stat--line-height: 2rem;
   --text-stat--font-weight: 700;
 }
@@ -126,141 +126,145 @@
 :root {
   --radius: 0.5rem;
 
-  /* Exact Stitch namedColors (Athletic Precision / project theme) */
-  --background: #f9f9f9;
-  --foreground: #1a1c1c;
-  --surface: #f9f9f9;
-  --surface-dim: #dadada;
-  --surface-bright: #f9f9f9;
-  --surface-tint: #1b6d24;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #f3f3f3;
-  --surface-container: #eeeeee;
-  --surface-container-high: #e8e8e8;
-  --surface-container-highest: #e2e2e2;
-  --card: #ffffff;
-  --card-foreground: #1a1c1c;
-  --popover: #ffffff;
-  --popover-foreground: #1a1c1c;
+  /* Mobile bottom nav geometry — page padding and sticky bars derive from these
+     so content can never sit under the bar or the home indicator. */
+  --bottom-nav-inset: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  --bottom-nav-height: calc(4rem + var(--bottom-nav-inset));
 
-  --primary: #0d631b;
+  /* Exact Stitch Modern Cricket Club palette */
+  --background: #f5f2e8;
+  --foreground: #151a17;
+  --surface: #f5f2e8;
+  --surface-dim: #dfdacd;
+  --surface-bright: #fbf8f0;
+  --surface-tint: #0b5d2a;
+  --surface-container-lowest: #fffdf7;
+  --surface-container-low: #fbf8f0;
+  --surface-container: #efebe0;
+  --surface-container-high: #e7e2d6;
+  --surface-container-highest: #ddd7ca;
+  --card: #fbf8f0;
+  --card-foreground: #151a17;
+  --popover: #fffdf7;
+  --popover-foreground: #151a17;
+
+  --primary: #0b5d2a;
   --primary-foreground: #ffffff;
-  --primary-container: #2e7d32;
-  --on-primary-container: #cbffc2;
+  --primary-container: #0f7a38;
+  --on-primary-container: #ffffff;
 
-  /* Leather ball red — urgency / critical match events */
-  --secondary: #b51a1b;
+  /* Leather ball red — urgency only */
+  --secondary: #c83e35;
   --secondary-foreground: #ffffff;
-  --secondary-container: #d93630;
+  --secondary-container: #f4d8d3;
 
-  /* Supporting grass green */
-  --tertiary: #1f6223;
-  --tertiary-foreground: #ffffff;
-  --tertiary-container: #3a7b39;
-  --on-tertiary-container: #c8ffbf;
+  /* Electric lime — selected / positive accents only */
+  --tertiary: #c9f64b;
+  --tertiary-foreground: #151a17;
+  --tertiary-container: #dff995;
+  --on-tertiary-container: #203000;
 
-  --muted: #eeeeee;
-  --muted-foreground: #40493d;
-  --accent: #e8f5e9;
-  --accent-foreground: #0d631b;
+  --muted: #efebe0;
+  --muted-foreground: #4a534c;
+  --accent: #dff995;
+  --accent-foreground: #203000;
 
-  --destructive: #ba1a1a;
+  --destructive: #c83e35;
   --destructive-foreground: #ffffff;
-  --success: #0d631b;
+  --success: #0b5d2a;
   --success-foreground: #ffffff;
-  --warning: #f9a825;
-  --warning-foreground: #1a1c1c;
+  --warning: #e1a62b;
+  --warning-foreground: #151a17;
   --info: #1565c0;
   --info-foreground: #ffffff;
 
-  --border: #bfcaba;
-  --input: #e2e2e2;
-  --ring: #0d631b;
-  --outline: #707a6c;
-  --outline-variant: #bfcaba;
+  --border: #c8c2b5;
+  --input: #ddd7ca;
+  --ring: #0b5d2a;
+  --outline: #8a9188;
+  --outline-variant: #c8c2b5;
 
-  --chart-1: #0d631b;
-  --chart-2: #2e7d32;
-  --chart-3: #b51a1b;
-  --chart-4: #f9a825;
-  --chart-5: #40493d;
+  --chart-1: #0b5d2a;
+  --chart-2: #c9f64b;
+  --chart-3: #c83e35;
+  --chart-4: #e1a62b;
+  --chart-5: #4a534c;
 
-  --sidebar: #f3f3f3;
-  --sidebar-foreground: #1a1c1c;
-  --sidebar-primary: #0d631b;
+  --sidebar: #efebe0;
+  --sidebar-foreground: #151a17;
+  --sidebar-primary: #0b5d2a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8f5e9;
-  --sidebar-accent-foreground: #0d631b;
-  --sidebar-border: #bfcaba;
-  --sidebar-ring: #0d631b;
+  --sidebar-accent: #dff995;
+  --sidebar-accent-foreground: #203000;
+  --sidebar-border: #c8c2b5;
+  --sidebar-ring: #0b5d2a;
 }
 
 .dark {
-  /* Stitch dark guidance: mint primary + tonal surfaces */
-  --background: #121412;
-  --foreground: #e2e3e2;
-  --surface: #121412;
-  --surface-dim: #0d0f0d;
-  --surface-bright: #282b28;
-  --surface-tint: #88d982;
-  --surface-container-lowest: #0d0f0d;
-  --surface-container-low: #1a1c1a;
-  --surface-container: #1e211e;
-  --surface-container-high: #282b28;
-  --surface-container-highest: #333633;
-  --card: #1a1c1a;
-  --card-foreground: #e2e3e2;
-  --popover: #1a1c1a;
-  --popover-foreground: #e2e3e2;
+  --background: #08170f;
+  --foreground: #f4f1e8;
+  --surface: #08170f;
+  --surface-dim: #051008;
+  --surface-bright: #183024;
+  --surface-tint: #c9f64b;
+  --surface-container-lowest: #051008;
+  --surface-container-low: #0c1e14;
+  --surface-container: #11271a;
+  --surface-container-high: #183024;
+  --surface-container-highest: #223b2d;
+  --card: #0c1e14;
+  --card-foreground: #f4f1e8;
+  --popover: #11271a;
+  --popover-foreground: #f4f1e8;
 
-  --primary: #88d982;
-  --primary-foreground: #00390a;
-  --primary-container: #2e7d32;
-  --on-primary-container: #cbffc2;
+  --primary: #c9f64b;
+  --primary-foreground: #132000;
+  --primary-container: #0f7a38;
+  --on-primary-container: #ffffff;
 
   --secondary: #ffb4ab;
   --secondary-foreground: #690005;
-  --secondary-container: #93000b;
+  --secondary-container: #84201c;
 
-  --tertiary: #91d78a;
-  --tertiary-foreground: #00390a;
-  --tertiary-container: #0c5216;
-  --on-tertiary-container: #c8ffbf;
+  --tertiary: #c9f64b;
+  --tertiary-foreground: #132000;
+  --tertiary-container: #334500;
+  --on-tertiary-container: #efffc1;
 
-  --muted: #282b28;
-  --muted-foreground: #bfcaba;
-  --accent: #1e3a22;
-  --accent-foreground: #88d982;
+  --muted: #183024;
+  --muted-foreground: #c5cec7;
+  --accent: #334500;
+  --accent-foreground: #efffc1;
 
   --destructive: #ffb4ab;
   --destructive-foreground: #690005;
-  --success: #88d982;
-  --success-foreground: #00390a;
+  --success: #c9f64b;
+  --success-foreground: #132000;
   --warning: #ffcc80;
   --warning-foreground: #3e2723;
   --info: #90caf9;
   --info-foreground: #0d47a1;
 
-  --border: #40493d;
-  --input: #40493d;
-  --ring: #88d982;
-  --outline: #8a9385;
-  --outline-variant: #40493d;
+  --border: #3c5042;
+  --input: #223b2d;
+  --ring: #c9f64b;
+  --outline: #91a096;
+  --outline-variant: #3c5042;
 
-  --chart-1: #88d982;
-  --chart-2: #a3f69c;
+  --chart-1: #c9f64b;
+  --chart-2: #6fca7d;
   --chart-3: #ffb4ab;
   --chart-4: #ffcc80;
-  --chart-5: #bfcaba;
+  --chart-5: #c5cec7;
 
-  --sidebar: #1a1c1a;
-  --sidebar-foreground: #e2e3e2;
-  --sidebar-primary: #88d982;
-  --sidebar-primary-foreground: #00390a;
-  --sidebar-accent: #1e3a22;
-  --sidebar-accent-foreground: #88d982;
-  --sidebar-border: #40493d;
-  --sidebar-ring: #88d982;
+  --sidebar: #0c1e14;
+  --sidebar-foreground: #f4f1e8;
+  --sidebar-primary: #c9f64b;
+  --sidebar-primary-foreground: #132000;
+  --sidebar-accent: #334500;
+  --sidebar-accent-foreground: #efffc1;
+  --sidebar-border: #3c5042;
+  --sidebar-ring: #c9f64b;
 }
 
 @layer base {
@@ -298,6 +302,18 @@
 @layer utilities {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-bottom-nav {
+    /* Keep navigation clear of home indicators even when a browser reports no inset. */
+    padding-bottom: var(--bottom-nav-inset);
+  }
+
+  /* Scoped to mobile so `md:pb-*` keeps control once the bottom nav is hidden. */
+  @media (width < 48rem) {
+    .pb-bottom-nav {
+      padding-bottom: calc(var(--bottom-nav-height) + 1.25rem);
+    }
   }
 
   .safe-top {

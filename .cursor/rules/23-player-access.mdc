@@ -7,22 +7,26 @@ alwaysApply: true
 
 ## Login
 
-- Mobile OTP only
-- Dev/local: dummy fixed OTP
+- Mobile OTP only (+91, 10-digit local number)
+- **Invite-only**: OTP is not sent / login fails unless Admin has added the player
+- Dev/local: dummy fixed OTP for seeded personas
 - **KMSI**: session persists until explicit sign-out (`signOut`)
 
 ## Gate
 
 1. Not authenticated → `/login`
-2. Authenticated but **not** active member of Ranches Thunders → access denied
-3. Active member with incomplete profile → force `/complete-profile`
+2. Authenticated but **not** active member of Ranches Thunders → `/access-denied`
+3. Active member with incomplete profile → force `/complete-profile` (name + mobile mandatory)
 4. Else → app
 
 ## Profile
 
-- Mandatory basic profile on first login
+- Mandatory basic profile on first login: **full name** and **mobile (+91, 10 digits)**
+- Phone must match the OTP identity number
 - Later: edit allowed fields only (name, avatar, etc.)
 - Phone is identity; treat as largely immutable after verify
+- `/profile` is the in-app hub for name edits, avatar photo, and identity summary
+- Avatar: public `avatars` bucket; replace uploads new then deletes the old object
 
 ## Participation
 

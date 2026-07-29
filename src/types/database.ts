@@ -134,6 +134,11 @@ export type Database = {
             | "completed"
             | "cancelled";
           polls_frozen: boolean;
+          polls_enabled: boolean;
+          squad_finalization_pending_at: string | null;
+          squad_finalized_at: string | null;
+          carpool_assigned_at: string | null;
+          carpool_assignment_reminded_at: string | null;
           confirmed_at: string | null;
           created_by: string | null;
           created_at: string;
@@ -156,12 +161,69 @@ export type Database = {
             | "completed"
             | "cancelled";
           polls_frozen?: boolean;
+          polls_enabled?: boolean;
+          squad_finalization_pending_at?: string | null;
+          squad_finalized_at?: string | null;
+          carpool_assigned_at?: string | null;
+          carpool_assignment_reminded_at?: string | null;
           confirmed_at?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["matches"]["Insert"]>;
+        Relationships: [];
+      };
+      match_squad_members: {
+        Row: {
+          match_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          match_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["match_squad_members"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      match_carpool_rides: {
+        Row: {
+          id: string;
+          match_id: string;
+          driver_user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          match_id: string;
+          driver_user_id: string;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["match_carpool_rides"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      match_carpool_passengers: {
+        Row: {
+          ride_id: string;
+          match_id: string;
+          passenger_user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          ride_id: string;
+          match_id: string;
+          passenger_user_id: string;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["match_carpool_passengers"]["Insert"]
+        >;
         Relationships: [];
       };
       polls: {
@@ -245,6 +307,7 @@ export type Database = {
           user_id: string;
           match_fee_share_inr: number;
           carpool_fee_inr: number;
+          carpool_credit_inr: number;
           total_inr: number;
           status: "pending" | "paid" | "offline_paid" | "waived";
           utr: string | null;
@@ -262,6 +325,7 @@ export type Database = {
           user_id: string;
           match_fee_share_inr?: number;
           carpool_fee_inr?: number;
+          carpool_credit_inr?: number;
           total_inr: number;
           status?: "pending" | "paid" | "offline_paid" | "waived";
           utr?: string | null;
@@ -273,6 +337,40 @@ export type Database = {
         };
         Update: Partial<
           Database["public"]["Tables"]["settlement_charges"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      settlement_reimbursements: {
+        Row: {
+          id: string;
+          settlement_id: string;
+          team_id: string;
+          user_id: string;
+          amount_inr: number;
+          status: "pending" | "paid" | "offline_paid";
+          utr: string | null;
+          screenshot_path: string | null;
+          paid_at: string | null;
+          marked_paid_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          settlement_id: string;
+          team_id: string;
+          user_id: string;
+          amount_inr: number;
+          status?: "pending" | "paid" | "offline_paid";
+          utr?: string | null;
+          screenshot_path?: string | null;
+          paid_at?: string | null;
+          marked_paid_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["settlement_reimbursements"]["Insert"]
         >;
         Relationships: [];
       };

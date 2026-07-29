@@ -56,11 +56,16 @@ Repositories = CRUD. Services = validation, authz, orchestration, notification t
 
 ---
 
-## ADR-008 — Stitch Athletic Precision
+## ADR-008 — Stitch Modern Cricket Club
 
-UI must match Stitch project design system; rebuild with reusable React components.
+UI must match Stitch project `5487252279778690236` design system **Modern Cricket Club** (`assets/11807811405223687109`). Rebuild with reusable React components; never paste Stitch HTML.
 
-**Why:** Native-quality, consistent PWA chrome.
+**Typography:** Barlow Condensed (display/stats) + Manrope (UI).  
+**Surfaces:** ivory canvas `#F5F2E8`, clubhouse match tickets `#082417`, lime `#C9F64B` for selected accents only.
+
+**Why:** Native-quality, ownable sports branding; Athletic Precision / Roboto Flex was too generic for Crease.
+
+**Supersedes:** Athletic Precision (`assets/6d86c10d6d484fecb655a86c604b00bc`).
 
 ---
 
@@ -69,3 +74,11 @@ UI must match Stitch project design system; rebuild with reusable React componen
 PWA push + existing WhatsApp group integration; schedules in Asia/Kolkata.
 
 **Why:** Players already coordinate in WhatsApp; app must meet them there.
+
+---
+
+## ADR-010 — Dual token sources stay in sync
+
+Canonical visual tokens live in both `src/styles/globals.css` and `src/constants/design-tokens.ts` (PWA theme colors, typography class strings, stitch metadata).
+
+**Why:** CSS drives Tailwind; TS drives metadata and shared class tokens. Drift breaks brand consistency across agents and builds.

@@ -10,6 +10,7 @@ import type {
 import type {
   IsoDate,
   IsoDateTime,
+  MatchCarpoolRideId,
   MatchId,
   PollId,
   PollVoteId,
@@ -41,9 +42,32 @@ export type Match = Timestamps &
     matchFeesInr: number | null;
     status: MatchStatus;
     pollsFrozen: boolean;
+    pollsEnabled: boolean;
+    /** Freeze was requested below 11; voting stays open until strength recovers. */
+    squadFinalizationPendingAt: IsoDateTime | null;
+    /** When set, fees charge these members only (not the full availability pool). */
+    squadFinalizedAt: IsoDateTime | null;
+    /** Admin saved post-match driver/passenger assignments (may be empty). */
+    carpoolAssignedAt: IsoDateTime | null;
+    /** Cron claimed the 2 PM Admin assignment reminder. */
+    carpoolAssignmentRemindedAt: IsoDateTime | null;
     confirmedAt: IsoDateTime | null;
     createdBy: ProfileId | null;
   };
+
+export type MatchSquadMember = {
+  matchId: MatchId;
+  userId: ProfileId;
+  createdAt: IsoDateTime;
+};
+
+export type MatchCarpoolRide = {
+  id: MatchCarpoolRideId;
+  matchId: MatchId;
+  driverUserId: ProfileId;
+  passengerUserIds: ProfileId[];
+  createdAt: IsoDateTime;
+};
 
 export type MatchPoll = Timestamps &
   TeamScoped & {

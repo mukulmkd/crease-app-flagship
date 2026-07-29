@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Roboto_Flex } from "next/font/google";
+import { Barlow_Condensed, Geist_Mono, Manrope } from "next/font/google";
 
 import { APP_DESCRIPTION, APP_NAME } from "@/constants/app";
 import { brandColors } from "@/constants/design-tokens";
@@ -7,10 +7,17 @@ import { AppProviders } from "@/providers/app-providers";
 
 import "@/styles/globals.css";
 
-/** Stitch Athletic Precision — Roboto Flex */
-const robotoFlex = Roboto_Flex({
+/** Stitch Modern Cricket Club — Manrope UI + Barlow Condensed display. */
+const manrope = Manrope({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
@@ -58,7 +65,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${robotoFlex.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${barlowCondensed.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <AppProviders>{children}</AppProviders>

@@ -1,18 +1,56 @@
 ---
-description: Google Stitch is visual source of truth for Crease UI
+description: Google Stitch Modern Cricket Club is visual source of truth for Crease UI
 alwaysApply: true
 ---
 
 # Stitch design source
 
-Project: **Crease Cricket Team Management**
-ID: `projects/5487252279778690236`
-Design system: **Athletic Precision**
+Project: **Crease Cricket Team Management**  
+ID: `projects/5487252279778690236`  
+Design system: **Modern Cricket Club**  
+Asset: `assets/11807811405223687109`
 
-When implementing or updating UI:
+Supersedes Athletic Precision / Roboto Flex. Do not revert to the old DS.
 
-- Pull screens / design system via Stitch MCP first.
-- Do not copy generated HTML — rebuild with reusable React components.
-- Match tokens in `src/styles/globals.css` and `src/constants/design-tokens.ts`.
-- Touch targets ≥ 48px. Radius DEFAULT 8px. Font: Roboto Flex.
-- Primary `#0d631b`, urgency/secondary `#b51a1b`, surface `#f9f9f9`.
+## When implementing or updating UI
+
+1. Pull screens / design system via Stitch MCP first.
+2. Do not copy generated HTML — rebuild with reusable React components.
+3. Keep tokens in sync: `src/styles/globals.css` **and** `src/constants/design-tokens.ts`.
+4. Prefer editing shared tokens/components over per-screen one-off styles.
+
+## Typography
+
+| Role | Face | Via |
+|---|---|---|
+| Headlines, match titles, dates, fees, counts, scores | **Barlow Condensed** | `font-heading` + `Display` / `Title` / `Heading` / `typography.statValue` |
+| Body, labels, forms, nav | **Manrope** | `--font-sans` / `Body` / `LabelText` |
+
+Never use Inter or Roboto as brand voice.
+
+## Color (use sparingly)
+
+| Token | Hex | Use |
+|---|---|---|
+| Canvas | `#F5F2E8` | Page background |
+| Pitch green | `#0B5D2A` | Primary actions, brand |
+| Clubhouse dark | `#082417` | Match tickets / fixture posters |
+| Electric lime | `#C9F64B` | Selected / positive / key accent **only** |
+| Urgency red | `#C83E35` | Unpaid, not playing, destructive, critical |
+
+Do not paint every tertiary surface lime. Lime is reserved for selection and confirmation accents.
+
+## Layout & chrome
+
+- Touch targets ≥ 48px. Radius DEFAULT 8px (`ROUND_EIGHT`).
+- Mobile bottom nav; desktop sidebar.
+- Prefer tonal surfaces over borders/shadows.
+- Prefer bottom sheets for create-tournament, add-player, confirm, pay.
+- Avoid glassmorphism, generic gradients, nested cards, purple accents, decorative cricket clipart.
+
+## Signature patterns
+
+- **Match ticket** — dominant dark `#082417` surface for next/fixture (see `MatchTicket`).
+- **SegmentedControl** — lime active state for Playing / Carpool / Warmup|Tournament / time.
+- **Status rail** — compact metrics strip, not a card grid.
+- **Admin quick actions** — secondary tonal chips; never compete with the next match.

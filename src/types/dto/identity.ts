@@ -44,11 +44,41 @@ export type CreateMatchDto = {
   groundMapsUrl?: string | null;
   startTime?: string | null;
   matchFeesInr?: number | null;
+  /** When true, confirm activates polls. Defaults true for this weekend. */
+  pollsEnabled?: boolean;
 };
 
 /** One or more independently configured weekend matches. */
 export type CreateWeekendMatchesDto = {
   matches: CreateMatchDto[];
+};
+
+export type UpdateMatchDto = {
+  matchId: string;
+  classification?: MatchClassification;
+  tournamentId?: string | null;
+  opposition?: string | null;
+  groundMapsUrl?: string | null;
+  startTime?: string | null;
+  matchFeesInr?: number | null;
+  pollsEnabled?: boolean;
+};
+
+export type CastAvailabilityVoteDto = {
+  matchId: string;
+  vote: "yes" | "no";
+};
+
+export type CastCarpoolVoteDto = {
+  matchId: string;
+  vote: "carpool" | "self";
+};
+
+export type OverrideVoteDto = {
+  matchId: string;
+  userId: string;
+  availability?: "yes" | "no";
+  carpool?: "carpool" | "self";
 };
 
 export type CreateNotificationDto = {

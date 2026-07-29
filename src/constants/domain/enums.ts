@@ -79,6 +79,13 @@ export const CHARGE_STATUSES = [
 ] as const;
 export type ChargeStatus = (typeof CHARGE_STATUSES)[number];
 
+export const REIMBURSEMENT_STATUSES = [
+  "pending",
+  "paid",
+  "offline_paid",
+] as const;
+export type ReimbursementStatus = (typeof REIMBURSEMENT_STATUSES)[number];
+
 export const FUND_TXN_DIRECTIONS = ["credit", "debit"] as const;
 export type FundTxnDirection = (typeof FUND_TXN_DIRECTIONS)[number];
 

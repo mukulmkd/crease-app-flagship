@@ -7,23 +7,48 @@ alwaysApply: true
 
 Every confirmed match has exactly two polls:
 
-1. **Availability** — playing / not playing
+1. **Availability** — available / not available (open pool; no hard yes-cap)
 2. **Carpool** — carpool vs coming on own
+
+## Playing squad (separate from the pool)
+
+- Final **playing squad** is 11–12 members in `match_squad_members`
+- Fees charge **squad members only**, not everyone who voted available
+- At availability freeze (Cron match day − 1 **18:00 IST** or Admin early freeze):
+  - If yes-count is **11 or 12** → auto-finalize squad = all yes voters + in-app + WhatsApp
+  - If yes-count **> 12** → freeze pool only; Admin picks 11–12 (`finalizePlayingSquad`) then notify
+  - If yes-count **< 11** → do **not** freeze; keep voting open, mark
+    `squad_finalization_pending_at`, and alert Admin to recruit players
+  - After a short-pool freeze attempt, players may continue joining without a
+    cap; Admin must explicitly confirm 11–12, then freeze + notify
+- Before freeze, every additional yes vote over 12 sends an Admin-only alert
+- At freeze, an oversubscribed pool freezes silently and waits for Admin; Cron
+  does not send a squad notification until Admin confirms 11–12
+- Unfreeze clears `squad_finalized_at` and squad rows
 
 ## Rules
 
-- One vote per member per poll; latest wins until freeze
-- Players change votes freely until **match day − 1**
-- After freeze: Admin-only edits
-- Everyone (Admin + Player) can see who opted in so far
-- Max 12 available; soft target min 11
+- One vote per member per poll; latest wins until that poll freezes
+- **Availability**: players change freely until **match day − 1** (auto) or Admin early freeze
+- Admin may **unfreeze availability** before kickoff (reopens player voting + notifies squad)
+- **Carpool**: stays open until **match kickoff** (IST); not closed by availability freeze
+- After a poll freezes: Admin-only edits (`MATCH_POLL_OVERRIDE`)
+- Only Admin may manually freeze / unfreeze availability; there is no Player freeze action
+- Everyone can see who is available; after finalize, UI shows the playing squad
 
-## Carpool fee
+## Carpool fee (post-match assignment)
 
-- Carpool = **₹100** per player for to-and-fro
-- Added on top of match fee share at settlement
+- Pre-match carpool poll is **intent only** — fees ignore poll votes
+- After kickoff, Admin assigns real drivers + passengers (`match_carpool_rides`)
+- Passenger pays **₹100**; driver earns **₹100 credit per passenger**
+- Empty assignment (nobody carpooled) is valid once Admin saves it
+- Match day **14:00 IST** Cron reminds Admins (in-app + individual WhatsApp)
 
 ## Repository / service
 
-- Repository: CRUD only
-- Service: freeze rules, squad caps, notification triggers
+- Repository: CRUD only (squad + carpool rides/passengers)
+- Service: freeze → auto/Admin finalize, assign carpool, complete/cancel match
+- `matches.polls_frozen` means **availability** is frozen (carpool uses poll `status`)
+- `matches.squad_finalized_at` means the billable XI/XII is locked
+- `matches.carpool_assigned_at` means Admin saved post-match rides
+- Only Admin marks **completed** (after assignment) or **cancelled** (no fees)

@@ -13,6 +13,11 @@ export type PollId = Brand<string, "PollId">;
 export type PollVoteId = Brand<string, "PollVoteId">;
 export type WeekendSettlementId = Brand<string, "WeekendSettlementId">;
 export type SettlementChargeId = Brand<string, "SettlementChargeId">;
+export type SettlementReimbursementId = Brand<
+  string,
+  "SettlementReimbursementId"
+>;
+export type MatchCarpoolRideId = Brand<string, "MatchCarpoolRideId">;
 export type TeamFundAccountId = Brand<string, "TeamFundAccountId">;
 export type ExpenseId = Brand<string, "ExpenseId">;
 export type FundTransactionId = Brand<string, "FundTransactionId">;

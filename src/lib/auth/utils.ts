@@ -54,6 +54,17 @@ export function mapAuthError(error: unknown): string {
       : "";
 
   const lower = message.toLowerCase();
+  if (
+    lower.includes("signups not allowed") ||
+    lower.includes("user not found") ||
+    lower.includes("unable to find user") ||
+    lower.includes("otp_disabled")
+  ) {
+    return "This number isn’t invited to Ranches Thunders. Ask your admin to add you.";
+  }
+  if (lower.includes("not an active member") || lower.includes("not invited")) {
+    return "This number isn’t invited to Ranches Thunders. Ask your admin to add you.";
+  }
   if (lower.includes("otp") || lower.includes("token")) {
     return "Invalid or expired OTP. Please try again.";
   }

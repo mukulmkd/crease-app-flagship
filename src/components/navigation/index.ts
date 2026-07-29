@@ -4,8 +4,6 @@ export { BottomNav } from "@/components/navigation/bottom-nav";
 export type { BottomNavProps } from "@/components/navigation/bottom-nav";
 export { DesktopNav } from "@/components/navigation/desktop-nav";
 export type { DesktopNavProps } from "@/components/navigation/desktop-nav";
-export { MobileNav } from "@/components/navigation/mobile-nav";
-export type { MobileNavProps } from "@/components/navigation/mobile-nav";
 export { NotificationBell } from "@/components/navigation/notification-bell";
 export type { NotificationBellProps } from "@/components/navigation/notification-bell";
 export { ThemeToggle } from "@/components/navigation/theme-toggle";

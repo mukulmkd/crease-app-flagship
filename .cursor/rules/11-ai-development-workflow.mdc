@@ -1,16 +1,21 @@
 ---
-description: AI workflow
+description: AI workflow for Stitch → React implementation
 alwaysApply: true
 ---
 
+# AI development workflow
+
 When implementing screens from Google Stitch:
 
-- Treat Stitch project `projects/5487252279778690236` (Athletic Precision) as visual source of truth.
-- Do not copy generated HTML.
-- Rebuild using reusable React components from `src/components`.
-- Follow project architecture under `src/`.
-- Reuse existing components first.
-- Separate presentation from business logic.
-- Preserve UX while improving maintainability.
+1. Treat Stitch project `projects/5487252279778690236` and **Modern Cricket Club** (`assets/11807811405223687109`) as visual source of truth.
+2. Pull / confirm screens via Stitch MCP before coding major UI.
+3. Do not copy generated HTML.
+4. Rebuild with reusable components from `src/components` and feature folders.
+5. Keep dual token sources in sync (`globals.css` + `design-tokens.ts`).
+6. Follow architecture: UI → Hook → Service → Repository → Supabase.
+7. Reuse existing components first (`MatchTicket`, `SegmentedControl`, `BottomSheet`, typography).
+8. Separate presentation from business logic — no Supabase / authz in JSX.
+9. Preserve UX while improving maintainability; split files >250 lines.
+10. Update `.cursor/rules` / `docs/UI.md` when the DS or signature patterns change.
 
-Always explain architectural decisions in generated code comments when non-obvious.
+Always explain non-obvious architectural decisions in brief code comments.

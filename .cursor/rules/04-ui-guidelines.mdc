@@ -1,5 +1,5 @@
 ---
-description: UI guidelines — native PWA feel
+description: UI guidelines — Modern Cricket Club native PWA feel
 alwaysApply: true
 ---
 
@@ -7,9 +7,10 @@ alwaysApply: true
 
 Use Tailwind + shadcn/ui.
 
-Mobile first. Bottom navigation on phones. Sidebar on desktop.
+Mobile first. Bottom navigation on phones (no hamburger drawer). Keep
+destinations role-aware. Sidebar on desktop.
 
-Support light/dark mode.
+Support light/dark mode (light is the MCC scorebook canvas; dark keeps tonal clubhouse surfaces).
 
 Include loading, empty and error states.
 
@@ -17,7 +18,10 @@ Large touch targets (≥ 48px).
 
 ## Native app feel
 
-- Stitch Athletic Precision is mandatory
+- Stitch **Modern Cricket Club** is mandatory (`docs/UI.md`, rule `12-stitch-design-system`)
 - Chrome should feel like iOS/Android utilities (clear hierarchy, tonal surfaces, no decorative clutter)
-- Prefer bottom sheets for create-tournament and confirm flows
-- One-tap poll controls
+- Prefer bottom sheets for create-tournament, add-player, confirm, and pay flows
+- One-tap poll controls via `SegmentedControl`
+- Dual fonts: Barlow Condensed (display) + Manrope (UI)
+- Next match is a **match ticket**, not a small card in a grid
+- Hide actions the user cannot perform; services still authorize
