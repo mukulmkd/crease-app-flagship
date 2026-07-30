@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Camera, Loader2, Trash2 } from "lucide-react";
+import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 
 import { UserAvatar } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
@@ -16,7 +16,8 @@ type ProfileAvatarControlProps = {
 };
 
 /**
- * Profile photo picker — compress → upload → replace deletes prior storage object.
+ * Profile photo picker — gallery or camera on any device.
+ * Square-crops, resizes to ≤512px, and compresses before upload.
  */
 function ProfileAvatarControl({ name, imageUrl }: ProfileAvatarControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,16 +60,19 @@ function ProfileAvatarControl({ name, imageUrl }: ProfileAvatarControlProps) {
           variant="tonal"
           className="absolute -right-1 -bottom-1 rounded-full border border-border bg-surface-container-high shadow-sm"
           disabled={busy}
-          aria-label="Change profile photo"
+          aria-label="Choose profile photo from gallery or camera"
           onClick={() => inputRef.current?.click()}
         >
-          <Camera className="size-4" aria-hidden />
+          <ImagePlus className="size-4" aria-hidden />
         </Button>
+        {/*
+          No `capture` attribute — on mobile the OS offers Gallery and Camera.
+          `image/*` covers JPEG/PNG/WebP/HEIC from photo libraries.
+        */}
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="user"
+          accept="image/*,.heic,.heif"
           className="sr-only"
           disabled={busy}
           onChange={(event) => {
@@ -99,7 +103,7 @@ function ProfileAvatarControl({ name, imageUrl }: ProfileAvatarControlProps) {
         </Button>
       ) : (
         <p className="text-caption text-muted-foreground">
-          Tap the camera to add a photo
+          Choose a photo from your gallery or camera
         </p>
       )}
     </div>
