@@ -4,7 +4,16 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
-  register: true,
+  // Custom client registration handles update checks + reload (see PwaUpdateProvider).
+  register: false,
+  reloadOnOnline: true,
+  cacheStartUrl: true,
+  dynamicStartUrl: true,
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+    cleanupOutdatedCaches: true,
+  },
   fallbacks: {
     document: "/offline",
   },

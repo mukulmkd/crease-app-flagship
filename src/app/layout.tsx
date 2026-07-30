@@ -66,6 +66,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Android Chrome: resize layout when the soft keyboard opens so fields stay visible.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

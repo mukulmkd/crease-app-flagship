@@ -284,6 +284,15 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* Keep focused fields clear of the soft keyboard when the page scrolls. */
+  input,
+  textarea,
+  select,
+  [contenteditable="true"],
+  [role="textbox"] {
+    scroll-margin-block: 6rem;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
