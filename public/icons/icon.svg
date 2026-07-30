@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" role="img" aria-label="Crease" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#082417"/>
+  <!-- Left post -->
+  <rect x="128" y="128" width="23" height="256" fill="#C9F64B"/>
+  <!-- Right post -->
+  <rect x="361" y="128" width="23" height="256" fill="#C9F64B"/>
+  <!-- Bottom crease -->
+  <rect x="128" y="361" width="256" height="23" fill="#C9F64B"/>
+  <!-- Center stump -->
+  <rect x="251" y="128" width="10" height="256" fill="#C9F64B"/>
+</svg>
