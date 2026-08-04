@@ -11,6 +11,8 @@ import {
   requireActor,
   useActor,
 } from "@/lib/query";
+import { sendDemoNotificationAction } from "@/services/notification.actions";
+import type { DemoNotificationScope } from "@/services/notification.actions";
 import { playCreaseNotificationSound, unlockNotificationAudio } from "@/utils";
 
 export function useUnreadNotificationCount() {
@@ -48,6 +50,20 @@ export function useMarkNotificationRead() {
       return getNotificationService().markRead(notificationId, actor);
     },
     onSuccess: async () => {
+      await invalidateQueries.notifications(client);
+      await invalidateQueries.dashboard(client);
+    },
+  });
+}
+
+/** Demo mode: insert inbox row(s) (Realtime → toast + chime + optional push). */
+export function useSendDemoNotification() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (scope: DemoNotificationScope = "self") =>
+      sendDemoNotificationAction(scope),
+    onSuccess: async () => {
+      // Realtime usually refreshes; invalidate covers slow/missed channels.
       await invalidateQueries.notifications(client);
       await invalidateQueries.dashboard(client);
     },

@@ -30,6 +30,7 @@ import {
 } from "@/features/team/hooks";
 import { PaymentCollectorSection } from "@/features/team/components/payment-collector-section";
 import { TeamLogoControl } from "@/features/team/components/team-logo-control";
+import { DemoModeSection } from "@/features/team/components/demo-mode-section";
 import { PushAlertsSection } from "@/features/notifications/components/push-alerts-section";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPhoneDisplay } from "@/lib/auth/utils";
@@ -229,50 +230,7 @@ export default function SettingsPage() {
 
       {canEdit ? <PaymentCollectorSection team={team} /> : null}
 
-      {canEdit ? (
-        <section className="space-y-4 rounded-xl bg-surface-container-low p-4">
-          <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
-            Demo mode
-          </p>
-          <BodySm>
-            For a 4-player QA squad: playing strength 4, past weekend fixtures,
-            and dummy payment proofs. Turn off before real match weekends.
-          </BodySm>
-          <SegmentedControl
-            aria-label="Demo mode"
-            options={[
-              { value: "off", label: "Off" },
-              { value: "on", label: "On" },
-            ]}
-            value={team.demoMode ? "on" : "off"}
-            loading={updateSettings.isPending}
-            onValueChange={async (value) => {
-              const next = value === "on";
-              if (next === team.demoMode) return;
-              try {
-                await updateSettings.mutateAsync({ demoMode: next });
-                toast.success({
-                  title: next ? "Demo mode on" : "Demo mode off",
-                  description: next
-                    ? "Squad target is 4 · past weekends unlocked"
-                    : "Production XI/XII rules restored",
-                });
-              } catch (error) {
-                toast.error({ title: getMutationErrorMessage(error) });
-              }
-            }}
-          />
-        </section>
-      ) : team.demoMode ? (
-        <section className="rounded-xl bg-surface-container-low p-4">
-          <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
-            Demo mode
-          </p>
-          <BodySm className="mt-2">
-            Team is in demo mode — playing squad target is 4.
-          </BodySm>
-        </section>
-      ) : null}
+      <DemoModeSection demoMode={team.demoMode} canEdit={canEdit} />
 
       <section className="rounded-xl bg-surface-container-low p-4">
         <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">

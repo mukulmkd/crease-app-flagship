@@ -31,6 +31,78 @@ export type BroadcastTeamNotificationInput = {
   userIds?: string[];
 };
 
+export type DemoNotificationScope = "self" | "team";
+
+/**
+ * Demo-mode only: inbox + optional OS push so QA can verify alerts open or closed.
+ * `self` — signed-in member only. `team` — Admin fans out to every active member.
+ */
+export async function sendDemoNotificationAction(
+  scope: DemoNotificationScope = "self",
+): Promise<{ ok: true; recipientCount: number }> {
+  const server = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await server.auth.getUser();
+  if (!user) throw new AppError("UNAUTHORIZED", "Sign in required", 401);
+
+  const teams = await createServerTeamRepository();
+  await requireActiveMembership(teams, MVP_TEAM.id, user.id);
+  const team = await teams.getMvpTeam();
+  if (!team.demoMode) {
+    throw new AppError(
+      "FORBIDDEN",
+      "Demo notifications are only available while demo mode is on",
+      403,
+    );
+  }
+
+  let recipientIds: string[];
+  if (scope === "team") {
+    await requireAdmin(teams, MVP_TEAM.id, user.id);
+    const members = await teams.listMemberships({
+      teamId: MVP_TEAM.id,
+      status: "active",
+      limit: 100,
+    });
+    recipientIds = members.items.map((member) => String(member.userId));
+  } else {
+    recipientIds = [user.id];
+  }
+
+  if (recipientIds.length === 0) {
+    return { ok: true, recipientCount: 0 };
+  }
+
+  const title = "Demo alert";
+  const body =
+    scope === "team"
+      ? "Crease team demo — inbox when the app is open; lock-screen push when closed (if enabled)."
+      : "Crease demo notification — check the bell, toast, and alert sound.";
+
+  const notifications = createAdminNotificationRepository();
+  await notifications.createMany(
+    recipientIds.map((userId) => ({
+      user_id: userId,
+      team_id: MVP_TEAM.id,
+      type: "system",
+      title,
+      body,
+      data: toDbJson({ demo: true, scope }),
+    })),
+  );
+
+  // OS push for background / locked devices — never blocks the inbox insert.
+  void sendWebPushToUsers(recipientIds, {
+    title,
+    body,
+    url: ALERTS_OPEN_HREF,
+    tag: "crease-demo",
+  });
+
+  return { ok: true, recipientCount: recipientIds.length };
+}
+
 /**
  * Team-wide fan-out.
  *
