@@ -205,7 +205,7 @@ function MatchSection({
     >
       <h2
         id={`${title.toLowerCase()}-matches`}
-        className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+        className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
       >
         {title}
         {matchCount > 0 ? ` · ${matchCount}` : ""}

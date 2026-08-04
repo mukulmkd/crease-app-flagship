@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, UserRound } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
@@ -65,18 +64,12 @@ function ProfileCompletionForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-col items-center gap-2 pt-2">
-        <div className="relative">
-          <div className="flex size-28 items-center justify-center rounded-full bg-surface-container-highest text-muted-foreground">
-            <UserRound className="size-14" strokeWidth={1.25} aria-hidden />
-          </div>
-          <span className="absolute right-0 bottom-0 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
-            <Camera className="size-5" aria-hidden />
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">Add Profile Photo</p>
-        <p className="text-caption text-muted-foreground">
-          Photo upload comes with storage setup
+      <div className="space-y-2 pt-4">
+        <h1 className="font-heading text-4xl font-semibold tracking-tight">
+          Complete your profile
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Confirm your name and verified mobile number to continue.
         </p>
       </div>
 
@@ -112,6 +105,10 @@ function ProfileCompletionForm() {
             autoComplete="tel-national"
             placeholder="0000000000"
             maxLength={10}
+            aria-invalid={Boolean(form.formState.errors.phone) || undefined}
+            aria-describedby={
+              form.formState.errors.phone ? "phone-error" : undefined
+            }
             aria-required
             className="h-full rounded-none border-0 bg-transparent focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0"
             {...form.register("phone", {

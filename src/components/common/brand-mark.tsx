@@ -1,4 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
+
+import appIcon from "../../../public/icons/icon-192.png";
 
 import { cn } from "@/utils";
 
@@ -12,7 +15,7 @@ type BrandMarkProps = {
 };
 
 /**
- * Crease brand lockup — scorebook crease mark + condensed wordmark.
+ * Crease brand lockup — official cricket-operations artwork + Oswald wordmark.
  * Team identity is shown separately in the centered top-bar logo.
  */
 function BrandMark({
@@ -26,18 +29,21 @@ function BrandMark({
       <span
         aria-hidden
         className={cn(
-          "relative flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#082417] text-primary-foreground",
+          "relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-clubhouse",
           markClassName,
         )}
       >
-        <span className="h-5 w-5 border-x-2 border-b-2 border-[#c9f64b]">
-          <span className="mx-auto block h-full w-px bg-[#c9f64b]" />
-        </span>
+        <Image
+          src={appIcon}
+          alt=""
+          className="size-full rounded-[inherit] object-cover"
+          priority
+        />
       </span>
       {showWordmark ? (
         <span
           data-brand-wordmark
-          className="font-heading text-xl font-extrabold tracking-[0.06em] text-primary uppercase"
+          className="font-heading text-xl font-semibold tracking-[0.04em] text-primary"
         >
           Crease
         </span>

@@ -44,7 +44,7 @@ function ProfileAvatarControl({ name, imageUrl }: ProfileAvatarControlProps) {
         <UserAvatar name={name} imageUrl={imageUrl} size="xl" />
         {busy ? (
           <span
-            className="absolute inset-0 flex items-center justify-center rounded-full bg-[#082417]/60"
+            className="absolute inset-0 flex items-center justify-center rounded-full bg-clubhouse/60"
             aria-live="polite"
             aria-label="Updating photo"
           >

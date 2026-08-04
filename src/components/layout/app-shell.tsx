@@ -108,7 +108,7 @@ function AppShell({
             id="main-content"
             tabIndex={-1}
             className={cn(
-              "mx-auto w-full max-w-6xl flex-1 scroll-smooth px-4 py-4 outline-none",
+              "mx-auto w-full max-w-[var(--content-max-width)] flex-1 scroll-smooth px-4 py-4 outline-none",
               "pb-bottom-nav md:px-6 md:pb-6",
               pathname === "/home" && "max-w-md py-2 md:max-w-6xl md:py-6",
             )}

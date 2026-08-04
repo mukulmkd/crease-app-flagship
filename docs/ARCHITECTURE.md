@@ -16,7 +16,7 @@
 - UI → Hook → Service → Repository → Supabase
 - Services own validation + authorization
 - Repositories own CRUD only
-- Stitch Modern Cricket Club via reusable components (never paste Stitch HTML)
+- Original **Modern Scorebook Utility** via reusable components
 
 ## Folder structure
 

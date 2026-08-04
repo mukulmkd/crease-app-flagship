@@ -218,9 +218,7 @@ function CreateWeekendMatchForm() {
       </div>
 
       <header>
-        <h1 className="font-heading text-3xl font-extrabold uppercase">
-          Weekend matches
-        </h1>
+        <h1 className="font-heading text-3xl font-semibold">Weekend matches</h1>
         <BodySm className="mt-1">
           {demoMode
             ? "Demo mode: pick a past or upcoming weekend. Configure Saturday and Sunday separately."
@@ -229,49 +227,84 @@ function CreateWeekendMatchForm() {
       </header>
 
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
-        <FormField label="Weekend">
-          <Select
-            value={String(weekendOffset)}
-            onValueChange={(value) =>
-              form.setValue("weekendOffset", Number(value), {
-                shouldValidate: true,
-              })
-            }
-          >
-            <SelectTrigger className="h-12 w-full">
-              <SelectValue placeholder="Select weekend" />
-            </SelectTrigger>
-            <SelectContent>
-              {weekends.map((dates, offset) => (
-                <SelectItem key={dates.saturday} value={String(offset)}>
-                  {weekendLabel(
-                    offset,
-                    dates.saturday,
-                    dates.sunday,
-                    thisWeekendSaturday,
-                  )}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
+        <ol
+          className="grid grid-cols-2 gap-2"
+          aria-label="Create match progress"
+        >
+          <CreateStep number={1} label="Pick weekend" complete />
+          <CreateStep number={2} label="Configure days" current />
+        </ol>
 
-        <WeekendDaySection
-          day="saturday"
-          dateIso={weekend.saturday}
-          unavailable={saturdayUnavailable}
-          form={form}
-          tournaments={tournaments.data?.items ?? []}
-          onCreateTournament={() => openTournamentSheet("saturday")}
-        />
-        <WeekendDaySection
-          day="sunday"
-          dateIso={weekend.sunday}
-          unavailable={sundayUnavailable}
-          form={form}
-          tournaments={tournaments.data?.items ?? []}
-          onCreateTournament={() => openTournamentSheet("sunday")}
-        />
+        <section
+          aria-labelledby="pick-weekend-heading"
+          className="space-y-3 rounded-2xl bg-surface-container-low p-4"
+        >
+          <div>
+            <p
+              id="pick-weekend-heading"
+              className="font-heading text-xl font-semibold"
+            >
+              1. Pick weekend
+            </p>
+            <BodySm>Choose the Saturday–Sunday window.</BodySm>
+          </div>
+          <FormField label="Weekend">
+            <Select
+              value={String(weekendOffset)}
+              onValueChange={(value) =>
+                form.setValue("weekendOffset", Number(value), {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger className="h-12 w-full">
+                <SelectValue placeholder="Select weekend" />
+              </SelectTrigger>
+              <SelectContent>
+                {weekends.map((dates, offset) => (
+                  <SelectItem key={dates.saturday} value={String(offset)}>
+                    {weekendLabel(
+                      offset,
+                      dates.saturday,
+                      dates.sunday,
+                      thisWeekendSaturday,
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+        </section>
+
+        <section aria-labelledby="configure-days-heading" className="space-y-3">
+          <div className="px-1">
+            <p
+              id="configure-days-heading"
+              className="font-heading text-xl font-semibold"
+            >
+              2. Configure days
+            </p>
+            <BodySm>
+              Select a day to expand it. Saturday and Sunday stay independent.
+            </BodySm>
+          </div>
+          <WeekendDaySection
+            day="saturday"
+            dateIso={weekend.saturday}
+            unavailable={saturdayUnavailable}
+            form={form}
+            tournaments={tournaments.data?.items ?? []}
+            onCreateTournament={() => openTournamentSheet("saturday")}
+          />
+          <WeekendDaySection
+            day="sunday"
+            dateIso={weekend.sunday}
+            unavailable={sundayUnavailable}
+            form={form}
+            tournaments={tournaments.data?.items ?? []}
+            onCreateTournament={() => openTournamentSheet("sunday")}
+          />
+        </section>
 
         {form.formState.errors.saturday?.enabled ? (
           <p className="text-sm text-destructive" role="alert">
@@ -308,6 +341,36 @@ function CreateWeekendMatchForm() {
         }}
       />
     </div>
+  );
+}
+
+function CreateStep({
+  number,
+  label,
+  complete = false,
+  current = false,
+}: {
+  number: number;
+  label: string;
+  complete?: boolean;
+  current?: boolean;
+}) {
+  return (
+    <li
+      aria-current={current ? "step" : undefined}
+      className="flex min-h-12 items-center gap-2 rounded-xl bg-surface-container-low px-3"
+    >
+      <span
+        className={
+          complete || current
+            ? "flex size-7 shrink-0 items-center justify-center rounded-full bg-tertiary text-xs font-bold text-tertiary-foreground"
+            : "flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-container-highest text-xs font-bold text-muted-foreground"
+        }
+      >
+        {number}
+      </span>
+      <span className="text-xs font-semibold">{label}</span>
+    </li>
   );
 }
 

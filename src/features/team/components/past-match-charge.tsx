@@ -27,9 +27,7 @@ function SummaryMetric({
       <p className="mt-1 font-heading text-xl font-bold tabular-nums">
         {value}
       </p>
-      <p className="text-[0.65rem] font-bold tracking-wide uppercase">
-        {label}
-      </p>
+      <p className="text-xs font-bold tracking-wide uppercase">{label}</p>
     </div>
   );
 }
@@ -74,7 +72,7 @@ function ChargeCard({
           <p className="font-heading text-2xl font-bold tabular-nums">
             ₹{formatInrAmount(charge.totalInr)}
           </p>
-          <p className="inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-wide uppercase">
+          <p className="inline-flex items-center gap-1 text-xs font-semibold tracking-wide uppercase">
             {settled ? (
               <CheckCircle2 className="size-3 text-success" aria-hidden />
             ) : null}

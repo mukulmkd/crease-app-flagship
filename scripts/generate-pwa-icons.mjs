@@ -1,10 +1,9 @@
 /**
- * Generate PWA / home-screen icons that match BrandMark
- * (clubhouse #082417 + lime crease mark #c9f64b).
+ * Generate every browser / installed-PWA icon from the approved Crease artwork.
  *
  * Usage: node scripts/generate-pwa-icons.mjs
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -12,44 +11,52 @@ import sharp from "sharp";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.join(__dirname, "../public/icons");
 const appDir = path.join(__dirname, "../src/app");
+const sourcePath = path.join(__dirname, "crease-app-logo-source.png");
 
-const CLUBHOUSE = "#082417";
-const LIME = "#C9F64B";
+const CLUBHOUSE = "#0A0C0B";
+const sourceMetadata = await sharp(sourcePath).metadata();
+if (!sourceMetadata.width || !sourceMetadata.height) {
+  throw new Error("Could not read Crease logo source dimensions");
+}
+const sourceCropSize = Math.round(
+  Math.min(sourceMetadata.width, sourceMetadata.height) * 0.8,
+);
+const sourceCropLeft = Math.round((sourceMetadata.width - sourceCropSize) / 2);
+const sourceCropTop = Math.round((sourceMetadata.height - sourceCropSize) / 2);
 
 /**
- * Cricket crease mark centered in a square — same geometry as BrandMark
- * (side posts + bottom bar + center stump).
+ * Resize the same master artwork for browser, Apple, and installed PWA use.
  * @param {number} size
- * @param {{ safeZone?: number }} [opts] safeZone 0–1; maskable uses ~0.2 padding
+ * @param {{ safeZone?: number }} [opts] Extra inset for maskable icon cropping.
  */
-function brandSvg(size, { safeZone = 0 } = {}) {
-  const inset = size * safeZone;
-  const canvas = size - inset * 2;
-  // Match BrandMark proportions: mark is ~50% of the 40px tile.
-  const mark = canvas * 0.5;
-  const stroke = Math.max(2, Math.round(size * 0.045));
-  const centerStroke = Math.max(2, Math.round(size * 0.02));
-  const x = inset + (canvas - mark) / 2;
-  const y = inset + (canvas - mark) / 2;
-  const cx = x + mark / 2;
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <rect width="${size}" height="${size}" fill="${CLUBHOUSE}"/>
-  <!-- Left post -->
-  <rect x="${x}" y="${y}" width="${stroke}" height="${mark}" fill="${LIME}"/>
-  <!-- Right post -->
-  <rect x="${x + mark - stroke}" y="${y}" width="${stroke}" height="${mark}" fill="${LIME}"/>
-  <!-- Bottom crease -->
-  <rect x="${x}" y="${y + mark - stroke}" width="${mark}" height="${stroke}" fill="${LIME}"/>
-  <!-- Center stump -->
-  <rect x="${cx - centerStroke / 2}" y="${y}" width="${centerStroke}" height="${mark}" fill="${LIME}"/>
-</svg>`;
-}
-
 async function writePng(filePath, size, opts) {
-  const svg = Buffer.from(brandSvg(size, opts));
-  await sharp(svg).png({ compressionLevel: 9 }).toFile(filePath);
+  const safeZone = opts?.safeZone ?? 0;
+  const inset = Math.round(size * safeZone);
+  const artworkSize = size - inset * 2;
+  const artwork = await sharp(sourcePath)
+    // The generated master includes a rounded preview canvas. Crop that shell
+    // away so platform-owned iOS/Android masks receive a full-bleed background.
+    .extract({
+      left: sourceCropLeft,
+      top: sourceCropTop,
+      width: sourceCropSize,
+      height: sourceCropSize,
+    })
+    .resize(artworkSize, artworkSize, { fit: "cover" })
+    .png()
+    .toBuffer();
+
+  await sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: CLUBHOUSE,
+    },
+  })
+    .composite([{ input: artwork, left: inset, top: inset }])
+    .png({ compressionLevel: 9 })
+    .toFile(filePath);
   console.log(
     `wrote ${path.relative(process.cwd(), filePath)} (${size}x${size})`,
   );
@@ -59,25 +66,18 @@ await mkdir(outDir, { recursive: true });
 
 await writePng(path.join(outDir, "icon-192.png"), 192);
 await writePng(path.join(outDir, "icon-512.png"), 512);
-// Maskable: keep mark inside ~80% safe zone for Android adaptive icons.
 await writePng(path.join(outDir, "icon-maskable-512.png"), 512, {
-  safeZone: 0.18,
+  safeZone: 0.08,
 });
-// iOS home screen (Add to Home Screen uses apple-touch-icon).
 await writePng(path.join(outDir, "apple-touch-icon.png"), 180);
 
-// Next.js App Router conventions — favicon + apple-icon for <head>.
 await writePng(path.join(appDir, "icon.png"), 32);
 await writePng(path.join(appDir, "apple-icon.png"), 180);
 
-// Optional SVG source of truth for the mark.
-await writeFile(
-  path.join(outDir, "icon.svg"),
-  brandSvg(512).replace(
-    'width="512" height="512"',
-    'width="512" height="512" role="img" aria-label="Crease"',
-  ),
-  "utf8",
-);
-
-console.log("PWA icons regenerated from BrandMark.");
+const sourceBase64 = (await readFile(sourcePath)).toString("base64");
+const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Crease">
+  <image width="512" height="512" href="data:image/png;base64,${sourceBase64}"/>
+</svg>`;
+await writeFile(path.join(outDir, "icon.svg"), svg, "utf8");
+console.log("wrote public/icons/icon.svg");

@@ -5,9 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { isActivePath } from "@/components/navigation/nav-link";
 import { typography } from "@/constants/design-tokens";
-import { hasPermission } from "@/constants/domain/team-permissions";
-import { primaryNav, secondaryNav } from "@/constants/navigation";
-import { useMyMembership } from "@/features/team/hooks";
+import { primaryNav } from "@/constants/navigation";
 import { cn } from "@/utils";
 
 type BottomNavProps = {
@@ -15,23 +13,18 @@ type BottomNavProps = {
 };
 
 /**
- * Mobile bottom navigation — restrained lime active state.
+ * Mobile bottom navigation — restrained amber active state.
  */
 function BottomNav({ className }: BottomNavProps) {
   const pathname = usePathname();
-  const membership = useMyMembership();
-  const role = membership.data?.role;
-  const items = [...primaryNav, ...secondaryNav].filter(
-    (item) =>
-      item.mobile && (!item.permission || hasPermission(role, item.permission)),
-  );
+  const items = primaryNav.filter((item) => item.mobile);
 
   return (
     <nav
       data-slot="bottom-nav"
       aria-label="Primary"
       className={cn(
-        "safe-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant bg-surface-container-lowest md:hidden",
+        "safe-bottom-nav fixed inset-x-0 bottom-0 z-[var(--layer-bottom-nav)] border-t border-outline-variant bg-surface-container-lowest md:hidden",
         className,
       )}
     >
@@ -57,7 +50,7 @@ function BottomNav({ className }: BottomNavProps) {
                   className={cn(
                     "flex size-10 items-center justify-center rounded-full transition-colors duration-200",
                     active
-                      ? "bg-accent text-accent-foreground"
+                      ? "bg-tertiary text-tertiary-foreground"
                       : "bg-transparent",
                   )}
                 >
@@ -66,7 +59,7 @@ function BottomNav({ className }: BottomNavProps) {
                 <span
                   className={cn(
                     typography.navLabel,
-                    "block max-w-full overflow-hidden text-[0.6rem] leading-3 text-ellipsis whitespace-nowrap",
+                    "block max-w-full overflow-hidden text-xs leading-4 text-ellipsis whitespace-nowrap",
                   )}
                 >
                   {item.mobileLabel ?? item.label}

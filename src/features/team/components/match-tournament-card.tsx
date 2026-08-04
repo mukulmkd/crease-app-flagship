@@ -21,7 +21,7 @@ function MatchTournamentCard({ loading, context }: MatchTournamentCardProps) {
       aria-label="Tournament"
       className="rounded-xl bg-surface-container-low px-4 py-3"
     >
-      <p className="flex items-center gap-2 text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+      <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
         <Trophy className="size-3.5 text-primary" aria-hidden />
         Tournament
       </p>
@@ -29,7 +29,7 @@ function MatchTournamentCard({ loading, context }: MatchTournamentCardProps) {
         <BodySm className="mt-1">Loading tournament…</BodySm>
       ) : context ? (
         <div className="mt-1 space-y-2">
-          <p className="font-heading text-xl font-bold uppercase">
+          <p className="font-heading text-xl font-semibold">
             {context.tournament.name}
           </p>
           <BodySm>

@@ -1,16 +1,29 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import { BodySm, Title } from "@/components/common";
 import { ErrorState, LoadingState } from "@/components/feedback";
 import {
   hasPermission,
   PERMISSIONS,
 } from "@/constants/domain/team-permissions";
-import { AdminSettlementSection } from "@/features/payments/components/admin-settlement-section";
 import { YourDuesSection } from "@/features/payments/components/your-dues-section";
 import { useMyWeekendDues } from "@/features/payments/hooks";
 import { useMvpTeam, useMyMembership } from "@/features/team/hooks";
 import { formatInrAmount } from "@/utils";
+
+const AdminSettlementSection = dynamic(
+  () =>
+    import("@/features/payments/components/admin-settlement-section").then(
+      (module) => module.AdminSettlementSection,
+    ),
+  {
+    loading: () => (
+      <LoadingState variant="cards" label="Loading settlement administration" />
+    ),
+  },
+);
 
 function PaymentsShell() {
   const membershipQuery = useMyMembership();
@@ -49,10 +62,10 @@ function PaymentsShell() {
     .reduce((sum, weekend) => sum + weekend.totalDueInr, 0);
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6 pb-2">
+      <div className="space-y-1">
         <Title>Payments</Title>
-        <BodySm>
+        <BodySm className="text-muted-foreground">
           {demoMode
             ? "Demo mode · weekend fees · dummy UTR proof available"
             : "Weekend fees for completed matches with assigned carpool · UPI · UTR · screenshot"}
@@ -61,21 +74,21 @@ function PaymentsShell() {
 
       <section
         aria-label="Total dues summary"
-        className="rounded-xl bg-surface-container-low px-4 py-4"
+        className="rounded-2xl bg-surface-container-low px-4 py-5"
       >
-        <p className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+        <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
           Total dues
         </p>
         {duesQuery.isLoading ? (
-          <p className="mt-1 font-heading text-3xl font-bold text-muted-foreground tabular-nums">
+          <p className="mt-1 font-heading text-3xl font-semibold text-muted-foreground tabular-nums">
             …
           </p>
         ) : (
           <p
             className={
               totalDueInr > 0
-                ? "mt-1 font-heading text-4xl font-bold text-destructive tabular-nums"
-                : "mt-1 font-heading text-4xl font-bold tabular-nums"
+                ? "mt-1 font-heading text-4xl font-semibold text-destructive tabular-nums"
+                : "mt-1 font-heading text-4xl font-semibold tabular-nums"
             }
           >
             ₹{formatInrAmount(totalDueInr)}

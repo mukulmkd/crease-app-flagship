@@ -231,7 +231,7 @@ export class FundService extends BaseService {
 
       const body =
         parsed.note?.trim() ||
-        `Admin asked for ₹${amount} per player toward the team fund. Pay offline and confirm with Admin.`;
+        `Admin asked for ₹${amount} per player toward the funds. Pay offline and confirm with Admin.`;
 
       await broadcastTeamNotificationAction({
         type: "fund",
@@ -251,7 +251,7 @@ export class FundService extends BaseService {
             body: JSON.stringify({
               text: [
                 `*Ranches Thunders — fund ask*`,
-                `Please contribute *₹${amount}* each to the team fund.`,
+                `Please contribute *₹${amount}* each to the funds.`,
                 parsed.note?.trim() ? parsed.note.trim() : null,
                 `Pay offline and confirm with Admin.`,
               ]

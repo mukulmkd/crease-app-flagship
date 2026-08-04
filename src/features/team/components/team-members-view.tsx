@@ -1,9 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { MoreVertical, Plus, Search, Users } from "lucide-react";
 
 import { UserAvatar } from "@/components/common";
+import { Display, Overline } from "@/components/common/typography";
 import {
   BottomSheet,
   BottomSheetContent,
@@ -20,8 +22,6 @@ import {
   PERMISSIONS,
 } from "@/constants/domain/team-permissions";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
-import { AddPlayerForm } from "@/features/team/components/add-player-form";
-import { MemberActionsSheet } from "@/features/team/components/member-actions-sheet";
 import {
   useMyMembership,
   useTeamMembers,
@@ -29,12 +29,25 @@ import {
 } from "@/features/team/hooks";
 import type { TeamMembershipWithProfile } from "@/types/models";
 
+const AddPlayerForm = dynamic(() =>
+  import("@/features/team/components/add-player-form").then(
+    (module) => module.AddPlayerForm,
+  ),
+);
+const MemberActionsSheet = dynamic(() =>
+  import("@/features/team/components/member-actions-sheet").then(
+    (module) => module.MemberActionsSheet,
+  ),
+);
+
 type RoleFilter = "all" | "admin" | "player";
 
 function TeamMembersView() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RoleFilter>("all");
   const [addOpen, setAddOpen] = useState(false);
+  const [addFormLoaded, setAddFormLoaded] = useState(false);
+  const [memberActionsLoaded, setMemberActionsLoaded] = useState(false);
   const [selectedMember, setSelectedMember] =
     useState<TeamMembershipWithProfile | null>(null);
   const membership = useMyMembership();
@@ -98,12 +111,8 @@ function TeamMembersView() {
     <div className="space-y-6">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold tracking-[0.12em] text-primary uppercase">
-            Team
-          </p>
-          <h1 className="font-heading text-4xl font-extrabold uppercase">
-            Ranches Thunders
-          </h1>
+          <Overline className="text-primary">Team</Overline>
+          <Display className="text-4xl">Ranches Thunders</Display>
           <p className="mt-1 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="size-4" aria-hidden />
             {members.data?.items.length ?? 0} active players
@@ -115,7 +124,10 @@ function TeamMembersView() {
             type="button"
             size="icon"
             aria-label="Add player"
-            onClick={() => setAddOpen(true)}
+            onClick={() => {
+              setAddFormLoaded(true);
+              setAddOpen(true);
+            }}
           >
             <Plus aria-hidden />
           </Button>
@@ -166,17 +178,20 @@ function TeamMembersView() {
               key={member.id}
               member={member}
               canManage={canManage}
-              onOpenActions={() => setSelectedMember(member)}
+              onOpenActions={() => {
+                setMemberActionsLoaded(true);
+                setSelectedMember(member);
+              }}
             />
           ))}
         </ul>
       )}
 
-      {canAdd ? (
+      {canAdd && addFormLoaded ? (
         <BottomSheet open={addOpen} onOpenChange={setAddOpen}>
           <BottomSheetContent className="bg-surface-container-lowest">
             <BottomSheetHeader className="text-left">
-              <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+              <BottomSheetTitle className="font-heading text-2xl font-semibold">
                 Add team member
               </BottomSheetTitle>
             </BottomSheetHeader>
@@ -192,7 +207,7 @@ function TeamMembersView() {
         </BottomSheet>
       ) : null}
 
-      {canManage ? (
+      {canManage && memberActionsLoaded ? (
         <MemberActionsSheet
           member={selectedMember}
           open={selectedMember != null}
@@ -246,7 +261,7 @@ function MemberRow({
         </p>
       </div>
       <div className="text-right">
-        <span className="text-xs font-bold tracking-[0.08em] text-primary uppercase">
+        <span className="text-xs font-semibold tracking-[0.08em] text-primary uppercase">
           {member.role}
         </span>
         <p className="mt-1 text-xs text-muted-foreground">

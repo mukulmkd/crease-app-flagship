@@ -14,10 +14,10 @@
 3. Active member, incomplete profile → `/complete-profile`
 4. Else → `/home`
 
-## UI (Modern Cricket Club)
+## UI (Modern Scorebook Utility)
 
-- `AuthShell` + brand crease mark
-- Login: Barlow Condensed headline, Manrope body, +91 field, members-only trust panel
+- `AuthShell` + official C-hand-and-ball app icon
+- Login: Oswald headline, Plus Jakarta Sans body, +91 field, members-only trust panel
 - Complete profile: name + +91 mobile (both required)
 - Access denied: invite-only copy + sign out
 - OTP: large cells, resend timer, demo OTP strip when `NEXT_PUBLIC_AUTH_DEV_OTP` is set

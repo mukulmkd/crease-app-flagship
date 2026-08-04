@@ -10,6 +10,9 @@ import {
   WalletCards,
 } from "lucide-react";
 
+import { MetricRail } from "@/components/common/metric-rail";
+import { TeamIdentity } from "@/components/common/team-identity";
+import { Caption, Overline, Stat } from "@/components/common/typography";
 import { EmptyState, ErrorState, LoadingState } from "@/components/feedback";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,23 +22,34 @@ import {
 import { DashboardGreeting } from "@/features/dashboard/components/dashboard-greeting";
 import { MatchTicket } from "@/features/dashboard/components/match-ticket";
 import { PastWeekendMatchPaymentCard } from "@/features/dashboard/components/past-weekend-match-payment-card";
+import { WeekendDuesCallout } from "@/features/dashboard/components/player-dues-callout";
 import { useDashboardSnapshot } from "@/features/dashboard/hooks";
 import { useNotificationsUi } from "@/features/notifications/providers/notifications-ui-provider";
-import { formatMatchDate } from "@/features/team/lib/match-format";
-import { formatInrAmount, nextWeekendDates } from "@/utils";
+import { useMyWeekendDues } from "@/features/payments/hooks";
+import {
+  formatMatchDate,
+  formatWeekendRange,
+} from "@/features/team/lib/match-format";
+import type { MyWeekendDues } from "@/services/payment.service";
+import type { DashboardMatchPaymentSummary } from "@/services/dashboard.service";
+import { formatInrAmount, nextWeekendDates, todayIsoDate } from "@/utils";
+
+const dashboardSectionHeadingClass =
+  "text-xs font-medium tracking-normal normal-case text-muted-foreground sm:font-semibold sm:tracking-[0.1em] sm:uppercase";
 
 /**
  * Home command center — summarize the weekend, do not manage it.
  */
 function DashboardShell() {
   const snapshotQuery = useDashboardSnapshot();
+  const duesQuery = useMyWeekendDues();
   const { openAlerts } = useNotificationsUi();
 
   if (snapshotQuery.isError) {
     return (
       <ErrorState
-        title="Access denied"
-        description="You must be an active Ranches Thunders member to use the app."
+        title="Couldn’t load home"
+        description="Check your connection and try again."
         onRetry={() => void snapshotQuery.refetch()}
       />
     );
@@ -62,27 +76,30 @@ function DashboardShell() {
     .reduce((s, p) => s + p.carpoolCount, 0);
   const recent = snap.recentNotifications[0];
   const thisWeekendTitle = weekendStatusTitle(weekendMatches);
+  const teamSnapshotHeading = `Team snapshot as of ${formatMatchDate(todayIsoDate())}`;
   const weekend = nextWeekendDates();
   const thisWeekendHeading =
     weekendMatches.length > 0
       ? `This weekend · ${thisWeekendTitle}`
       : `This weekend · ${formatMatchDate(weekend.saturday)} · ${formatMatchDate(weekend.sunday)}`;
-  const pastWeekendHeading = `Last weekend · ${formatMatchDate(snap.pastWeekendWeekStart)} · ${formatMatchDate(
-    // Sunday = Saturday + 1 day displayed via summaries or week start +1
-    pastWeekendSunday(snap.pastWeekendWeekStart),
-  )}`;
+  const settlementWeekendGroups = buildSettlementWeekendGroups(
+    duesQuery.data ?? [],
+    showAdminStatus ? pastWeekendSummaries : [],
+    snap.pastWeekendWeekStart,
+  );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <TeamIdentity />
       <DashboardGreeting />
 
       <section aria-labelledby="this-weekend-heading" className="space-y-3">
-        <h2
+        <Overline
           id="this-weekend-heading"
-          className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+          className={dashboardSectionHeadingClass}
         >
           {thisWeekendHeading}
-        </h2>
+        </Overline>
         {weekendMatches.length === 0 ? (
           <EmptyState
             title="No matches this weekend"
@@ -99,53 +116,64 @@ function DashboardShell() {
         )}
       </section>
 
+      {settlementWeekendGroups.map((group) => (
+        <section
+          key={group.weekStartDate}
+          aria-labelledby={`settlement-weekend-${group.weekStartDate}`}
+          className="space-y-3"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <Overline
+              id={`settlement-weekend-${group.weekStartDate}`}
+              className={dashboardSectionHeadingClass}
+            >
+              {group.weekStartDate === snap.pastWeekendWeekStart
+                ? "Last weekend"
+                : "Weekend"}{" "}
+              · {formatWeekendRange(group.weekStartDate, group.weekEndDate)}
+            </Overline>
+            {group.adminSummaries.length > 0 ? (
+              <Link
+                href="/payments"
+                className="shrink-0 text-xs font-semibold text-primary underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              >
+                Payments
+              </Link>
+            ) : null}
+          </div>
+          {group.personalDues ? (
+            <WeekendDuesCallout weekend={group.personalDues} />
+          ) : null}
+          {group.adminSummaries.length > 0 ? (
+            <ul className="space-y-2">
+              {group.adminSummaries.map((row) => (
+                <PastWeekendMatchPaymentCard key={row.matchId} summary={row} />
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ))}
+
       {moreUpcomingMatches.length > 0 ? (
         <section aria-labelledby="more-upcoming-heading" className="space-y-3">
-          <h2
+          <Overline
             id="more-upcoming-heading"
-            className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+            className={dashboardSectionHeadingClass}
           >
             More upcoming matches
-          </h2>
+          </Overline>
           {moreUpcomingMatches.map((match) => (
             <MatchTicket key={match.id} match={match} />
           ))}
         </section>
       ) : null}
 
-      {showAdminStatus && pastWeekendSummaries.length > 0 ? (
-        <section
-          aria-labelledby="past-weekend-payments-heading"
-          className="space-y-3"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <h2
-              id="past-weekend-payments-heading"
-              className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
-            >
-              {pastWeekendHeading}
-            </h2>
-            <Link
-              href="/payments"
-              className="text-[0.65rem] font-semibold text-primary underline-offset-2 hover:underline"
-            >
-              Payments
-            </Link>
-          </div>
-          <ul className="space-y-2">
-            {pastWeekendSummaries.map((row) => (
-              <PastWeekendMatchPaymentCard key={row.matchId} summary={row} />
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       {showAdminStatus ? (
-        <section aria-label={thisWeekendTitle} className="space-y-2">
-          <h2 className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
-            {thisWeekendTitle}
-          </h2>
-          <div className="grid grid-cols-3 gap-2">
+        <section aria-label={teamSnapshotHeading} className="space-y-2">
+          <Overline className={dashboardSectionHeadingClass}>
+            {teamSnapshotHeading}
+          </Overline>
+          <MetricRail className="gap-1.5 sm:gap-2">
             <StatusMetric
               icon={Car}
               value={carpoolTotal > 0 ? String(carpoolTotal) : "—"}
@@ -164,6 +192,7 @@ function DashboardShell() {
                   : "—"
               }
               label="Unpaid fees"
+              mobileLabel="Unpaid"
               hint={
                 snap.unpaidCount > 0
                   ? `${snap.unpaidCount} player${snap.unpaidCount === 1 ? "" : "s"} pending`
@@ -175,26 +204,27 @@ function DashboardShell() {
             <StatusMetric
               icon={WalletCards}
               value={`₹${formatInrAmount(snap.fundBalanceInr)}`}
-              label="Team fund"
-              hint="club balance on hand"
+              label="Funds"
+              mobileLabel="Fund"
+              hint="balance on hand"
               href="/expenses"
             />
-          </div>
+          </MetricRail>
         </section>
       ) : null}
 
       <section aria-labelledby="recent-alerts-heading">
-        <h2
+        <Overline
           id="recent-alerts-heading"
-          className="flex items-center gap-2 text-[0.65rem] font-bold tracking-[0.08em] uppercase"
+          className={`flex items-center gap-1.5 ${dashboardSectionHeadingClass}`}
         >
-          <BellRing className="size-3.5" aria-hidden />
+          <BellRing className="size-3 sm:size-3.5" aria-hidden />
           Recent alerts
-        </h2>
+        </Overline>
         <button
           type="button"
           onClick={openAlerts}
-          className="mt-2 flex min-h-16 w-full items-center gap-3 rounded-xl bg-surface-container px-4 py-3 text-left transition-colors hover:bg-surface-container-high"
+          className="mt-2 flex min-h-16 w-full items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3 text-left transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <BellRing className="size-4" aria-hidden />
@@ -203,7 +233,7 @@ function DashboardShell() {
             <span className="block text-xs font-semibold">
               {recent?.title ?? "You’re all caught up"}
             </span>
-            <span className="mt-0.5 block text-[0.65rem] leading-4 text-muted-foreground">
+            <span className="mt-0.5 block text-xs leading-4 text-muted-foreground">
               {recent?.body ?? "Match and payment alerts will appear here."}
             </span>
           </span>
@@ -218,7 +248,7 @@ function DashboardShell() {
                 asChild
                 variant="tonal"
                 size="sm"
-                className="min-h-12 w-full rounded-full text-[0.65rem]"
+                className="min-h-12 w-full rounded-xl text-xs"
               >
                 <Link href="/matches/new">
                   <Plus aria-hidden />
@@ -231,7 +261,7 @@ function DashboardShell() {
                 asChild
                 variant="tonal"
                 size="sm"
-                className="min-h-12 w-full rounded-full text-[0.65rem]"
+                className="min-h-12 w-full rounded-xl text-xs"
               >
                 <Link href="/team">
                   <Users aria-hidden />
@@ -247,6 +277,45 @@ function DashboardShell() {
 }
 
 type MetricIcon = typeof Users;
+
+type SettlementWeekendGroup = {
+  weekStartDate: string;
+  weekEndDate: string;
+  personalDues: MyWeekendDues | null;
+  adminSummaries: DashboardMatchPaymentSummary[];
+};
+
+function buildSettlementWeekendGroups(
+  personalDues: MyWeekendDues[],
+  adminSummaries: DashboardMatchPaymentSummary[],
+  pastWeekendWeekStart: string,
+): SettlementWeekendGroup[] {
+  const groups = new Map<string, SettlementWeekendGroup>();
+
+  for (const weekend of personalDues) {
+    groups.set(weekend.weekStartDate, {
+      weekStartDate: weekend.weekStartDate,
+      weekEndDate: weekend.weekEndDate,
+      personalDues: weekend,
+      adminSummaries: [],
+    });
+  }
+
+  if (adminSummaries.length > 0) {
+    const existing = groups.get(pastWeekendWeekStart);
+    groups.set(pastWeekendWeekStart, {
+      weekStartDate: pastWeekendWeekStart,
+      weekEndDate:
+        existing?.weekEndDate ?? pastWeekendSunday(pastWeekendWeekStart),
+      personalDues: existing?.personalDues ?? null,
+      adminSummaries,
+    });
+  }
+
+  return [...groups.values()].sort((a, b) =>
+    b.weekStartDate.localeCompare(a.weekStartDate),
+  );
+}
 
 function pastWeekendSunday(saturdayIso: string): string {
   const [y, m, d] = saturdayIso.split("-").map(Number);
@@ -274,6 +343,7 @@ function weekendStatusTitle(matches: Array<{ matchDate: string }>): string {
 function StatusMetric({
   icon: Icon,
   label,
+  mobileLabel,
   value,
   hint,
   urgent = false,
@@ -281,30 +351,38 @@ function StatusMetric({
 }: {
   icon: MetricIcon;
   label: string;
+  mobileLabel?: string;
   value: string;
   hint: string;
   urgent?: boolean;
   href?: string;
 }) {
   const className = urgent
-    ? "flex min-h-[5.5rem] min-w-0 flex-col items-center justify-center rounded-xl border-b-2 border-destructive bg-surface-container-low px-2 py-3 text-center transition-colors"
-    : "flex min-h-[5.5rem] min-w-0 flex-col items-center justify-center rounded-xl bg-surface-container-low px-2 py-3 text-center transition-colors";
+    ? "flex min-h-16 min-w-0 flex-col items-center justify-center rounded-lg border-b-2 border-destructive bg-surface-container-low px-1.5 py-2 text-center transition-colors sm:min-h-[5.5rem] sm:rounded-xl sm:px-2 sm:py-3"
+    : "flex min-h-16 min-w-0 flex-col items-center justify-center rounded-lg bg-surface-container-low px-1.5 py-2 text-center transition-colors sm:min-h-[5.5rem] sm:rounded-xl sm:px-2 sm:py-3";
 
   const body = (
     <>
       <Icon
-        className={urgent ? "size-4 text-destructive" : "size-4 text-primary"}
+        className={
+          urgent
+            ? "size-3.5 text-destructive sm:size-4"
+            : "size-3.5 text-primary sm:size-4"
+        }
         aria-hidden
       />
-      <p className="mt-1.5 font-heading text-xl leading-none font-bold tabular-nums">
+      <Stat className="mt-1 max-w-full text-base leading-none font-semibold tracking-tight whitespace-nowrap tabular-nums sm:mt-1.5 sm:text-xl">
         {value}
-      </p>
-      <p className="mt-1 text-[0.65rem] font-bold tracking-wide text-foreground uppercase">
+      </Stat>
+      <Caption className="mt-1 leading-none font-medium tracking-normal text-foreground sm:hidden">
+        {mobileLabel ?? label}
+      </Caption>
+      <Caption className="mt-1 hidden leading-none text-foreground uppercase sm:block">
         {label}
-      </p>
-      <p className="mt-0.5 line-clamp-2 text-[0.6rem] leading-3.5 text-muted-foreground">
+      </Caption>
+      <Caption className="mt-0.5 line-clamp-2 hidden font-normal tracking-normal text-muted-foreground sm:block">
         {hint}
-      </p>
+      </Caption>
     </>
   );
 

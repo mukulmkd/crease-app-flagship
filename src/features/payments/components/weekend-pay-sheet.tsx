@@ -12,12 +12,12 @@ import {
   BottomSheetHeader,
   BottomSheetTitle,
 } from "@/components/dialogs";
-import { FormField } from "@/components/forms/form-field";
+import { StatusChip } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MVP_TEAM } from "@/constants/domain/enums";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
+import { PaymentProofFields } from "@/features/payments/components/payment-proof-fields";
 import { UpiPayActions } from "@/features/payments/components/upi-pay-actions";
 import {
   useSubmitDemoWeekendPaymentProof,
@@ -75,7 +75,7 @@ function WeekendPaySheet({
     >
       <BottomSheetContent className="bg-surface-container-lowest">
         <BottomSheetHeader className="text-left">
-          <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+          <BottomSheetTitle className="font-heading text-2xl font-semibold">
             Pay weekend
           </BottomSheetTitle>
           <BottomSheetDescription>
@@ -123,26 +123,32 @@ function WeekendPaySheet({
                   utr: values.utr,
                   file,
                 });
-                toast.success({ title: "Weekend payment submitted" });
+                toast.success({
+                  title: "Payment proof submitted",
+                  description: "Your weekend payment is marked paid.",
+                });
                 onClose();
               } catch (error) {
                 toast.error({ title: getMutationErrorMessage(error) });
               }
             })}
           >
-            <p className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
-              Confirm payment
-            </p>
-            <FormField label="UTR" error={form.formState.errors.utr?.message}>
-              <Input {...form.register("utr")} autoComplete="off" />
-            </FormField>
-            <FormField label="Screenshot">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              />
-            </FormField>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                  Step 2 · Submit proof
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Step 1 is the UPI payment above.
+                </p>
+              </div>
+              <StatusChip status="pending">Payment pending</StatusChip>
+            </div>
+            <PaymentProofFields
+              utrRegistration={form.register("utr")}
+              utrError={form.formState.errors.utr?.message}
+              onFileChange={setFile}
+            />
             <Button
               type="submit"
               variant="tonal"
@@ -150,7 +156,7 @@ function WeekendPaySheet({
               loading={submitWeekend.isPending}
               disabled={!upi && !demoMode}
             >
-              Mark paid · ₹{formatInrAmount(amountInr)}
+              Submit proof · ₹{formatInrAmount(amountInr)}
             </Button>
             {demoMode ? (
               <Button

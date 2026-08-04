@@ -41,7 +41,7 @@ function TeamLogoControl({ teamName, logoUrl }: TeamLogoControlProps) {
     <div className="flex flex-col items-start gap-3">
       <div className="relative">
         <span
-          className="relative flex size-20 items-center justify-center overflow-hidden rounded-xl bg-[#082417] text-primary-foreground"
+          className="relative flex size-20 items-center justify-center overflow-hidden rounded-xl bg-clubhouse text-primary-foreground"
           aria-hidden={!resolved}
         >
           {resolved ? (
@@ -49,17 +49,20 @@ function TeamLogoControl({ teamName, logoUrl }: TeamLogoControlProps) {
             <img
               src={resolved}
               alt={`${teamName} logo`}
+              loading="lazy"
+              decoding="async"
               className="size-full object-cover"
             />
           ) : (
-            <span className="h-8 w-8 border-x-2 border-b-2 border-[#c9f64b]">
-              <span className="mx-auto block h-full w-px bg-[#c9f64b]" />
+            <span className="relative h-8 w-8" aria-hidden>
+              <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-tertiary" />
+              <span className="absolute top-0 bottom-0 left-1/2 w-0.5 -translate-x-1/2 rounded-full bg-tertiary/80" />
             </span>
           )}
         </span>
         {busy ? (
           <span
-            className="absolute inset-0 flex items-center justify-center rounded-xl bg-[#082417]/60"
+            className="absolute inset-0 flex items-center justify-center rounded-xl bg-clubhouse/60"
             aria-live="polite"
             aria-label="Updating logo"
           >

@@ -13,7 +13,7 @@ type EmptyStateProps = {
   className?: string;
 };
 
-/** Stitch empty state — centered title-lg + primary CTA */
+/** Centered empty state with an optional primary action. */
 function EmptyState({
   icon: Icon = Inbox,
   title,

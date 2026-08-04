@@ -20,7 +20,7 @@ import type {
 } from "@/types/models";
 
 /**
- * Team fund account, expenses, asks, contributions — CRUD only.
+ * Funds account, expenses, asks, contributions — CRUD only.
  */
 export class FundRepository extends BaseRepository {
   constructor(client: TypedSupabaseClient) {
@@ -40,7 +40,7 @@ export class FundRepository extends BaseRepository {
   async getAccountOrThrow(teamId: TeamId | string): Promise<TeamFundAccount> {
     const account = await this.getAccount(teamId);
     if (!account) {
-      throw new AppError("NOT_FOUND", "Team fund account not found", 404);
+      throw new AppError("NOT_FOUND", "Funds account not found", 404);
     }
     return account;
   }

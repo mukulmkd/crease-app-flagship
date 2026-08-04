@@ -1,6 +1,8 @@
 "use client";
 
 import { BrandMark } from "@/components/common/brand-mark";
+import { TeamIdentity } from "@/components/common/team-identity";
+import { Overline } from "@/components/common/typography";
 import { NavLink } from "@/components/navigation/nav-link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -16,7 +18,7 @@ type SidebarProps = {
 };
 
 /**
- * Desktop / tablet left navigation — Stitch Athletic Precision rail.
+ * Desktop / tablet left navigation — Modern Scorebook Utility rail.
  */
 function Sidebar({ collapsed = false, className }: SidebarProps) {
   const membership = useMyMembership();
@@ -44,6 +46,14 @@ function Sidebar({ collapsed = false, className }: SidebarProps) {
         />
       </div>
 
+      <div className="px-2 pb-2">
+        <TeamIdentity
+          compact
+          collapsed={collapsed}
+          className="bg-surface-container"
+        />
+      </div>
+
       <ScrollArea className="flex-1 px-2 pb-4">
         <nav className="flex flex-col gap-1" aria-label="Primary">
           {primaryNav
@@ -53,25 +63,25 @@ function Sidebar({ collapsed = false, className }: SidebarProps) {
             ))}
         </nav>
 
-        {!collapsed ? (
-          <>
-            <Separator className="my-3" />
-            <p className="mb-1 px-3 text-caption font-medium tracking-wide text-muted-foreground uppercase">
+        <>
+          <Separator className="my-3" />
+          {!collapsed ? (
+            <Overline className="mb-1 px-3 text-muted-foreground">
               More
-            </p>
-            <nav className="flex flex-col gap-1" aria-label="Secondary">
-              {secondaryNav
-                .filter(
-                  (item) =>
-                    item.desktop &&
-                    (!item.permission || hasPermission(role, item.permission)),
-                )
-                .map((item) => (
-                  <NavLink key={item.id} item={item} collapsed={collapsed} />
-                ))}
-            </nav>
-          </>
-        ) : null}
+            </Overline>
+          ) : null}
+          <nav className="flex flex-col gap-1" aria-label="Secondary">
+            {secondaryNav
+              .filter(
+                (item) =>
+                  item.desktop &&
+                  (!item.permission || hasPermission(role, item.permission)),
+              )
+              .map((item) => (
+                <NavLink key={item.id} item={item} collapsed={collapsed} />
+              ))}
+          </nav>
+        </>
       </ScrollArea>
     </aside>
   );

@@ -7,10 +7,18 @@ Lazy load heavy components.
 
 Use semantic HTML.
 
-Provide aria-labels.
+Use one `h1` per route. Associate every label, description, and error with its
+control; composite fields and OTP need an explicit accessible name.
 
-Support keyboard navigation.
+Support keyboard navigation, visible focus, radio-group arrow keys, and sheet
+focus trapping.
 
-Meet WCAG AA.
+Default touch targets are ≥48px; documented dense desktop exceptions are ≥40px.
+Operational copy is ≥12px. Meet WCAG AA in light and dark.
+
+Honor `prefers-reduced-motion` in CSS and programmatic scrolling.
+
+Every data route needs loading, empty, error, permission, and offline behavior.
+Service-worker updates must not discard active form input.
 
 Optimize for Lighthouse.

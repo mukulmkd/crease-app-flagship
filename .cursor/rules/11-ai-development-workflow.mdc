@@ -1,21 +1,22 @@
 ---
-description: AI workflow for Stitch → React implementation
+description: AI workflow for implementing Crease product UI
 alwaysApply: true
 ---
 
 # AI development workflow
 
-When implementing screens from Google Stitch:
+When implementing or changing screens:
 
-1. Treat Stitch project `projects/5487252279778690236` and **Modern Cricket Club** (`assets/11807811405223687109`) as visual source of truth.
-2. Pull / confirm screens via Stitch MCP before coding major UI.
-3. Do not copy generated HTML.
-4. Rebuild with reusable components from `src/components` and feature folders.
-5. Keep dual token sources in sync (`globals.css` + `design-tokens.ts`).
-6. Follow architecture: UI → Hook → Service → Repository → Supabase.
-7. Reuse existing components first (`MatchTicket`, `SegmentedControl`, `BottomSheet`, typography).
-8. Separate presentation from business logic — no Supabase / authz in JSX.
-9. Preserve UX while improving maintainability; split files >250 lines.
-10. Update `.cursor/rules` / `docs/UI.md` when the DS or signature patterns change.
+1. Treat `docs/UI.md` **Modern Scorebook Utility** as the only visual source of truth.
+2. Do not regenerate an external design system or copy generated HTML.
+3. Rebuild with reusable components from `src/components` and feature folders.
+4. Keep dual token sources in sync (`globals.css` + `design-tokens.ts`).
+5. Follow architecture: UI → Hook → Service → Repository → Supabase.
+6. Reuse `MatchTicket`, `MatchPollControl`, `SegmentedControl`,
+   `ManageMatchSheet`, `BottomSheet`, and shared typography first.
+7. Separate presentation from business logic — no Supabase / authz in JSX.
+8. Preserve task completion while improving maintainability; split files >250 lines.
+9. Verify loading, empty, error, permission, offline, keyboard, and mobile states.
+10. Update `.cursor/rules` / `docs/UI.md` when the system or signature patterns change.
 
 Always explain non-obvious architectural decisions in brief code comments.

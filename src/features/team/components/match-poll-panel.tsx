@@ -1,7 +1,8 @@
 "use client";
 
-import { SegmentedControl } from "@/components/forms/segmented-control";
-import { BodySm } from "@/components/common";
+import { ChevronDown } from "lucide-react";
+
+import { BodySm, StatusChip } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
 import { Progress } from "@/components/ui/progress";
 import type { MembershipRole } from "@/constants/domain/enums";
@@ -17,6 +18,7 @@ import {
   useMatchPolls,
   useSquadLimits,
 } from "@/features/team/hooks";
+import { MatchPollControl } from "@/features/team/components/match-poll-control";
 import { MatchSquadFinalize } from "@/features/team/components/match-squad-finalize";
 import {
   MatchRidesSummary,
@@ -81,6 +83,10 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
   );
   const myAvailability = availability?.myVote?.availability;
   const myCarpool = carpool?.myVote?.carpool;
+  const myUserId = availability?.myVote?.userId;
+  const inPlayingSquad = myUserId
+    ? squadUserIds.includes(String(myUserId))
+    : false;
   const availabilityLocked = availabilityFrozen && !canOverride;
   const carpoolLocked = carpoolFrozen && !canOverride;
   const showAdminFinalize =
@@ -109,34 +115,75 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
     { value: "self" as const, label: "Coming own" },
   ];
 
-  const statusHint = squadFinalized
+  const statusSummary = squadFinalized
+    ? `Squad locked · ${squadCount} selected · Travel ${carpoolFrozen ? "locked" : "open"}`
+    : availabilityFrozen
+      ? `Availability locked · ${yesCount} in pool · Squad pending`
+      : finalizationPending
+        ? `Voting open · ${yesCount} available · Admin confirmation needed`
+        : `Voting open · ${yesCount} available · Target ${squadMin}–${squadMax}`;
+  const statusDetails = squadFinalized
     ? carpoolFrozen
-      ? "Playing squad and travel locked — Admin can still override"
-      : "Playing squad locked — travel votes stay open until kickoff"
+      ? "The playing squad and travel poll are locked. An Admin can still correct a response."
+      : "The playing squad is final. Travel votes remain open until kickoff."
     : availabilityFrozen
       ? yesCount > squadMax
-        ? "Availability frozen — Admin must pick the playing squad"
-        : "Availability frozen — squad not finalized yet"
+        ? "The availability pool is frozen. An Admin must select the final playing squad."
+        : "Availability is frozen, but the playing squad has not been finalized yet."
       : finalizationPending
         ? yesCount >= squadMin
-          ? "Voting stays open — Admin must confirm the playing squad"
-          : `Voting stays open — recruit players, then confirm at ${squadMin}–${squadMax}`
+          ? "Voting stays open until an Admin confirms the playing squad."
+          : `Voting stays open while the team recruits players. An Admin can confirm once ${squadMin}–${squadMax} are selected.`
         : yesCount > squadMax
-          ? "Pool is oversubscribed — Admin should finalize before freeze time"
-          : `Availability is a pool (no hard cap). Final ${squadMin}–${squadMax} locks at freeze.`;
+          ? "The available pool has no hard cap. An Admin will select the final playing squad."
+          : `Availability is an open pool. The final ${squadMin}–${squadMax} players lock at freeze.`;
+  const participation = inPlayingSquad
+    ? {
+        label: "Playing squad",
+        description: "You’re selected for this match.",
+        status: "accent" as const,
+      }
+    : myAvailability === "yes"
+      ? {
+          label: "Available pool · not selected",
+          description: "You opted in but are not in the final squad.",
+          status: "warning" as const,
+        }
+      : {
+          label: "Not playing",
+          description: "You’re not in the final squad.",
+          status: "neutral" as const,
+        };
 
   return (
     <div className="space-y-5">
+      {squadFinalized ? (
+        <section
+          aria-label="Your participation"
+          className="flex items-center justify-between gap-3 rounded-xl bg-surface-container-low px-4 py-3"
+        >
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-muted-foreground">
+              Your participation
+            </p>
+            <BodySm className="mt-0.5">{participation.description}</BodySm>
+          </div>
+          <StatusChip status={participation.status} className="shrink-0">
+            {participation.label}
+          </StatusChip>
+        </section>
+      ) : null}
+
       <section className="space-y-3" aria-labelledby="squad-strength">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p
               id="squad-strength"
-              className="font-heading text-xl font-bold uppercase"
+              className="font-heading text-xl font-semibold"
             >
               Squad strength
             </p>
-            <BodySm>{statusHint}</BodySm>
+            <BodySm>{statusSummary}</BodySm>
           </div>
           <span className="font-heading text-2xl font-bold tabular-nums">
             {strengthLabel}
@@ -150,6 +197,16 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
           Target {squadMin}–{squadMax}
           {squadFinalized ? ` · Available ${yesCount}` : ""} · {travelSummary}
         </BodySm>
+        <details className="group rounded-lg bg-surface-container-low">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-3 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none">
+            Why this status?
+            <ChevronDown
+              className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+              aria-hidden
+            />
+          </summary>
+          <BodySm className="px-3 pb-3">{statusDetails}</BodySm>
+        </details>
       </section>
 
       {showAdminFinalize ? (
@@ -158,21 +215,19 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
 
       {canVote ? (
         <section className="space-y-4 rounded-xl bg-surface-container-low p-4">
-          <h2 className="font-heading text-xl font-bold uppercase">
-            Your response
-          </h2>
+          <h2 className="font-heading text-xl font-semibold">Your response</h2>
           <div className="space-y-2">
             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Availability
             </p>
-            <SegmentedControl
+            <MatchPollControl<"yes" | "no">
               aria-label="Availability"
               loading={castAvailability.isPending}
-              options={playingOpts.map((o) => ({
-                ...o,
+              options={playingOpts.map((option) => ({
+                ...option,
                 disabled: availabilityLocked,
               }))}
-              value={myAvailability ?? ("no" as const)}
+              value={myAvailability}
               onValueChange={async (vote) => {
                 try {
                   await castAvailability.mutateAsync({ matchId, vote });
@@ -187,14 +242,14 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Travel
             </p>
-            <SegmentedControl
-              aria-label="Carpool"
+            <MatchPollControl<"carpool" | "self">
+              aria-label="Travel"
               loading={castCarpool.isPending}
-              options={carpoolOpts.map((o) => ({
-                ...o,
+              options={carpoolOpts.map((option) => ({
+                ...option,
                 disabled: carpoolLocked,
               }))}
-              value={myCarpool ?? ("self" as const)}
+              value={myCarpool}
               onValueChange={async (vote) => {
                 try {
                   await castCarpool.mutateAsync({ matchId, vote });

@@ -23,6 +23,7 @@ import {
   useTeamMembers,
 } from "@/features/team/hooks";
 import type { MatchCarpoolRide } from "@/types/models";
+import { formatInrAmount } from "@/utils";
 
 type RideDraft = {
   key: string;
@@ -86,6 +87,7 @@ function CarpoolAssignForm({
   const save = useSaveCarpoolAssignments();
   const seedDemo = useSeedDemoCarpool();
   const [rides, setRides] = useState<RideDraft[]>(initialRides);
+  const feePerPassenger = demoMode ? 0.25 : 100;
 
   const nameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -103,6 +105,12 @@ function CarpoolAssignForm({
     }
     return set;
   }, [rides]);
+  const assignedRides = rides.filter((ride) => ride.driverUserId);
+  const passengerCount = assignedRides.reduce(
+    (sum, ride) => sum + ride.passengerUserIds.length,
+    0,
+  );
+  const transferTotal = passengerCount * feePerPassenger;
 
   return (
     <div className="space-y-4 px-4 pb-6">
@@ -126,7 +134,6 @@ function CarpoolAssignForm({
                     ? "First squad member drives; others are passengers."
                     : undefined,
               });
-              onClose();
             } catch (error) {
               toast.error({ title: getMutationErrorMessage(error) });
             }
@@ -153,7 +160,7 @@ function CarpoolAssignForm({
             className="space-y-3 rounded-xl bg-surface-container-low p-3"
           >
             <div className="flex items-center justify-between gap-2">
-              <p className="font-heading text-lg font-bold uppercase">
+              <p className="font-heading text-lg font-semibold">
                 Ride {rideIndex + 1}
               </p>
               <Button
@@ -243,6 +250,17 @@ function CarpoolAssignForm({
                 })
               )}
             </fieldset>
+            {ride.driverUserId ? (
+              <BodySm className="rounded-lg bg-surface-container-high px-3 py-2">
+                {nameById.get(ride.driverUserId)} receives ₹
+                {formatInrAmount(
+                  ride.passengerUserIds.length * feePerPassenger,
+                )}{" "}
+                credit · {ride.passengerUserIds.length} passenger
+                {ride.passengerUserIds.length === 1 ? "" : "s"} charged ₹
+                {formatInrAmount(feePerPassenger)} each
+              </BodySm>
+            ) : null}
           </div>
         );
       })}
@@ -265,6 +283,34 @@ function CarpoolAssignForm({
         <Plus className="size-4" aria-hidden />
         Add ride
       </Button>
+
+      <section className="rounded-xl bg-surface-container-high p-4">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Charges and credits preview
+        </p>
+        {passengerCount > 0 ? (
+          <div className="mt-2 flex items-end justify-between gap-3">
+            <BodySm>
+              {passengerCount} passenger
+              {passengerCount === 1 ? "" : "s"} × ₹
+              {formatInrAmount(feePerPassenger)}
+            </BodySm>
+            <p className="font-heading text-xl font-bold tabular-nums">
+              ₹{formatInrAmount(transferTotal)}
+            </p>
+          </div>
+        ) : (
+          <BodySm className="mt-2">
+            No passenger charges or driver credits will be created.
+          </BodySm>
+        )}
+        {passengerCount > 0 ? (
+          <BodySm className="mt-1 text-muted-foreground">
+            Passengers are charged ₹{formatInrAmount(transferTotal)} total;
+            drivers receive the same amount as credits.
+          </BodySm>
+        ) : null}
+      </section>
 
       <div className="flex flex-col gap-2">
         <Button
@@ -355,7 +401,7 @@ function MatchCarpoolAssign({
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="max-h-[90dvh] overflow-y-auto bg-surface-container-lowest">
         <BottomSheetHeader className="text-left">
-          <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+          <BottomSheetTitle className="font-heading text-2xl font-semibold">
             Assign carpool
           </BottomSheetTitle>
           <BottomSheetDescription>

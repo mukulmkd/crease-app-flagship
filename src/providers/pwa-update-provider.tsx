@@ -2,13 +2,44 @@
 
 import { useEffect } from "react";
 
+import { toast } from "@/components/feedback/toast";
+
 const SW_PATH = "/sw.js";
+const UPDATE_TOAST_ID = "pwa-update-available";
+const PWA_RUNTIME_ENABLED =
+  process.env.NODE_ENV === "production" ||
+  process.env.NEXT_PUBLIC_ENABLE_PWA_DEV === "true";
+
+async function clearStaleDevelopmentWorker() {
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  const hadController = Boolean(navigator.serviceWorker.controller);
+
+  await Promise.all(
+    registrations.map((registration) => registration.unregister()),
+  );
+  if ("caches" in window) {
+    const cacheNames = await window.caches.keys();
+    await Promise.all(cacheNames.map((name) => window.caches.delete(name)));
+  }
+
+  // A worker keeps controlling the current tab until the next navigation.
+  // Reload once after cleanup; the session flag prevents a development loop.
+  if (
+    hadController &&
+    window.sessionStorage.getItem("crease-dev-sw-reset") !== "1"
+  ) {
+    window.sessionStorage.setItem("crease-dev-sw-reset", "1");
+    window.location.reload();
+    return;
+  }
+  if (!hadController) {
+    window.sessionStorage.removeItem("crease-dev-sw-reset");
+  }
+}
 
 /**
- * Keep installed PWA clients on the latest deploy without player action.
- *
  * - Checks for a new service worker whenever the app opens / becomes visible
- * - Reloads once when an updated worker takes control (skipWaiting + clientsClaim)
+ * - Leaves an update waiting until the player chooses to reload
  */
 function PwaUpdateProvider() {
   useEffect(() => {
@@ -16,23 +47,35 @@ function PwaUpdateProvider() {
       return;
     }
 
-    let registration: ServiceWorkerRegistration | null = null;
-    let refreshing = false;
+    if (!PWA_RUNTIME_ENABLED) {
+      void clearStaleDevelopmentWorker().catch(() => {
+        // Development cleanup must never block the app.
+      });
+      return;
+    }
 
-    const reloadForUpdate = () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
+    let registration: ServiceWorkerRegistration | null = null;
+    let applyingUpdate = false;
+
+    const applyUpdate = (worker: ServiceWorker) => {
+      applyingUpdate = true;
+      worker.postMessage({ type: "SKIP_WAITING" });
     };
 
-    // Only auto-reload on *updates*. First install should not bounce the page.
-    const hadControllerAtStart = Boolean(navigator.serviceWorker.controller);
-    if (hadControllerAtStart) {
-      navigator.serviceWorker.addEventListener(
-        "controllerchange",
-        reloadForUpdate,
-      );
-    }
+    const announceUpdate = (worker: ServiceWorker) => {
+      toast.action({
+        id: UPDATE_TOAST_ID,
+        title: "Update available",
+        description:
+          "Reload when you’re ready. Your current screen and form input will stay in place until then.",
+        actionLabel: "Reload",
+        onAction: () => applyUpdate(worker),
+      });
+    };
+
+    const onControllerChange = () => {
+      if (applyingUpdate) window.location.reload();
+    };
 
     const checkForUpdates = () => {
       void registration?.update().catch(() => {
@@ -43,6 +86,9 @@ function PwaUpdateProvider() {
     const onVisibility = () => {
       if (document.visibilityState === "visible") checkForUpdates();
     };
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) checkForUpdates();
+    };
 
     void navigator.serviceWorker
       .register(SW_PATH, { scope: "/" })
@@ -50,9 +96,8 @@ function PwaUpdateProvider() {
         registration = reg;
         checkForUpdates();
 
-        // If a worker is already waiting (rare with skipWaiting), nudge activation.
         if (reg.waiting) {
-          reg.waiting.postMessage({ type: "SKIP_WAITING" });
+          announceUpdate(reg.waiting);
         }
 
         reg.addEventListener("updatefound", () => {
@@ -63,8 +108,7 @@ function PwaUpdateProvider() {
               worker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
-              // skipWaiting is on; controllerchange + reload finishes the swap.
-              worker.postMessage({ type: "SKIP_WAITING" });
+              announceUpdate(worker);
             }
           });
         });
@@ -73,23 +117,25 @@ function PwaUpdateProvider() {
         // Registration failure should not block the app.
       });
 
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      onControllerChange,
+    );
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("focus", checkForUpdates);
     window.addEventListener("online", checkForUpdates);
-    window.addEventListener("pageshow", (event) => {
-      if (event.persisted) checkForUpdates();
-    });
+    window.addEventListener("pageshow", onPageShow);
 
     return () => {
+      toast.dismiss(UPDATE_TOAST_ID);
+      navigator.serviceWorker.removeEventListener(
+        "controllerchange",
+        onControllerChange,
+      );
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("focus", checkForUpdates);
       window.removeEventListener("online", checkForUpdates);
-      if (hadControllerAtStart) {
-        navigator.serviceWorker.removeEventListener(
-          "controllerchange",
-          reloadForUpdate,
-        );
-      }
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
 

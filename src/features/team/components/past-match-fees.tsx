@@ -47,7 +47,7 @@ function PastMatchFees({
       <div className="flex items-center justify-between gap-2">
         <h2
           id="my-payment-heading"
-          className="font-heading text-xl font-bold uppercase"
+          className="font-heading text-xl font-semibold"
         >
           {canManageSettlement ? "Fees & settlement" : "My payment"}
         </h2>
@@ -173,10 +173,10 @@ function PastMatchFees({
                       <p
                         className={
                           charge.status === "pending"
-                            ? "text-[0.65rem] font-bold tracking-wide text-destructive uppercase"
+                            ? "text-xs font-bold tracking-wide text-destructive uppercase"
                             : isChargeSettled(charge)
-                              ? "text-[0.65rem] font-bold tracking-wide text-success uppercase"
-                              : "text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase"
+                              ? "text-xs font-bold tracking-wide text-success uppercase"
+                              : "text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         }
                       >
                         {chargeStatusLabel(charge.status, charge.note)}

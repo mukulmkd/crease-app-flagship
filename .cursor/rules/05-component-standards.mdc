@@ -9,15 +9,19 @@ Extract reusable components. Prefer composition over one-off JSX.
 
 ## Design-system shared components
 
-Typography (`Title`, `Body`, `BodySm`)  
-SectionHeader · StatusChip · UserAvatar · BrandMark · TeamLogoBadge  
-FormField · SegmentedControl  
+Typography (`Display`, `Headline`, `Title`, `Stat`, `Label`, `Overline`,
+`Caption`, `Body`, `BodySm`)
+SectionHeader · StatusChip · MetricRail · UserAvatar · BrandMark · TeamLogoBadge
+FormField · Checkbox · SegmentedControl
 EmptyState / LoadingState / ErrorState  
 BottomSheet · toast helpers
 
 ## Feature UI patterns (reuse these)
 
 - `MatchTicket` — Home next-match surface (`features/dashboard`)
+- `MatchPollControl` — compact/full availability + carpool voting
+- `ManageMatchSheet` — staged Admin match lifecycle
+- `PaymentProofFields` — common UTR + screenshot proof fields
 - `WeekendDaySection` + `CreateTournamentSheet` — weekend create flow
 - Auth: `AuthShell`, `LoginForm`, `OtpForm`
 - Team: `TeamMembersView`, `AddPlayerForm` (sheet)
@@ -26,8 +30,10 @@ BottomSheet · toast helpers
 
 - Primitives live in `components/ui` (shadcn).
 - Compose higher-level UI in `common` / `forms` / `dialogs` / `feedback`.
-- Display/stat copy must use `font-heading` (Barlow Condensed).
-- Selected states on segmented controls use lime accent — do not invent parallel toggles.
+- Display/stat copy must use `font-heading` (Oswald).
+- Use one `h1` per route; use shared typography roles instead of ad-hoc text sizes.
+- Operational copy is at least 12px.
+- Selected states on segmented controls use amber accent — do not invent parallel toggles.
 - Avoid nesting cards inside cards; prefer tonal surfaces and hairline dividers.
 - Keep feature files under ~250 lines; extract day sections / sheets / tickets.
 

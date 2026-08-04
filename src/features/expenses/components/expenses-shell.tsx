@@ -43,7 +43,7 @@ function ExpensesShell() {
     return (
       <ErrorState
         title="Admin only"
-        description="Team fund and expenses are managed by Ranches Thunders admins."
+        description="Funds and expenses are managed by Ranches Thunders admins."
         onRetry={() => void membershipQuery.refetch()}
       />
     );
@@ -69,24 +69,24 @@ function ExpensesShell() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6 pb-2">
+      <div className="space-y-1">
         <Title>Expenses</Title>
-        <BodySm>
+        <BodySm className="text-muted-foreground">
           Contributions by player, fund asks, and every club expense
         </BodySm>
       </div>
 
       <section
-        aria-label="Team fund summary"
-        className="rounded-xl bg-surface-container-low px-4 py-4"
+        aria-label="Funds summary"
+        className="rounded-2xl bg-surface-container-low px-4 py-5"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
-              Team fund balance
+            <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+              Funds balance
             </p>
-            <p className="mt-1 font-heading text-4xl font-bold tabular-nums">
+            <p className="mt-1 font-heading text-4xl font-semibold tabular-nums">
               ₹{formatInrAmount(hub.balanceInr)}
             </p>
           </div>
@@ -96,7 +96,7 @@ function ExpensesShell() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 border-t border-outline-variant/40 pt-3">
           <div>
-            <p className="text-[0.6rem] font-bold tracking-wide text-muted-foreground uppercase">
+            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Contributed
             </p>
             <p className="mt-0.5 font-heading text-xl font-bold text-primary tabular-nums">
@@ -104,7 +104,7 @@ function ExpensesShell() {
             </p>
           </div>
           <div>
-            <p className="text-[0.6rem] font-bold tracking-wide text-muted-foreground uppercase">
+            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Expenses
             </p>
             <p className="mt-0.5 font-heading text-xl font-bold text-destructive tabular-nums">
@@ -119,7 +119,7 @@ function ExpensesShell() {
           type="button"
           variant="tonal"
           size="sm"
-          className="min-h-12 w-full rounded-full text-[0.65rem]"
+          className="min-h-12 w-full rounded-xl text-xs"
           onClick={() => setExpenseOpen(true)}
         >
           <Plus aria-hidden />
@@ -130,7 +130,7 @@ function ExpensesShell() {
             type="button"
             variant="tonal"
             size="sm"
-            className="min-h-12 w-full rounded-full text-[0.65rem]"
+            className="min-h-12 w-full rounded-xl text-xs"
             onClick={() => setAskOpen(true)}
           >
             <HandCoins aria-hidden />
@@ -143,7 +143,7 @@ function ExpensesShell() {
         <div className="flex items-center justify-between gap-2">
           <h2
             id="contributions-heading"
-            className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+            className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
           >
             Contributions by player
           </h2>
@@ -151,7 +151,7 @@ function ExpensesShell() {
             type="button"
             variant="ghost"
             size="sm"
-            className="h-8 px-2 text-[0.65rem] font-semibold text-primary"
+            className="min-h-12 px-3 text-xs font-semibold text-primary"
             onClick={() => openRecord()}
           >
             Record
@@ -178,7 +178,7 @@ function ExpensesShell() {
       <section aria-labelledby="expense-history-heading" className="space-y-3">
         <h2
           id="expense-history-heading"
-          className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+          className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
         >
           All expenses
         </h2>

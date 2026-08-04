@@ -33,7 +33,7 @@ function SummaryStat({
       >
         {value}
       </p>
-      <p className="mt-0.5 text-[0.65rem] font-bold tracking-wide text-muted-foreground uppercase">
+      <p className="mt-0.5 text-xs font-bold tracking-wide text-muted-foreground uppercase">
         {label}
       </p>
     </div>
@@ -48,7 +48,7 @@ function MatchFeesSection({ matches }: { matches: MatchFeeRow[] }) {
 
   return (
     <section className="space-y-3">
-      <h2 className="font-heading text-xl font-bold uppercase">
+      <h2 className="font-heading text-xl font-semibold">
         Match fees
         {matches.length > 0 ? ` · ${matches.length}` : ""}
       </h2>
@@ -62,7 +62,7 @@ function MatchFeesSection({ matches }: { matches: MatchFeeRow[] }) {
                   <p className="text-sm font-semibold">
                     {formatMatchDate(match.matchDate)}
                   </p>
-                  <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {MATCH_CLASSIFICATION_LABELS[match.classification]}
                     {" · "}
                     {match.opposition?.trim() || "TBD"}
@@ -75,7 +75,7 @@ function MatchFeesSection({ matches }: { matches: MatchFeeRow[] }) {
               {match.classification === "tournament" ? (
                 <dl className="grid grid-cols-2 gap-2 text-center">
                   <div className="rounded-lg bg-surface-container-lowest px-2 py-2">
-                    <dt className="text-[0.6rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+                    <dt className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                       Tournament fee for this match
                     </dt>
                     <dd className="mt-0.5 font-heading text-lg font-bold tabular-nums">
@@ -83,7 +83,7 @@ function MatchFeesSection({ matches }: { matches: MatchFeeRow[] }) {
                     </dd>
                   </div>
                   <div className="rounded-lg bg-surface-container-lowest px-2 py-2">
-                    <dt className="text-[0.6rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+                    <dt className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                       Match fees
                     </dt>
                     <dd className="mt-0.5 font-heading text-lg font-bold tabular-nums">
@@ -92,7 +92,7 @@ function MatchFeesSection({ matches }: { matches: MatchFeeRow[] }) {
                   </div>
                 </dl>
               ) : (
-                <p className="text-[0.65rem] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Match fees ₹{formatInrAmount(match.matchFeesInr)}
                   {match.matchFeesInr <= 0 ? " · TBD" : ""}
                 </p>
@@ -118,7 +118,7 @@ function PlayerSection({
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="font-heading text-xl font-bold uppercase">
+      <h2 className="font-heading text-xl font-semibold">
         {title}
         {players.length > 0 ? ` · ${players.length}` : ""}
       </h2>
@@ -158,12 +158,12 @@ function PlayerSection({
                     </span>
                   )}
                   {player.isCollector ? (
-                    <span className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+                    <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                       Collector
                     </span>
                   ) : null}
                 </p>
-                <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {player.matches
                     .map(
                       (match) =>
@@ -187,7 +187,7 @@ function PlayerSection({
                       : player.paidInr || player.billedInr,
                   )}
                 </p>
-                <p className="text-[0.65rem] font-bold tracking-wide text-muted-foreground uppercase">
+                <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
                   {variant === "unpaid"
                     ? "Due"
                     : player.isCollector

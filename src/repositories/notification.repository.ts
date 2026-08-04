@@ -78,6 +78,17 @@ export class NotificationRepository extends BaseRepository {
     return mapNotification(this.requireData(data, "notification.update"));
   }
 
+  async markAllReadForUser(userId: ProfileId | string): Promise<number> {
+    const { data, error } = await this.client
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .is("read_at", null)
+      .select("id");
+    this.assertOk(error, "notification.markAllReadForUser");
+    return data?.length ?? 0;
+  }
+
   async findByIdOrThrow(id: NotificationId | string): Promise<Notification> {
     const row = await this.findById(id);
     if (!row) throw new AppError("NOT_FOUND", "Notification not found", 404);

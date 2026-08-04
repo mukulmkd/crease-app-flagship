@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/utils";
 
 /**
- * Modern Cricket Club field — tactile tonal surface with a clear focus ring.
+ * Form field — tactile tonal surface with a clear focus ring.
  */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (

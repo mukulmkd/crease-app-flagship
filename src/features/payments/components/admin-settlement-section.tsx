@@ -90,6 +90,14 @@ function AdminSettlementSection() {
         weekend.players.length > 0 || weekend.reimbursements.length > 0,
     )
     .sort((a, b) => b.weekStartDate.localeCompare(a.weekStartDate));
+  const firstUnresolvedIndex = weekends.findIndex(
+    (weekend) =>
+      weekend.settlement?.status !== "settled" &&
+      (weekend.players.some((player) => player.totalDueInr > 0) ||
+        weekend.reimbursements.length > 0 ||
+        weekend.organizerPendingCount > 0 ||
+        weekend.settlement?.status === "collecting"),
+  );
 
   const buttonLabel = generateStatus?.label ?? "Generate weekend fees";
   const buttonDisabled =
@@ -99,15 +107,18 @@ function AdminSettlementSection() {
 
   return (
     <section className="space-y-3">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <h2 className="font-heading text-xl font-bold uppercase">
-          Admin settlement
-        </h2>
-        <div className="flex max-w-xs flex-col items-end gap-1">
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-4">
+        <h2 className="font-heading text-xl font-semibold">Admin settlement</h2>
+        <BodySm className="sm:col-start-1">
+          Collect player fees, then upload organizer payment proofs on Summary
+          before confirming settled.
+        </BodySm>
+        <div className="flex flex-col gap-1 sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:max-w-xs sm:items-end">
           <Button
             type="button"
             variant="tonal"
             size="sm"
+            className="min-h-12 w-full sm:min-h-10 sm:w-auto"
             loading={generate.isPending}
             disabled={buttonDisabled}
             onClick={async () => {
@@ -127,16 +138,12 @@ function AdminSettlementSection() {
             {buttonLabel}
           </Button>
           {generateStatus?.hint ? (
-            <p className="text-right text-[0.65rem] text-muted-foreground">
+            <p className="text-left text-xs text-muted-foreground sm:text-right">
               {generateStatus.hint}
             </p>
           ) : null}
         </div>
       </div>
-      <BodySm>
-        Collect player fees, then upload organizer payment proofs on Summary
-        before confirming settled.
-      </BodySm>
 
       {duesQuery.isLoading ||
       reimbursements.isLoading ||
@@ -150,7 +157,7 @@ function AdminSettlementSection() {
             <li key={weekend.settlementId}>
               <AdminWeekendGroup
                 weekend={weekend}
-                defaultOpen={index === 0}
+                defaultOpen={index === firstUnresolvedIndex}
                 confirmPending={confirmSettled.isPending}
                 onMarkOffline={setOfflinePlayer}
                 onReimburse={setReimburse}

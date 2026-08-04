@@ -74,11 +74,11 @@ function RecordContributionSheet({
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="bg-surface-container-lowest">
         <BottomSheetHeader className="text-left">
-          <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+          <BottomSheetTitle className="font-heading text-2xl font-semibold">
             Record contribution
           </BottomSheetTitle>
           <BottomSheetDescription>
-            Credits the team fund when a player has paid offline.
+            Credits the funds when a player has paid offline.
           </BottomSheetDescription>
         </BottomSheetHeader>
         <form

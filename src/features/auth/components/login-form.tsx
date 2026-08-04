@@ -16,7 +16,7 @@ import {
 import { loginFormSchema, type LoginFormInput } from "@/lib/validations/auth";
 
 /**
- * Modern Cricket Club login — member-only mobile OTP.
+ * Member-only mobile OTP login.
  */
 function LoginForm() {
   const sendOtp = useSendOtp();
@@ -37,9 +37,9 @@ function LoginForm() {
       <div className="space-y-4 pt-8">
         <div aria-hidden className="flex items-center gap-2">
           <span className="h-1 w-12 bg-primary" />
-          <span className="h-1 w-4 bg-[#c9f64b]" />
+          <span className="h-1 w-4 bg-tertiary" />
         </div>
-        <h1 className="font-heading text-5xl leading-[0.95] font-extrabold tracking-tight uppercase">
+        <h1 className="font-heading text-5xl leading-[0.95] font-semibold tracking-tight">
           Your team.
           <br />
           Match ready.
@@ -75,6 +75,11 @@ function LoginForm() {
             autoComplete="tel-national"
             placeholder="000 000 0000"
             maxLength={10}
+            aria-invalid={Boolean(form.formState.errors.phone) || undefined}
+            aria-describedby={
+              form.formState.errors.phone ? "phone-error" : undefined
+            }
+            aria-required
             className="h-full rounded-none border-0 bg-transparent focus-visible:border-0 focus-visible:bg-transparent focus-visible:ring-0"
             {...form.register("phone", {
               onChange: (event) => {
@@ -87,13 +92,11 @@ function LoginForm() {
         </div>
       </FormField>
 
-      <div className="mt-auto overflow-hidden rounded-2xl bg-[#082417] p-5 text-white">
+      <div className="mt-auto overflow-hidden rounded-2xl bg-clubhouse p-5 text-white">
         <div className="flex items-start gap-3">
-          <ShieldCheck className="mt-0.5 size-5 text-[#c9f64b]" aria-hidden />
+          <ShieldCheck className="mt-0.5 size-5 text-tertiary" aria-hidden />
           <div>
-            <p className="font-heading text-xl font-bold uppercase">
-              Members only
-            </p>
+            <p className="font-heading text-xl font-semibold">Members only</p>
             <p className="mt-1 text-sm leading-5 text-white/70">
               Only active Ranches Thunders members can enter.
             </p>

@@ -7,7 +7,7 @@ alwaysApply: true
 
 Crease is a mobile-first Progressive Web App for **Ranches Thunders**.
 
-People install it on iPhone or Android. The UI must feel like a native utility app and strictly follow the Stitch **Modern Cricket Club** design.
+People install it on iPhone or Android. The UI must feel like a native utility app and follow the **Modern Scorebook Utility** design (`docs/UI.md`).
 
 ## Roles (exactly two)
 
@@ -41,7 +41,7 @@ A user must be an **active team member** (added by Admin). Otherwise every scree
 ## Guiding principles
 
 - Mobile first, PWA first
-- Stitch Modern Cricket Club fidelity (Barlow Condensed + Manrope)
+- Modern Scorebook Utility fidelity (Oswald + Plus Jakarta Sans)
 - Clean architecture (UI → Hook → Service → Repository → Supabase)
 - No duplicated business logic
 - Services enforce authorization; UI only hides actions

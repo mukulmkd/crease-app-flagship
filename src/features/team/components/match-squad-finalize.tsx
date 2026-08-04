@@ -73,7 +73,7 @@ function MatchSquadFinalize({ matchId, available }: MatchSquadFinalizeProps) {
   return (
     <section className="space-y-3 rounded-xl bg-surface-container-low p-4">
       <div>
-        <h2 className="font-heading text-xl font-bold uppercase">
+        <h2 className="font-heading text-xl font-semibold">
           Finalize playing squad
         </h2>
         <BodySm>

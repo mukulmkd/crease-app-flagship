@@ -56,6 +56,21 @@ export function useMarkNotificationRead() {
   });
 }
 
+export function useMarkAllNotificationsRead() {
+  const actor = useActor();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      requireActor(actor);
+      return getNotificationService().markAllRead(actor);
+    },
+    onSettled: async () => {
+      await invalidateQueries.notifications(client);
+      await invalidateQueries.dashboard(client);
+    },
+  });
+}
+
 /** Demo mode: insert inbox row(s) (Realtime → toast + chime + optional push). */
 export function useSendDemoNotification() {
   const client = useQueryClient();

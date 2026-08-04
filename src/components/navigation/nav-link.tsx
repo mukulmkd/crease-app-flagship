@@ -35,7 +35,7 @@ function NavLink({ item, collapsed = false, className }: NavLinkProps) {
         "group/nav-link ease-emphasized flex items-center gap-3 rounded-xl text-sm font-medium transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
         collapsed ? "size-12 justify-center" : "h-12 px-3",
         active
-          ? "bg-primary-container/20 text-primary"
+          ? "text-primary"
           : "text-muted-foreground hover:bg-surface-container hover:text-foreground",
         className,
       )}
@@ -43,7 +43,7 @@ function NavLink({ item, collapsed = false, className }: NavLinkProps) {
       <span
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200",
-          active && "bg-primary-container text-on-primary-container",
+          active && "bg-tertiary text-tertiary-foreground",
         )}
       >
         <Icon className="size-5" aria-hidden />

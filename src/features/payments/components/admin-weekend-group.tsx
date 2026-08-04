@@ -60,6 +60,17 @@ function AdminWeekendGroup({
     unpaidTotal > 0 ||
     weekend.reimbursements.length > 0 ||
     weekend.organizerPendingCount > 0;
+  const isSettled = weekend.settlement?.status === "settled";
+  const nextAction =
+    unpaidTotal > 0
+      ? `Collect ₹${formatInrAmount(unpaidTotal)} from players`
+      : weekend.reimbursements.length > 0
+        ? `Pay ${weekend.reimbursements.length} pending reimbursement${weekend.reimbursements.length === 1 ? "" : "s"}`
+        : weekend.organizerPendingCount > 0
+          ? "Upload organizer payment proof"
+          : weekend.settlement?.status === "collecting"
+            ? "Confirm this weekend settled"
+            : "No action needed";
   const thisSat = nextWeekendDates().saturday;
   const range = formatWeekendRange(weekend.weekStartDate, weekend.weekEndDate);
   const title =
@@ -76,10 +87,10 @@ function AdminWeekendGroup({
           onClick={() => setOpen((value) => !value)}
         >
           <span className="min-w-0">
-            <span className="block font-heading text-lg font-bold tracking-tight uppercase">
+            <span className="block font-heading text-lg font-semibold tracking-tight">
               {title}
             </span>
-            <span className="mt-0.5 block text-[0.65rem] text-muted-foreground">
+            <span className="mt-0.5 block text-xs text-muted-foreground">
               {weekend.players.length === 1
                 ? "1 player"
                 : `${weekend.players.length} players`}
@@ -99,6 +110,8 @@ function AdminWeekendGroup({
                 <StatusChip status="warning">
                   Organizer payout pending
                 </StatusChip>
+              ) : isSettled ? (
+                <StatusChip status="success">Settled</StatusChip>
               ) : null}
             </span>
           </span>
@@ -113,7 +126,11 @@ function AdminWeekendGroup({
         {weekend.players.length > 0 ? (
           <Button
             asChild
-            variant="tonal"
+            variant={
+              weekend.organizerPendingCount > 0 && unpaidTotal <= 0
+                ? "default"
+                : "tonal"
+            }
             size="sm"
             className="my-3 shrink-0 self-center"
           >
@@ -127,6 +144,14 @@ function AdminWeekendGroup({
           id={panelId}
           className="space-y-3 border-t border-outline-variant px-3 py-3"
         >
+          {!isSettled ? (
+            <div className="rounded-lg border-l-2 border-primary bg-primary/8 px-3 py-2">
+              <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                Next action
+              </p>
+              <p className="mt-0.5 text-sm font-semibold">{nextAction}</p>
+            </div>
+          ) : null}
           {weekend.players.length === 0 ? (
             <BodySm>No player charges for this weekend yet.</BodySm>
           ) : (
@@ -144,7 +169,7 @@ function AdminWeekendGroup({
 
           {weekend.reimbursements.length > 0 ? (
             <div className="space-y-2">
-              <p className="px-1 text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+              <p className="px-1 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                 Owed to drivers
               </p>
               <ul className="space-y-2">
@@ -191,7 +216,7 @@ function AdminWeekendGroup({
                 disabled={hasPending}
                 onClick={() => void onConfirm()}
               >
-                Confirm settled · {weekend.weekStartDate}
+                Confirm settled
               </Button>
             </div>
           ) : null}

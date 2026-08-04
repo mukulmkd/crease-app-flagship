@@ -66,6 +66,13 @@ export class NotificationService extends BaseService {
     });
   }
 
+  async markAllRead(actor: Actor): Promise<number> {
+    return this.run(async () => {
+      await requireActiveMembership(this.teams, MVP_TEAM.id, actor.actorId);
+      return this.notifications.markAllReadForUser(actor.actorId);
+    });
+  }
+
   /**
    * Subscribe to new inbox rows for this member (Realtime). Returns unsubscribe.
    * Membership is checked once up front; RLS still filters the stream.

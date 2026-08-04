@@ -1,0 +1,67 @@
+---
+description: Modern Scorebook Utility is the visual source of truth for Crease
+alwaysApply: true
+---
+
+# Design system — Modern Scorebook Utility
+
+This is an original Crease system. `docs/UI.md` and the shipped tokens are the
+only visual source of truth. Do not regenerate screens from external design
+tools or revive superseded palettes.
+
+## When implementing or updating UI
+
+1. Prefer `docs/UI.md` + current tokens.
+2. Rebuild with reusable React components; do not paste generated HTML.
+3. Keep `src/styles/globals.css` and `src/constants/design-tokens.ts` in sync.
+4. Prefer shared tokens/components over per-screen utilities.
+
+## Typography
+
+| Role | Face | Via |
+|---|---|---|
+| Headlines, match titles, dates, fees, counts, scores | **Oswald** | `font-heading` + shared typography |
+| Body, labels, forms, nav | **Plus Jakarta Sans** | `--font-sans` + shared typography |
+
+Use `Display`, `Headline`, `Title`, `Stat`, `Label`, `Overline`, `Caption`,
+`Body`, and `BodySm`. Keep operational copy at 12px or larger. Use one `h1`
+per route.
+
+## Color
+
+| Token | Light | Dark (Neutral Night) | Use |
+|---|---|---|---|
+| Canvas | `#F2F2F1` | `#0C0E0D` | Page background |
+| Ink primary | `#1A1A1A` | `#EDEEEB` | Primary actions / brand |
+| Clubhouse | `#0A0C0B` | `#0A0C0B` | Match tickets / brand mark |
+| Amber accent | `#E0B84A` | `#E0B84A` | Selected state **only** |
+| Urgency red | `#C44B42` | `#E5736A` | Unpaid / destructive |
+| Success blue | `#1A6BB5` | `#7EB6E0` | Confirmations |
+
+Never use green or lime for brand, actions, success, or chrome. Do not paint
+neutral hover surfaces amber.
+
+The official app artwork is a minimal amber C-shaped hand cradling an off-white
+cricket ball on clubhouse black. Its master source is
+`scripts/crease-app-logo-source.png`; generate every favicon, Apple icon, and
+PWA icon with `npm run icons:generate`. Do not add small secondary symbols.
+
+## Layout and interaction
+
+- Touch targets are at least 48px; documented dense exceptions are at least 40px.
+- Radius defaults to 8px; use tonal surfaces and hairline dividers.
+- Mobile nav is exactly Home, Matches, Team, Pay, Profile.
+- Desktop uses the sidebar and may expose Fund and Settings directly.
+- Prefer bottom sheets for mobile create, confirm, pay, and management flows.
+- Toasts, push banners, sheets, keyboard, and bottom nav use shared geometry tokens.
+- Avoid gradients, glassmorphism, nested cards, decorative clipart, and heavy shadows.
+
+## Signature patterns
+
+- **App artwork** — same themed master in app chrome and every icon output.
+- **MatchTicket** — dominant next-fixture surface.
+- **MatchPollControl** — shared compact/full one-tap voting control.
+- **SegmentedControl** — amber active state for exclusive choices.
+- **ManageMatchSheet** — staged Admin lifecycle actions.
+- **MetricRail** — compact operational metrics.
+- **BottomSheet** — mobile-first task and confirmation container.

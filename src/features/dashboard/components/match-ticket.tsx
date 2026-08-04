@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Car,
   CheckCircle2,
-  Loader2,
   MapPin,
   UserRoundX,
   UsersRound,
@@ -16,6 +15,7 @@ import { toast } from "@/components/feedback/toast";
 import { Progress } from "@/components/ui/progress";
 import { MATCH_CLASSIFICATION_LABELS } from "@/constants/domain/labels";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
+import { MatchPollControl } from "@/features/team/components/match-poll-control";
 import {
   useCastAvailabilityVote,
   useCastCarpoolVote,
@@ -33,7 +33,7 @@ type MatchTicketProps = {
   match: Match;
 };
 
-/** Dominant dashboard fixture surface from the Stitch match-ticket concept. */
+/** Dominant dashboard fixture surface for the next match. */
 function MatchTicket({ match }: MatchTicketProps) {
   const { min: squadMin } = useSquadLimits();
   const pollsOpen = match.status === "confirmed" && match.pollsEnabled;
@@ -54,22 +54,23 @@ function MatchTicket({ match }: MatchTicketProps) {
   const progress = pollsOpen
     ? Math.min(100, Math.round((strengthCount / squadMin) * 100))
     : 0;
+  const groundMapsHref = safeExternalUrl(match.groundMapsUrl);
 
   return (
-    <article className="overflow-hidden rounded-xl bg-[#082417] text-white shadow-[0_8px_20px_rgba(8,36,23,0.16)]">
+    <article className="overflow-hidden rounded-xl bg-clubhouse text-white shadow-ticket">
       <div className="space-y-4 p-4">
         <div className="flex items-center justify-between gap-3">
           <span>
-            <span className="text-[0.65rem] font-bold tracking-[0.08em] text-[#c9f64b] uppercase">
+            <span className="text-xs font-semibold tracking-[0.08em] text-tertiary uppercase">
               {formatMatchDate(match.matchDate)} ·{" "}
               {formatMatchTime(match.startTime)}
             </span>
           </span>
           <span className="flex items-center gap-1">
-            <CalendarDays className="size-4 text-white/75" aria-hidden />
+            <CalendarDays className="size-4 text-white/85" aria-hidden />
             <Link
               href={`/matches/${match.id}`}
-              className="flex size-12 items-center justify-center rounded-full text-white/75 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[#c9f64b] focus-visible:outline-none"
+              className="flex size-12 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:outline-none"
               aria-label={`Open ${matchOpposition(match)} match details`}
             >
               <ArrowUpRight className="size-4" aria-hidden />
@@ -78,28 +79,41 @@ function MatchTicket({ match }: MatchTicketProps) {
         </div>
 
         <div>
-          <h2 className="font-heading text-[2rem] leading-none font-extrabold tracking-tight uppercase sm:text-4xl">
+          <h2 className="font-heading text-[2rem] leading-none font-semibold tracking-tight sm:text-4xl">
             {matchOpposition(match)}
           </h2>
-          <p className="mt-1 text-[0.65rem] font-semibold tracking-[0.08em] text-white/65 uppercase">
+          <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-white/85 uppercase">
             {MATCH_CLASSIFICATION_LABELS[match.classification]}
             {match.pollsEnabled ? " · Polls on" : " · Polls off"}
           </p>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[0.65rem] text-white/75">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-white/85">
             <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-[#c9f64b]" />
+              <span className="size-1.5 rounded-full bg-tertiary" />
               {formatMatchTime(match.startTime)}
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="size-3" aria-hidden />
-              {match.groundMapsUrl ? "Ground location" : "Ground TBD"}
-            </span>
+            {groundMapsHref ? (
+              <a
+                href={groundMapsHref}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-12 items-center gap-1.5 rounded-md underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:outline-none"
+                aria-label="Open ground location in Maps"
+              >
+                <MapPin className="size-3" aria-hidden />
+                Ground location
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="size-3" aria-hidden />
+                Ground TBD
+              </span>
+            )}
           </div>
         </div>
 
         <div className="space-y-2 border-t border-white/15 pt-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[0.6rem] font-bold tracking-[0.08em] text-white/65 uppercase">
+            <p className="text-xs font-bold tracking-[0.08em] text-white/85 uppercase">
               {squadFinalized ? "Playing squad" : "Available"}
             </p>
             <p className="font-heading text-base font-bold tabular-nums">
@@ -113,97 +127,81 @@ function MatchTicket({ match }: MatchTicketProps) {
           <Progress
             value={progress}
             aria-label="Squad strength"
-            className="h-1.5 bg-white/15 [&_[data-slot=progress-indicator]]:bg-[#c9f64b]"
+            className="h-1.5 bg-white/15 [&_[data-slot=progress-indicator]]:bg-tertiary"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2" aria-label="Quick match voting">
-          <PollVoteButton
-            icon={CheckCircle2}
-            label="Playing"
-            active={myAvailability === "yes"}
-            disabled={availabilityDisabled}
+        <div className="space-y-2">
+          <MatchPollControl<"yes" | "no">
+            aria-label="Availability"
+            variant="compact"
+            value={myAvailability}
             loading={castAvailability.isPending}
-            onClick={() =>
-              saveVote(
-                () =>
-                  castAvailability.mutateAsync({
-                    matchId: match.id,
-                    vote: "yes",
-                  }),
+            options={[
+              {
+                value: "yes",
+                label: "Playing",
+                icon: CheckCircle2,
+                disabled: availabilityDisabled,
+              },
+              {
+                value: "no",
+                label: "Not playing",
+                icon: UserRoundX,
+                disabled: availabilityDisabled,
+              },
+            ]}
+            onValueChange={(vote) =>
+              void saveVote(
+                () => castAvailability.mutateAsync({ matchId: match.id, vote }),
                 "Availability saved",
               )
             }
           />
-          <PollVoteButton
-            icon={UserRoundX}
-            label="Not playing"
-            active={myAvailability === "no"}
-            disabled={availabilityDisabled}
-            loading={castAvailability.isPending}
-            onClick={() =>
-              saveVote(
-                () =>
-                  castAvailability.mutateAsync({
-                    matchId: match.id,
-                    vote: "no",
-                  }),
-                "Availability saved",
-              )
-            }
-          />
-          <PollVoteButton
-            icon={Car}
-            label="Carpool"
-            active={myCarpool === "carpool"}
-            disabled={carpoolDisabled}
+          <MatchPollControl<"carpool" | "self">
+            aria-label="Travel"
+            variant="compact"
+            value={myCarpool}
             loading={castCarpool.isPending}
-            onClick={() =>
-              saveVote(
-                () =>
-                  castCarpool.mutateAsync({
-                    matchId: match.id,
-                    vote: "carpool",
-                  }),
-                "Carpool saved",
-              )
-            }
-          />
-          <PollVoteButton
-            icon={UsersRound}
-            label="Coming own"
-            active={myCarpool === "self"}
-            disabled={carpoolDisabled}
-            loading={castCarpool.isPending}
-            onClick={() =>
-              saveVote(
-                () =>
-                  castCarpool.mutateAsync({
-                    matchId: match.id,
-                    vote: "self",
-                  }),
+            options={[
+              {
+                value: "carpool",
+                label: "Carpool",
+                icon: Car,
+                disabled: carpoolDisabled,
+              },
+              {
+                value: "self",
+                label: "Coming own",
+                icon: UsersRound,
+                disabled: carpoolDisabled,
+              },
+            ]}
+            onValueChange={(vote) =>
+              void saveVote(
+                () => castCarpool.mutateAsync({ matchId: match.id, vote }),
                 "Carpool saved",
               )
             }
           />
         </div>
         {match.status !== "confirmed" ? (
-          <p className="text-center text-[0.65rem] text-white/55">
+          <p className="text-center text-xs text-white/75">
             {match.pollsEnabled
               ? "Future fixture. Polls open Monday at 9 AM IST in match week."
               : "Future fixture. Publishes Monday at 9 AM IST; polls are off."}
           </p>
         ) : !match.pollsEnabled ? (
-          <p className="text-center text-[0.65rem] text-white/55">
+          <p className="text-center text-xs text-white/75">
             Polls not enabled yet. Admin can turn them on from match details.
           </p>
         ) : pollsQuery.data?.availabilityFrozen &&
           pollsQuery.data?.carpoolFrozen ? (
-          <p className="text-center text-[0.65rem] text-white/55">
+          <p className="text-center text-xs text-white/75">
             Polls are locked. Open the match for Admin overrides.
           </p>
         ) : pollsQuery.data?.availabilityFrozen ? (
-          <p className="text-center text-[0.65rem] text-white/55">
+          <p className="text-center text-xs text-white/75">
             Squad locked. Travel votes stay open until kickoff.
           </p>
         ) : null}
@@ -221,44 +219,16 @@ async function saveVote(action: () => Promise<unknown>, successTitle: string) {
   }
 }
 
-type PollVoteButtonProps = {
-  icon: typeof CheckCircle2;
-  label: string;
-  active: boolean;
-  disabled: boolean;
-  loading?: boolean;
-  onClick: () => void;
-};
-
-function PollVoteButton({
-  icon: Icon,
-  label,
-  active,
-  disabled,
-  loading = false,
-  onClick,
-}: PollVoteButtonProps) {
-  return (
-    <button
-      type="button"
-      disabled={disabled || loading}
-      aria-pressed={active}
-      aria-busy={loading || undefined}
-      className={
-        active
-          ? "flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#c9f64b] px-2 text-xs font-semibold text-[#152000] transition-colors"
-          : "flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white/10 px-2 text-xs font-semibold text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-45"
-      }
-      onClick={onClick}
-    >
-      {loading ? (
-        <Loader2 className="size-3.5 animate-spin" aria-hidden />
-      ) : (
-        <Icon className="size-3.5" aria-hidden />
-      )}
-      {label}
-    </button>
-  );
+function safeExternalUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 export { MatchTicket };

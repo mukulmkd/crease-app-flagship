@@ -7,14 +7,14 @@ const withPWA = withPWAInit({
   disable:
     process.env.NODE_ENV === "development" &&
     process.env.ENABLE_PWA_DEV !== "true",
-  // Custom client registration handles update checks + reload (see PwaUpdateProvider).
+  // Custom client registration surfaces waiting updates without interrupting forms.
   register: false,
   reloadOnOnline: true,
   cacheStartUrl: true,
   dynamicStartUrl: true,
   customWorkerSrc: "worker",
   workboxOptions: {
-    skipWaiting: true,
+    skipWaiting: false,
     clientsClaim: true,
     cleanupOutdatedCaches: true,
   },

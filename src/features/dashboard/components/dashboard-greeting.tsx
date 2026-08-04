@@ -33,7 +33,7 @@ function timeOfDayGreeting(now = new Date()): string {
 }
 
 /**
- * Home hero greeting — Stitch Player Home pattern.
+ * Home greeting for the player-first command center.
  * Brand-forward first viewport: greeting + one supporting line, no metric spam.
  */
 function DashboardGreeting({ className }: DashboardGreetingProps) {

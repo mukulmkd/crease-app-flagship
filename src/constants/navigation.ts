@@ -49,6 +49,15 @@ export const primaryNav: NavItem[] = [
     desktop: true,
   },
   {
+    id: "payments",
+    label: "Payments",
+    mobileLabel: "Pay",
+    href: "/payments",
+    icon: CreditCard,
+    mobile: true,
+    desktop: true,
+  },
+  {
     id: "profile",
     label: "Profile",
     href: "/profile",
@@ -60,21 +69,12 @@ export const primaryNav: NavItem[] = [
 
 export const secondaryNav: NavItem[] = [
   {
-    id: "payments",
-    label: "Payments",
-    mobileLabel: "Pay",
-    href: "/payments",
-    icon: CreditCard,
-    mobile: true,
-    desktop: true,
-  },
-  {
     id: "expenses",
-    label: "Expenses",
+    label: "Funds",
     mobileLabel: "Fund",
     href: "/expenses",
     icon: WalletCards,
-    mobile: true,
+    mobile: false,
     desktop: true,
     permission: PERMISSIONS.FUND_EXPENSE_ADD,
   },
@@ -83,8 +83,7 @@ export const secondaryNav: NavItem[] = [
     label: "Settings",
     href: "/settings",
     icon: Settings,
-    mobile: true,
+    mobile: false,
     desktop: true,
-    permission: PERMISSIONS.TEAM_SETTINGS_EDIT,
   },
 ];

@@ -44,7 +44,7 @@ function MemberActionsSheet({
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="bg-surface-container-lowest">
         <BottomSheetHeader className="text-left">
-          <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+          <BottomSheetTitle className="font-heading text-2xl font-semibold">
             Manage player
           </BottomSheetTitle>
           <BottomSheetDescription className="sr-only">
@@ -66,7 +66,7 @@ function MemberActionsSheet({
                   {member.profile.phone ?? "Phone unavailable"}
                 </p>
               </div>
-              <span className="text-xs font-bold tracking-[0.08em] text-primary uppercase">
+              <span className="text-xs font-semibold tracking-[0.08em] text-primary uppercase">
                 {member.role}
               </span>
             </div>
@@ -75,7 +75,7 @@ function MemberActionsSheet({
               {!isAdmin ? (
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="tonal"
                   className="h-12 justify-start gap-3"
                   loading={pending}
                   onClick={() => void onPromote()}
@@ -86,7 +86,7 @@ function MemberActionsSheet({
               ) : (
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="tonal"
                   className="h-12 justify-start gap-3"
                   loading={pending}
                   disabled={isLastAdmin}

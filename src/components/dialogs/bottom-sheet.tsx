@@ -38,15 +38,44 @@ function BottomSheetContent({
   return (
     <DrawerContent
       data-slot="bottom-sheet-content"
-      className={cn("safe-bottom mt-24 max-h-[85vh] rounded-t-2xl", className)}
+      className={cn(
+        "safe-bottom mt-24 max-h-[var(--sheet-max-height)] rounded-t-2xl border-outline-variant bg-surface-container-lowest",
+        className,
+      )}
       {...props}
     />
   );
 }
 
 const BottomSheetClose = DrawerClose;
-const BottomSheetHeader = DrawerHeader;
-const BottomSheetTitle = DrawerTitle;
+
+function BottomSheetHeader({
+  className,
+  ...props
+}: React.ComponentProps<typeof DrawerHeader>) {
+  return (
+    <DrawerHeader
+      className={cn("gap-1 px-4 pt-5 pb-4 text-left", className)}
+      {...props}
+    />
+  );
+}
+
+function BottomSheetTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DrawerTitle>) {
+  return (
+    <DrawerTitle
+      className={cn(
+        "font-heading text-2xl font-semibold tracking-[-0.01em]",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 const BottomSheetDescription = DrawerDescription;
 
 export {

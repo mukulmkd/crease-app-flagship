@@ -62,12 +62,19 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
   });
 
   const canResend = secondsLeft <= 0 && !resend.isPending;
+  const tokenError = form.formState.errors.token?.message;
+  const otpDescribedBy = [
+    tokenError ? "otp-token-error" : null,
+    verify.isError ? "otp-verify-error" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-7">
       <div className="space-y-3 pt-8">
-        <div aria-hidden className="h-1 w-16 bg-[#c9f64b]" />
-        <h1 className="font-heading text-4xl font-extrabold tracking-tight uppercase">
+        <div aria-hidden className="h-1 w-16 bg-tertiary" />
+        <h1 className="font-heading text-4xl font-semibold tracking-tight">
           Check your phone
         </h1>
         <p className="text-body-sm text-muted-foreground">
@@ -87,33 +94,50 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
         ) : null}
       </div>
 
-      <Controller
-        control={form.control}
-        name="token"
-        render={({ field }) => (
-          <InputOTP
-            maxLength={OTP_LENGTH}
-            value={field.value}
-            onChange={field.onChange}
-            containerClassName="justify-center"
-            autoFocus
-          >
-            <InputOTPGroup className="gap-2">
-              {Array.from({ length: OTP_LENGTH }).map((_, index) => (
-                <InputOTPSlot
-                  key={index}
-                  index={index}
-                  className="size-12 rounded-xl border border-outline-variant bg-surface-container-lowest text-lg focus-within:border-primary focus-within:bg-accent"
-                />
-              ))}
-            </InputOTPGroup>
-          </InputOTP>
-        )}
-      />
+      <div>
+        <label htmlFor="otp-token" className="sr-only">
+          Verification code
+        </label>
+        <Controller
+          control={form.control}
+          name="token"
+          render={({ field }) => (
+            <InputOTP
+              id="otp-token"
+              maxLength={OTP_LENGTH}
+              value={field.value}
+              onChange={field.onChange}
+              containerClassName="justify-center"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              aria-invalid={Boolean(tokenError) || verify.isError || undefined}
+              aria-describedby={otpDescribedBy || undefined}
+              autoFocus
+            >
+              <InputOTPGroup className="gap-1">
+                {Array.from({ length: OTP_LENGTH }).map((_, index) => (
+                  <InputOTPSlot
+                    key={index}
+                    index={index}
+                    aria-invalid={
+                      Boolean(tokenError) || verify.isError || undefined
+                    }
+                    className="size-11 rounded-xl border border-outline-variant bg-surface-container-lowest text-lg focus-within:border-primary focus-within:bg-accent"
+                  />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+          )}
+        />
+      </div>
 
-      {form.formState.errors.token ? (
-        <p className="text-center text-sm text-destructive" role="alert">
-          {form.formState.errors.token.message}
+      {tokenError ? (
+        <p
+          id="otp-token-error"
+          className="text-center text-sm text-destructive"
+          role="alert"
+        >
+          {tokenError}
         </p>
       ) : null}
 
@@ -162,7 +186,11 @@ function OtpForm({ phone: phoneProp }: OtpFormProps) {
       </div>
 
       {(verify.isError || resend.isError) && (
-        <p className="text-center text-sm text-destructive" role="alert">
+        <p
+          id={verify.isError ? "otp-verify-error" : undefined}
+          className="text-center text-sm text-destructive"
+          role="alert"
+        >
           {getMutationErrorMessage(verify.error ?? resend.error)}
         </p>
       )}

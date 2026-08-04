@@ -11,7 +11,7 @@ const segmentedControlVariants = cva(
     variants: {
       size: {
         default: "h-12",
-        sm: "h-10",
+        sm: "h-12",
       },
     },
     defaultVariants: {
@@ -26,11 +26,12 @@ const segmentedItemVariants = cva(
     variants: {
       size: {
         default: "h-10",
-        sm: "h-8 text-xs",
+        sm: "h-10 text-xs",
       },
       active: {
-        true: "bg-accent text-accent-foreground",
-        false: "text-muted-foreground hover:text-foreground",
+        true: "bg-tertiary text-tertiary-foreground shadow-sm",
+        false:
+          "text-muted-foreground hover:bg-surface-container-highest/60 hover:text-foreground",
       },
     },
     defaultVariants: {
@@ -58,7 +59,7 @@ type SegmentedControlProps<T extends string> = VariantProps<
 };
 
 /**
- * Stitch exclusive choice control — 48px track, tonal active state.
+ * Exclusive choice control — 48px track, amber active state.
  */
 function SegmentedControl<T extends string>({
   options,

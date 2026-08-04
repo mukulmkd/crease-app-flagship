@@ -2,7 +2,7 @@
 
 ## Vision
 
-Crease is a mobile-first Progressive Web App for **Ranches Thunders** — weekend match ops, polls, carpool, fee settlement, and team funds — with a native-quality UI matching Stitch **Modern Cricket Club**.
+Crease is a mobile-first Progressive Web App for **Ranches Thunders** — weekend match ops, polls, carpool, fee settlement, and team funds — with a native-quality UI following **Modern Scorebook Utility**.
 
 ## Target users
 
@@ -60,7 +60,7 @@ Users who are not active members get **access denied** on every app screen.
 ## Design
 
 - Top-tier 2026 utility-app UX
-- Strict Stitch Modern Cricket Club fidelity (Barlow Condensed + Manrope)
+- Strict Modern Scorebook Utility fidelity (Oswald + Plus Jakarta Sans; Ink + Amber — no green)
 - Large touch targets, clear hierarchy, native chrome patterns
 
 ## Explicitly out of MVP

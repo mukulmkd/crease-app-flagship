@@ -52,7 +52,7 @@ function UpiPayActions({
 
   if (!ready || options.length === 0) {
     return (
-      <p className="rounded-xl bg-surface-container-low px-3 py-3 text-[0.7rem] text-muted-foreground">
+      <p className="rounded-xl bg-surface-container-low px-3 py-3 text-xs text-muted-foreground">
         Ask Admin to set a valid UPI VPA in Settings before paying.
       </p>
     );
@@ -60,7 +60,7 @@ function UpiPayActions({
 
   return (
     <div className="space-y-2">
-      <p className="text-[0.7rem] font-medium text-foreground">
+      <p className="text-xs font-medium text-foreground">
         Pay ₹{formatInrAmount(amountInr)} with
       </p>
       <div
@@ -82,7 +82,7 @@ function UpiPayActions({
         ))}
       </div>
       <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low px-3 py-2">
-        <p className="min-w-0 truncate text-[0.7rem] text-muted-foreground">
+        <p className="min-w-0 truncate text-xs text-muted-foreground">
           <span className="font-medium text-foreground">{trimmedVpa}</span>
           {payeeName?.trim() ? ` · ${payeeName.trim()}` : null}
         </p>
@@ -90,14 +90,14 @@ function UpiPayActions({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-9 shrink-0 px-2 text-[0.65rem]"
+          className="h-12 shrink-0 px-3 text-xs"
           onClick={() => void copyVpa()}
         >
           <Copy aria-hidden className="size-3.5" />
           Copy
         </Button>
       </div>
-      <p className="text-[0.65rem] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         {apple
           ? "Pick your UPI app above (iPhone won’t show a chooser). Then return here with UTR + screenshot."
           : "After paying in your UPI app, return here and submit UTR + screenshot."}

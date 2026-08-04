@@ -20,7 +20,7 @@ Within ~5 seconds show:
 
 ## Widgets (MVP)
 
-- Next match ticket (`#082417` clubhouse surface)
+- Next match ticket (`#0A0C0B` clubhouse surface)
 - Availability strength
 - Carpool summary
 - Pending weekend payments
@@ -39,9 +39,12 @@ Within ~5 seconds show:
 - Prefer a compact status rail over equal-weight card grids
 - **Admin-only** team snapshot rail: carpool riders, unpaid weekend fees, team fund balance
 - Players do not see the Admin status rail (they use match tickets + Payments for their own fees)
+- Players and Admins who play see their own outstanding-dues callout before
+  supporting dashboard content.
 - Render **one ticket per weekend day** (Sat and/or Sun) — never collapse a weekend to a single fixture
 - Home sections: **This weekend** then **More upcoming matches** (later weekends)
 - Tickets respect `polls_enabled` — voting only when confirmed and polls are on
 - Home reads `useDashboardSnapshot()`; weekend scoping is service logic, not JSX filtering
 - Each confirmed-match ticket provides real one-tap availability + travel voting
-- Poll buttons mutate in place; only the dedicated arrow navigates to match detail
+- `MatchPollControl` mutates in place; only the dedicated arrow navigates to detail
+- Home hierarchy: next match → vote → personal dues → alerts; Admin status follows

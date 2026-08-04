@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { BodySm, Title } from "@/components/common/typography";
 import { cn } from "@/utils";
 
 type SectionHeaderProps = {
@@ -18,13 +19,14 @@ function SectionHeader({
   return (
     <div
       data-slot="section-header"
-      className={cn("flex items-start justify-between gap-4", className)}
+      className={cn(
+        "flex min-h-12 items-start justify-between gap-4",
+        className,
+      )}
     >
       <div className="min-w-0 space-y-1">
-        <h2 className="text-title font-semibold tracking-tight">{title}</h2>
-        {description ? (
-          <p className="text-body-sm text-muted-foreground">{description}</p>
-        ) : null}
+        <Title>{title}</Title>
+        {description ? <BodySm>{description}</BodySm> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

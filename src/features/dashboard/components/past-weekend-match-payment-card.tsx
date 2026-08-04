@@ -36,10 +36,10 @@ function PastWeekendMatchPaymentCard({
       className="flex min-h-16 items-center justify-between gap-3 rounded-xl bg-surface-container-low px-4 py-3 transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
     >
       <span className="min-w-0">
-        <span className="block truncate font-heading text-lg font-bold uppercase">
+        <span className="block truncate font-heading text-lg font-semibold">
           {title}
         </span>
-        <span className="mt-0.5 block text-[0.65rem] text-muted-foreground">
+        <span className="mt-0.5 block text-xs text-muted-foreground">
           {formatMatchDate(summary.matchDate)} · {detail}
         </span>
       </span>
@@ -47,7 +47,7 @@ function PastWeekendMatchPaymentCard({
         <span className="block font-heading text-xl font-bold tabular-nums">
           {summary.hasCharges ? `₹${formatInrAmount(summary.billedInr)}` : "—"}
         </span>
-        <span className="text-[0.6rem] font-bold tracking-wide text-muted-foreground uppercase">
+        <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           {summary.hasCharges ? `${summary.playerCount} charged` : statusLabel}
         </span>
       </span>

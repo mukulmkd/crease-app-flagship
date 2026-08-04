@@ -17,7 +17,7 @@ function ContributionRow({
       <UserAvatar name={name} imageUrl={player.avatarUrl} size="md" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{name}</p>
-        <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {player.paymentCount === 0
             ? "No contributions yet"
             : `${player.paymentCount} payment${player.paymentCount === 1 ? "" : "s"}`}
@@ -26,13 +26,13 @@ function ContributionRow({
       <button
         type="button"
         onClick={onRecord}
-        className="shrink-0 rounded-lg px-2 py-1 text-right transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+        className="min-h-12 shrink-0 rounded-lg px-3 py-1 text-right transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
         aria-label={`Record contribution for ${name}. Total ₹${formatInrAmount(player.totalInr)}`}
       >
         <p className="font-heading text-lg font-bold tabular-nums">
           ₹{formatInrAmount(player.totalInr)}
         </p>
-        <p className="text-[0.6rem] font-semibold text-primary">Add</p>
+        <p className="text-xs font-semibold text-primary">Add</p>
       </button>
     </li>
   );
@@ -50,7 +50,7 @@ function ExpenseRow({ expense }: { expense: Expense }) {
             {expense.note}
           </p>
         ) : null}
-        <p className="mt-1 text-[0.65rem] text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           {formatWhen(expense.createdAt)}
         </p>
       </div>

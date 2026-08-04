@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { BodySm, StatusChip } from "@/components/common";
+import { Overline } from "@/components/common/typography";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
@@ -119,9 +120,7 @@ function PushAlertsSection() {
     <section className="space-y-3 rounded-xl bg-surface-container-low p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
-            Push alerts
-          </p>
+          <Overline className="text-muted-foreground">Notifications</Overline>
           <BodySm className="mt-1">
             Lock-screen alerts are on by default after you Allow once. Turn them
             off anytime here. On iPhone, install Crease to the Home Screen first

@@ -46,7 +46,9 @@ function UserAvatar({
       )}
       aria-label={name}
     >
-      {src ? <AvatarImage src={src} alt={name} /> : null}
+      {src ? (
+        <AvatarImage src={src} alt={name} loading="lazy" decoding="async" />
+      ) : null}
       <AvatarFallback className="bg-primary/10 font-semibold text-primary">
         {getInitials(name)}
       </AvatarFallback>

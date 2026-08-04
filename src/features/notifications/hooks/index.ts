@@ -2,6 +2,7 @@ export {
   useUnreadNotificationCount,
   useNotifications,
   useMarkNotificationRead,
+  useMarkAllNotificationsRead,
   useSendDemoNotification,
   useNotificationAlerts,
 } from "@/features/notifications/hooks/use-notification-queries";

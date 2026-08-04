@@ -1,7 +1,6 @@
 "use client";
 
 import { BrandMark } from "@/components/common/brand-mark";
-import { TeamLogoBadge } from "@/components/common/team-logo-badge";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { cn } from "@/utils";
@@ -14,7 +13,6 @@ type TopAppBarProps = {
 
 /**
  * Top app bar — brand lockup + page title + chrome actions.
- * Modern Cricket Club: compact scorebook chrome with persistent brand.
  */
 function TopAppBar({
   title = "Crease",
@@ -27,7 +25,7 @@ function TopAppBar({
     <header
       data-slot="top-app-bar"
       className={cn(
-        "safe-top sticky top-0 z-30 flex min-h-14 items-center gap-2 bg-surface-container-lowest px-3 md:min-h-16 md:border-b md:border-outline-variant md:bg-background md:px-4",
+        "safe-top sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-outline-variant/50 bg-surface-container-lowest px-3 md:min-h-16 md:bg-background md:px-4",
         className,
       )}
     >
@@ -38,18 +36,13 @@ function TopAppBar({
           markClassName="size-7 rounded-md [&>span]:scale-75 md:size-10 md:rounded-lg md:[&>span]:scale-100"
         />
         {showTitle ? (
-          <h1 className="truncate font-heading text-xl font-bold tracking-tight uppercase md:text-2xl">
+          <span className="truncate font-heading text-xl font-semibold tracking-tight md:text-2xl">
             {title}
-          </h1>
+          </span>
         ) : (
-          <h1 className="sr-only">{title || "Crease"}</h1>
+          <span className="sr-only">{title || "Crease"}</span>
         )}
       </div>
-
-      <TeamLogoBadge
-        className="absolute left-1/2 -translate-x-1/2"
-        imageClassName="size-9 md:size-11 md:rounded-lg"
-      />
 
       <div className="flex items-center gap-0.5">
         <ProfileMenu className="h-10 px-1 md:h-12 md:px-2" />

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, CalendarDays } from "lucide-react";
 
 import { BodySm, StatusChip } from "@/components/common";
 import { EmptyState, ErrorState, LoadingState } from "@/components/feedback";
@@ -11,6 +13,10 @@ import {
 } from "@/constants/domain/team-permissions";
 import { EditTournamentSheet } from "@/features/team/components/edit-tournament-sheet";
 import { useMyMembership, useTournamentSummaries } from "@/features/team/hooks";
+import {
+  formatMatchDate,
+  matchOpposition,
+} from "@/features/team/lib/match-format";
 import { formatInrAmount } from "@/utils";
 import type { TournamentSummary } from "@/types/models";
 
@@ -100,7 +106,7 @@ function TournamentSection({
     <section className="space-y-3" aria-labelledby={`${title}-heading`}>
       <h2
         id={`${title}-heading`}
-        className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+        className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
       >
         {title}
         {rows.length > 0 ? ` · ${rows.length}` : ""}
@@ -138,6 +144,7 @@ function TournamentCard({
     remainingMatchCount,
     settledMatchCount,
     feePoolPerMatchInr,
+    fixtures,
   } = summary;
   const isPast =
     tournament.status === "completed" || tournament.status === "cancelled";
@@ -146,7 +153,7 @@ function TournamentCard({
     <article className="space-y-3 rounded-xl bg-surface-container-low p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-heading text-2xl leading-none font-bold uppercase">
+          <p className="font-heading text-2xl leading-none font-semibold">
             {tournament.name}
           </p>
           <BodySm className="mt-1">
@@ -167,6 +174,43 @@ function TournamentCard({
           value={String(remainingMatchCount)}
           emphasize={!isPast && remainingMatchCount > 0}
         />
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+          Fixtures
+        </p>
+        {fixtures.length > 0 ? (
+          <ul className="divide-y divide-outline-variant/40 overflow-hidden rounded-lg bg-surface-container-lowest">
+            {fixtures.map((match) => (
+              <li key={String(match.id)}>
+                <Link
+                  href={`/matches/${match.id}`}
+                  className="flex min-h-12 items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                >
+                  <CalendarDays
+                    className="size-4 shrink-0 text-primary"
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">
+                      {matchOpposition(match)}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {formatMatchDate(match.matchDate)}
+                    </span>
+                  </span>
+                  <ArrowRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <BodySm>No fixtures linked yet.</BodySm>
+        )}
       </div>
 
       {canEdit ? (
@@ -201,7 +245,7 @@ function Metric({
       >
         {value}
       </p>
-      <p className="text-[0.6rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+      <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
         {label}
       </p>
     </div>

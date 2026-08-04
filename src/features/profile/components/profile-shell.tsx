@@ -2,16 +2,21 @@
 
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, LogOut, Settings, WalletCards } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { StatusChip } from "@/components/common";
-import { Body, BodySm, Title } from "@/components/common/typography";
+import { Body, BodySm, Overline, Title } from "@/components/common/typography";
 import { FormField } from "@/components/forms/form-field";
 import { ErrorState, LoadingState } from "@/components/feedback";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  hasPermission,
+  PERMISSIONS,
+} from "@/constants/domain/team-permissions";
 import {
   getMutationErrorMessage,
   useSignOut,
@@ -82,6 +87,7 @@ function ProfileShell() {
     Boolean(membershipQuery.data?.userId) &&
     String(teamQuery.data?.collectorUserId) ===
       String(membershipQuery.data?.userId);
+  const canManageFund = hasPermission(role, PERMISSIONS.FUND_EXPENSE_ADD);
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-6 pb-8">
@@ -110,9 +116,7 @@ function ProfileShell() {
       </header>
 
       <section className="space-y-4 rounded-xl bg-surface-container-low p-4">
-        <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
-          Edit profile
-        </p>
+        <Overline className="text-muted-foreground">Edit profile</Overline>
         <form
           className="space-y-4"
           onSubmit={form.handleSubmit(async (values) => {
@@ -152,6 +156,33 @@ function ProfileShell() {
             Save changes
           </Button>
         </form>
+      </section>
+
+      <section
+        className="overflow-hidden rounded-xl bg-surface-container-low"
+        aria-label="More"
+      >
+        <Link
+          href="/settings"
+          className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+        >
+          <Settings className="size-5 text-primary" aria-hidden />
+          <span className="flex-1 text-sm font-semibold">Settings</span>
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+        </Link>
+        {canManageFund ? (
+          <Link
+            href="/expenses"
+            className="flex min-h-14 items-center gap-3 border-t border-outline-variant px-4 py-3 transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+          >
+            <WalletCards className="size-5 text-primary" aria-hidden />
+            <span className="flex-1 text-sm font-semibold">Funds</span>
+            <ChevronRight
+              className="size-4 text-muted-foreground"
+              aria-hidden
+            />
+          </Link>
+        ) : null}
       </section>
 
       <Button

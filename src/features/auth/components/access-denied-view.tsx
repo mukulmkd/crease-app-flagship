@@ -23,7 +23,7 @@ function AccessDeniedView() {
           <ShieldX className="size-8" aria-hidden />
         </div>
         <div className="space-y-2">
-          <h1 className="font-heading text-4xl font-extrabold tracking-tight uppercase">
+          <h1 className="font-heading text-4xl font-semibold tracking-tight">
             Invite only
           </h1>
           <p className="text-base leading-6 text-muted-foreground">

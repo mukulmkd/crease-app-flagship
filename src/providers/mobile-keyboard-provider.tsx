@@ -32,14 +32,19 @@ function isTextEditable(el: EventTarget | null): el is HTMLElement {
 
 function scrollEditableIntoView(el: HTMLElement) {
   const vv = window.visualViewport;
-  // Extra space above the keyboard / home indicator.
-  const pad = 28;
+  const styles = getComputedStyle(document.documentElement);
+  const pad =
+    Number.parseFloat(styles.getPropertyValue("--keyboard-scroll-padding")) ||
+    28;
+  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
 
   if (!vv) {
     el.scrollIntoView({
       block: "center",
       inline: "nearest",
-      behavior: "smooth",
+      behavior,
     });
     return;
   }
@@ -51,7 +56,7 @@ function scrollEditableIntoView(el: HTMLElement) {
   if (rect.top >= visibleTop && rect.bottom <= visibleBottom) return;
 
   // Prefer centering in the remaining visible area so sheets/forms stay usable.
-  el.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  el.scrollIntoView({ block: "center", inline: "nearest", behavior });
 }
 
 /**
@@ -88,6 +93,16 @@ function MobileKeyboardProvider({ children }: MobileKeyboardProviderProps) {
     };
 
     const onViewportChange = () => {
+      if (vv) {
+        const keyboardInset = Math.max(
+          0,
+          window.innerHeight - vv.height - vv.offsetTop,
+        );
+        document.documentElement.style.setProperty(
+          "--keyboard-inset",
+          `${Math.round(keyboardInset)}px`,
+        );
+      }
       const active = document.activeElement;
       if (!isTextEditable(active)) return;
       scheduleScroll(active, 16);
@@ -133,6 +148,7 @@ function MobileKeyboardProvider({ children }: MobileKeyboardProviderProps) {
       document.removeEventListener("pointerdown", onPointerDown, true);
       vv?.removeEventListener("resize", onViewportChange);
       vv?.removeEventListener("scroll", onViewportChange);
+      document.documentElement.style.setProperty("--keyboard-inset", "0px");
     };
   }, []);
 

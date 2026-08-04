@@ -12,11 +12,10 @@ import {
   BottomSheetHeader,
   BottomSheetTitle,
 } from "@/components/dialogs";
-import { FormField } from "@/components/forms/form-field";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
+import { PaymentProofFields } from "@/features/payments/components/payment-proof-fields";
 import { useSubmitReimbursementProof } from "@/features/payments/hooks";
 import type { SettlementReimbursement } from "@/types/models";
 import { formatInrAmount } from "@/utils";
@@ -54,7 +53,7 @@ function ReimbursementPaySheet({
     >
       <BottomSheetContent className="bg-surface-container-lowest">
         <BottomSheetHeader className="text-left">
-          <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+          <BottomSheetTitle className="font-heading text-2xl font-semibold">
             Reimbursement
           </BottomSheetTitle>
           <BottomSheetDescription>
@@ -83,17 +82,11 @@ function ReimbursementPaySheet({
             }
           })}
         >
-          <FormField label="UTR" error={form.formState.errors.utr?.message}>
-            <Input {...form.register("utr")} autoComplete="off" />
-          </FormField>
-          <FormField label="Screenshot">
-            <Input
-              type="file"
-              accept="image/*"
-              required
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </FormField>
+          <PaymentProofFields
+            utrRegistration={form.register("utr")}
+            utrError={form.formState.errors.utr?.message}
+            onFileChange={setFile}
+          />
           <Button
             type="submit"
             className="w-full"

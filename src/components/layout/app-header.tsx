@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 
-import { TeamLogoBadge } from "@/components/common/team-logo-badge";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
+import { typography } from "@/constants/design-tokens";
 import { cn } from "@/utils";
 
 type AppHeaderProps = {
@@ -26,23 +26,16 @@ function AppHeader({
     <header
       data-slot="app-header"
       className={cn(
-        "safe-top sticky top-0 z-30 hidden items-center justify-between gap-4 border-b border-outline-variant/30 bg-surface-container-low/95 px-6 py-3 backdrop-blur-sm supports-backdrop-filter:bg-surface-container-low/85 lg:flex",
+        "safe-top sticky top-0 z-30 hidden items-center justify-between gap-4 border-b border-outline-variant/30 bg-surface-container-low px-6 py-3 lg:flex",
         className,
       )}
     >
       <div className="min-w-0">
-        <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
+        <p className={cn(typography.overline, "text-muted-foreground")}>
           Overview
         </p>
-        <p className="truncate text-title font-semibold tracking-tight">
-          {title}
-        </p>
+        <p className={cn(typography.title, "truncate")}>{title}</p>
       </div>
-
-      <TeamLogoBadge
-        className="absolute left-1/2 -translate-x-1/2"
-        imageClassName="size-10 rounded-lg"
-      />
 
       <div className="flex items-center gap-1">
         <Link

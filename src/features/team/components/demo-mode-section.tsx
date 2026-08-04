@@ -2,7 +2,7 @@
 
 import { Bell, Users, Volume2 } from "lucide-react";
 
-import { BodySm } from "@/components/common/typography";
+import { BodySm, Overline } from "@/components/common/typography";
 import { SegmentedControl } from "@/components/forms/segmented-control";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
@@ -54,9 +54,7 @@ function DemoModeSection({ demoMode, canEdit }: DemoModeSectionProps) {
 
   return (
     <section className="space-y-4 rounded-xl bg-surface-container-low p-4">
-      <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
-        Demo mode
-      </p>
+      <Overline className="text-muted-foreground">Demo mode</Overline>
       {canEdit ? (
         <>
           <BodySm>
@@ -104,7 +102,7 @@ function DemoModeSection({ demoMode, canEdit }: DemoModeSectionProps) {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button
               type="button"
-              variant="secondary"
+              variant="tonal"
               className="h-12 w-full justify-start gap-2"
               onClick={() => void playSound()}
             >
@@ -113,7 +111,7 @@ function DemoModeSection({ demoMode, canEdit }: DemoModeSectionProps) {
             </Button>
             <Button
               type="button"
-              variant="secondary"
+              variant="tonal"
               className="h-12 w-full justify-start gap-2"
               loading={sendDemo.isPending && sendDemo.variables === "self"}
               onClick={() => void sendAlert("self")}

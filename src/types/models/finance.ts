@@ -121,7 +121,7 @@ export type FundContributionAsk = Timestamps &
     createdBy: ProfileId | null;
   };
 
-/** Single recorded contribution payment from a player into the team fund. */
+/** Single recorded contribution payment from a player into the funds. */
 export type FundContribution = Timestamps &
   TeamScoped & {
     id: FundContributionId;

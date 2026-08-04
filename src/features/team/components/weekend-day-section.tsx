@@ -4,6 +4,7 @@ import { Controller, useWatch, type UseFormReturn } from "react-hook-form";
 
 import { FormField, SegmentedControl } from "@/components/forms";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -62,15 +63,13 @@ function WeekendDaySection({
                 : "flex min-h-16 cursor-pointer items-center gap-3 px-4"
             }
           >
-            <input
-              type="checkbox"
-              className="size-5 accent-primary"
+            <Checkbox
               checked={unavailable ? false : field.value}
               disabled={unavailable}
-              onChange={field.onChange}
+              onCheckedChange={field.onChange}
             />
             <span className="min-w-0">
-              <span className="block font-heading text-2xl font-bold uppercase">
+              <span className="block font-heading text-2xl font-semibold">
                 {day}
               </span>
               <span className="block text-sm text-muted-foreground">
@@ -213,11 +212,10 @@ function WeekendDaySection({
             name={`${day}.pollsEnabled`}
             render={({ field }) => (
               <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl bg-surface-container px-3 py-3">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-5 accent-primary"
+                <Checkbox
+                  className="mt-0.5"
                   checked={field.value}
-                  onChange={field.onChange}
+                  onCheckedChange={field.onChange}
                 />
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold">

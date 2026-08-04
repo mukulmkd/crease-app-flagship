@@ -86,7 +86,7 @@ function PastMatchReport({ match, role }: PastMatchReportProps) {
   return (
     <div className="space-y-6">
       <section aria-label="Final squad" className="space-y-2">
-        <h2 className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+        <h2 className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
           Final squad
         </h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -141,7 +141,7 @@ function PastMatchReport({ match, role }: PastMatchReportProps) {
       <section aria-labelledby="timeline-heading" className="space-y-2">
         <h2
           id="timeline-heading"
-          className="font-heading text-xl font-bold uppercase"
+          className="font-heading text-xl font-semibold"
         >
           Timeline
         </h2>

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { BodySm, StatusChip } from "@/components/common";
+import { Overline } from "@/components/common/typography";
 import { FormField } from "@/components/forms/form-field";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
@@ -68,9 +69,9 @@ function PaymentCollectorSection({ team }: PaymentCollectorSectionProps) {
     <section className="space-y-4 rounded-xl bg-surface-container-low p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-caption font-medium tracking-wide text-muted-foreground uppercase">
+          <Overline className="text-muted-foreground">
             Payment collector
-          </p>
+          </Overline>
           <BodySm className="mt-1">
             Exactly one Admin collects weekend UPI. Players pay their VPA. The
             collector&apos;s own dues auto-settle — they cannot pay themselves.

@@ -8,6 +8,7 @@ import {
   LogOut,
   Settings,
   UserRound,
+  WalletCards,
 } from "lucide-react";
 
 import { UserAvatar } from "@/components/common/user-avatar";
@@ -26,6 +27,10 @@ import {
   getMutationErrorMessage,
   useSignOut,
 } from "@/features/auth/hooks/use-auth-mutations";
+import {
+  hasPermission,
+  PERMISSIONS,
+} from "@/constants/domain/team-permissions";
 import { useMyProfile } from "@/features/profile/hooks";
 import { useMyMembership } from "@/features/team/hooks";
 import { membershipRoleLabel } from "@/features/team/lib/status";
@@ -82,6 +87,10 @@ function ProfileMenu({ name, role, imageUrl, className }: ProfileMenuProps) {
       ? membershipRoleLabel(membershipQuery.data.role)
       : "Member");
   const avatarUrl = imageUrl ?? profileQuery.data?.avatarUrl ?? null;
+  const canManageFund = hasPermission(
+    membershipQuery.data?.role,
+    PERMISSIONS.FUND_EXPENSE_ADD,
+  );
 
   const handleSignOut = () => {
     signOut.mutate(undefined, {
@@ -142,6 +151,14 @@ function ProfileMenu({ name, role, imageUrl, className }: ProfileMenuProps) {
               Payments
             </Link>
           </DropdownMenuItem>
+          {canManageFund ? (
+            <DropdownMenuItem asChild>
+              <Link href="/expenses">
+                <WalletCards />
+                Funds
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem asChild>
             <Link href="/settings">
               <Settings />

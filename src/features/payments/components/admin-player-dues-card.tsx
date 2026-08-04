@@ -33,10 +33,10 @@ function AdminPlayerDuesCard({
     >
       <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
         <div className="min-w-0">
-          <p className="font-heading text-xl font-bold uppercase">
+          <p className="font-heading text-xl font-semibold">
             {player.fullName?.trim() || "Player"}
             {player.isCollector ? (
-              <span className="ml-2 text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground normal-case">
+              <span className="ml-2 text-xs font-bold tracking-[0.08em] text-muted-foreground normal-case">
                 · Collector
               </span>
             ) : null}
@@ -44,7 +44,7 @@ function AdminPlayerDuesCard({
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">
             ₹{formatInrAmount(displayAmount)}
           </p>
-          <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {player.matches.length === 1
               ? "1 match"
               : `${player.matches.length} matches`}{" "}
@@ -92,7 +92,7 @@ function AdminPlayerDuesCard({
               <span className="block truncate font-medium">
                 vs {match.opposition?.trim() || "Opposition TBD"}
               </span>
-              <span className="mt-0.5 block text-[0.65rem] text-muted-foreground">
+              <span className="mt-0.5 block text-xs text-muted-foreground">
                 {formatMatchDate(match.matchDate)} ·{" "}
                 {chargeStatusLabel(match.status, match.note)}
               </span>

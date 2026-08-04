@@ -35,6 +35,8 @@ export type Tournament = Timestamps &
 /** Tournament row + settlement progress for Matches → Tournaments tab. */
 export type TournamentSummary = {
   tournament: Tournament;
+  /** Non-cancelled fixtures linked to this tournament, ordered by date. */
+  fixtures: Match[];
   /** Matches whose weekend fees are Confirm settled. */
   settledMatchCount: number;
   /** plannedMatchCount − settledMatchCount (floored at 0). */

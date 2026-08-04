@@ -23,7 +23,7 @@ Admin creates Saturday and/or Sunday matches for Ranches Thunders — **this wee
 - If `polls_enabled`: activates polls + notifies squad
 - If not: fixture is live but polls stay draft until Admin taps **Enable polls now**
 - Admin may vote as a player once polls are on
-- Match detail uses a clubhouse fixture poster (`#082417`) before poll controls
+- Match detail uses a clubhouse fixture poster (`#0A0C0B`) before poll controls
 
 ## Home
 

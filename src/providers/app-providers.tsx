@@ -26,7 +26,14 @@ export function AppProviders({ children }: AppProvidersProps) {
             <PwaUpdateProvider />
             <TooltipProvider delayDuration={200}>
               {children}
-              <Toaster position="bottom-center" richColors closeButton />
+              <Toaster
+                position="bottom-center"
+                offset={{ bottom: "var(--toast-bottom-offset)" }}
+                mobileOffset={{
+                  bottom: "var(--toast-bottom-offset)",
+                }}
+                closeButton
+              />
             </TooltipProvider>
           </MobileKeyboardProvider>
         </SessionProvider>

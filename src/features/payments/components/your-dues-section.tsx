@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { BodySm, StatusChip } from "@/components/common";
-import { EmptyState, LoadingState } from "@/components/feedback";
+import { EmptyState, ErrorState, LoadingState } from "@/components/feedback";
 import { Button } from "@/components/ui/button";
 import { WeekendPaySheet } from "@/features/payments/components/weekend-pay-sheet";
 import { useMyWeekendDues } from "@/features/payments/hooks";
@@ -61,7 +61,7 @@ function YourDuesSection({
 
   return (
     <section className="space-y-3">
-      <h2 className="font-heading text-xl font-bold uppercase">Your dues</h2>
+      <h2 className="font-heading text-xl font-semibold">Your dues</h2>
 
       {isCollector ? (
         <BodySm>
@@ -72,10 +72,16 @@ function YourDuesSection({
 
       {duesQuery.isLoading ? (
         <LoadingState label="Loading dues" />
+      ) : duesQuery.isError ? (
+        <ErrorState
+          title="Couldn’t load your dues"
+          description="Check your connection and try again."
+          onRetry={() => void duesQuery.refetch()}
+        />
       ) : weekends.length === 0 ? (
         <EmptyState
-          title="Nothing due"
-          description="You’re clear for open settlements."
+          title="Payments clear"
+          description="No payment is pending across open settlements."
         />
       ) : (
         <ul className="space-y-3">
@@ -132,13 +138,13 @@ function YourWeekendDuesGroup({
         onClick={() => setOpen((value) => !value)}
       >
         <span className="min-w-0">
-          <span className="block text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+          <span className="block text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
             {weekendTitle(weekend)}
           </span>
           <span className="mt-1 block font-heading text-3xl font-bold tabular-nums">
             ₹{formatInrAmount(weekend.totalDueInr)}
           </span>
-          <span className="mt-0.5 block text-[0.65rem] text-muted-foreground">
+          <span className="mt-0.5 block text-xs text-muted-foreground">
             {weekend.lines.length === 1
               ? "1 match"
               : `${weekend.lines.length} matches`}
@@ -148,13 +154,19 @@ function YourWeekendDuesGroup({
                 ? " · collector — no UPI to yourself"
                 : " · pay once for the weekend"}
           </span>
-          {autoSettled || isCollector ? (
-            <span className="mt-2 inline-flex">
-              <StatusChip status={autoSettled ? "success" : "info"}>
-                {autoSettled ? "Auto settled" : "Collector"}
-              </StatusChip>
-            </span>
-          ) : null}
+          <span className="mt-2 inline-flex">
+            <StatusChip
+              status={
+                autoSettled ? "success" : isCollector ? "info" : "pending"
+              }
+            >
+              {autoSettled
+                ? "Paid · auto settled"
+                : isCollector
+                  ? "Collector"
+                  : "Payment pending"}
+            </StatusChip>
+          </span>
         </span>
         <ChevronDown
           className={cn(
@@ -177,7 +189,7 @@ function YourWeekendDuesGroup({
                   <span className="block truncate font-medium">
                     vs {line.opposition?.trim() || "Opposition TBD"}
                   </span>
-                  <span className="mt-0.5 block text-[0.65rem] text-muted-foreground">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {formatMatchDate(line.matchDate)} · {chargeBreakdown(line)}
                   </span>
                 </span>
@@ -194,7 +206,7 @@ function YourWeekendDuesGroup({
                 className="w-full"
                 onClick={() => onPay(weekend)}
               >
-                Pay ₹{formatInrAmount(weekend.totalDueInr)}
+                Pay & submit proof · ₹{formatInrAmount(weekend.totalDueInr)}
               </Button>
             </div>
           ) : null}

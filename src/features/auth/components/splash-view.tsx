@@ -9,7 +9,7 @@ import { useAuth } from "@/providers/auth-provider";
 const SPLASH_MS = 1800;
 
 /**
- * Stitch splash — brand mark + progress, then route by session.
+ * Brand splash + progress, then route by session.
  */
 function SplashView() {
   const router = useRouter();
@@ -65,7 +65,7 @@ function SplashView() {
           <h1 className="font-heading text-3xl leading-none font-bold tracking-tight">
             Crease
           </h1>
-          <p className="mt-2 text-[0.6rem] font-semibold tracking-[0.24em] text-primary/45 uppercase">
+          <p className="mt-2 text-xs font-semibold tracking-[0.24em] text-primary/45 uppercase">
             Ranches Thunders
           </p>
         </div>

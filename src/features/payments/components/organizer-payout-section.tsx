@@ -52,9 +52,7 @@ function OrganizerPayoutSection({
 
   return (
     <section className="space-y-3">
-      <h2 className="font-heading text-xl font-bold uppercase">
-        Pay organizers
-      </h2>
+      <h2 className="font-heading text-xl font-semibold">Pay organizers</h2>
       <BodySm>
         Upload proof for{" "}
         <span className="font-medium">match / ground fees</span> paid to
@@ -113,7 +111,7 @@ function OrganizerPayoutSection({
             >
               <div className="min-w-0">
                 <p className="text-sm font-semibold">{label}</p>
-                <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {payout.payeeName?.trim() ||
                     (pending ? "Organizer TBD" : "Organizer paid")}
                 </p>

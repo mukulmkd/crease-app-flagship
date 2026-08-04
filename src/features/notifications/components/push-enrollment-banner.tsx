@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, X } from "lucide-react";
 
 import { BodySm } from "@/components/common";
@@ -31,6 +31,7 @@ type BannerMode =
 function PushEnrollmentBanner() {
   const [mode, setMode] = useState<BannerMode>("hidden");
   const [busy, setBusy] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +83,30 @@ function PushEnrollmentBanner() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const banner = bannerRef.current;
+    if (mode === "hidden" || !banner) {
+      root.style.setProperty("--push-banner-height", "0px");
+      return;
+    }
+
+    const updateHeight = () => {
+      root.style.setProperty(
+        "--push-banner-height",
+        `${Math.ceil(banner.getBoundingClientRect().height)}px`,
+      );
+    };
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(banner);
+
+    return () => {
+      observer.disconnect();
+      root.style.setProperty("--push-banner-height", "0px");
+    };
+  }, [mode]);
 
   function dismiss() {
     try {
@@ -149,14 +174,15 @@ function PushEnrollmentBanner() {
 
   return (
     <div
+      ref={bannerRef}
       role="region"
       aria-label="Push alerts"
-      className="fixed inset-x-0 bottom-[var(--bottom-nav-height)] z-40 border-t border-outline-variant/40 bg-surface-container-lowest p-3 shadow-lg md:bottom-0"
+      className="fixed inset-x-0 bottom-[var(--chrome-bottom-offset)] z-[var(--layer-push-banner)] border-t border-outline-variant/40 bg-surface-container-lowest p-3 shadow-lg"
     >
       <div className="mx-auto flex max-w-lg gap-3">
         <Bell aria-hidden className="mt-0.5 size-5 shrink-0 text-primary" />
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="font-heading text-base font-bold tracking-wide uppercase">
+          <p className="font-heading text-base font-semibold tracking-wide">
             {copy.title}
           </p>
           <BodySm className="text-muted-foreground">{copy.body}</BodySm>
@@ -187,7 +213,7 @@ function PushEnrollmentBanner() {
           type="button"
           variant="ghost"
           size="icon"
-          className="size-9 shrink-0"
+          className="size-12 shrink-0"
           aria-label="Dismiss"
           onClick={dismiss}
         >

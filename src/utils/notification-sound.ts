@@ -101,7 +101,7 @@ export async function playCreaseNotificationSound(
 
   const t0 = ctx.currentTime + 0.01;
   softTap(ctx, t0);
-  // Rising lime-bright ping — distinctive vs generic OS pings.
+  // Distinct confirmation ping — soft rising tone.
   tone(ctx, {
     frequency: 587.33, // D5
     start: t0 + 0.04,

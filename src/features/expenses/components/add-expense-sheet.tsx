@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +13,7 @@ import {
   BottomSheetTitle,
 } from "@/components/dialogs";
 import { FormField } from "@/components/forms/form-field";
+import { SegmentedControl } from "@/components/forms/segmented-control";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +27,14 @@ const expenseSchema = z.object({
 });
 
 type ExpenseValues = z.infer<typeof expenseSchema>;
+type ExpenseCategoryPreset = "ground" | "kit" | "travel" | "other";
+
+const CATEGORY_OPTIONS = [
+  { value: "ground" as const, label: "Ground" },
+  { value: "kit" as const, label: "Kit" },
+  { value: "travel" as const, label: "Travel" },
+  { value: "other" as const, label: "Other" },
+];
 
 type AddExpenseSheetProps = {
   open: boolean;
@@ -33,16 +43,18 @@ type AddExpenseSheetProps = {
 
 function AddExpenseSheet({ open, onOpenChange }: AddExpenseSheetProps) {
   const addExpense = useAddExpense();
+  const [categoryPreset, setCategoryPreset] =
+    useState<ExpenseCategoryPreset>("ground");
   const form = useForm<ExpenseValues>({
     resolver: zodResolver(expenseSchema),
-    defaultValues: { amountInr: undefined, category: "other", note: "" },
+    defaultValues: { amountInr: undefined, category: "ground", note: "" },
   });
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="bg-surface-container-lowest">
         <BottomSheetHeader className="text-left">
-          <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+          <BottomSheetTitle className="font-heading text-2xl font-semibold">
             Add expense
           </BottomSheetTitle>
           <BottomSheetDescription>
@@ -60,7 +72,12 @@ function AddExpenseSheet({ open, onOpenChange }: AddExpenseSheetProps) {
               });
               toast.success({ title: "Expense recorded" });
               onOpenChange(false);
-              form.reset({ amountInr: undefined, category: "other", note: "" });
+              setCategoryPreset("ground");
+              form.reset({
+                amountInr: undefined,
+                category: "ground",
+                note: "",
+              });
             } catch (error) {
               toast.error({ title: getMutationErrorMessage(error) });
             }
@@ -79,13 +96,36 @@ function AddExpenseSheet({ open, onOpenChange }: AddExpenseSheetProps) {
           </FormField>
           <FormField
             label="Category"
-            error={form.formState.errors.category?.message}
+            error={
+              categoryPreset === "other"
+                ? undefined
+                : form.formState.errors.category?.message
+            }
           >
-            <Input
-              {...form.register("category")}
-              placeholder="Ground / kit / other"
+            <SegmentedControl
+              size="sm"
+              aria-label="Expense category"
+              options={CATEGORY_OPTIONS}
+              value={categoryPreset}
+              onValueChange={(value) => {
+                setCategoryPreset(value);
+                form.setValue("category", value === "other" ? "" : value);
+                form.clearErrors("category");
+              }}
             />
           </FormField>
+          {categoryPreset === "other" ? (
+            <FormField
+              label="Other category"
+              error={form.formState.errors.category?.message}
+            >
+              <Input
+                {...form.register("category")}
+                placeholder="e.g. refreshments"
+                autoFocus
+              />
+            </FormField>
+          ) : null}
           <FormField label="Note" error={form.formState.errors.note?.message}>
             <Input {...form.register("note")} />
           </FormField>

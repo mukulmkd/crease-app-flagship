@@ -41,9 +41,10 @@ Each confirmed match has:
 - Strength reminders **12:00** & **21:00 IST** while yes &lt; 11 and availability not frozen
 - Yes → no flip re-notifies squad
 
-## UI (Modern Cricket Club)
+## UI (Modern Scorebook Utility)
 
-- One-tap `SegmentedControl` (lime active)
+- Shared one-tap `MatchPollControl` (compact ticket + full detail variants,
+  amber selected state, arrow-key radio navigation)
 - Live available count / finalized squad on match detail + Home tickets
 - Home tickets provide real one-tap availability and travel voting per match
 - Availability and travel disable independently when each poll freezes

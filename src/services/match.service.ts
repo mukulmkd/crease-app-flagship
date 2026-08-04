@@ -323,6 +323,7 @@ export class MatchService extends BaseService {
         ).length;
         summaries.push({
           tournament,
+          fixtures: activeFixtures,
           settledMatchCount,
           remainingMatchCount: Math.max(
             0,

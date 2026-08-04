@@ -95,7 +95,7 @@ function EditTournamentSheet({
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="bg-surface-container-lowest">
         <BottomSheetHeader className="text-left">
-          <BottomSheetTitle className="font-heading text-2xl font-bold uppercase">
+          <BottomSheetTitle className="font-heading text-2xl font-semibold">
             Edit tournament
           </BottomSheetTitle>
           <BottomSheetDescription>

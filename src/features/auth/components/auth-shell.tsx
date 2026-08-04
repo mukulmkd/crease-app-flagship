@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, HelpCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -13,19 +13,17 @@ type AuthShellProps = {
   showBack?: boolean;
   backHref?: string;
   title?: string;
-  showHelp?: boolean;
   className?: string;
 };
 
 /**
- * Unauthenticated Modern Cricket Club chrome (no app navigation).
+ * Unauthenticated Modern Scorebook Utility chrome (no app navigation).
  */
 function AuthShell({
   children,
   showBack = false,
   backHref = "/login",
   title,
-  showHelp = false,
   className,
 }: AuthShellProps) {
   return (
@@ -36,7 +34,7 @@ function AuthShell({
         className,
       )}
     >
-      <header className="safe-top relative z-10 flex h-14 items-center gap-2 px-4">
+      <header className="safe-top relative z-10 flex h-14 items-center gap-2 border-b border-outline-variant/40 px-4">
         {showBack ? (
           <Button asChild variant="ghost" size="icon" aria-label="Go back">
             <Link href={backHref}>
@@ -52,24 +50,12 @@ function AuthShell({
         />
         <span className="sr-only">{title ?? "Crease"}</span>
 
-        {showHelp ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Help"
-            disabled
-          >
-            <HelpCircle aria-hidden />
-          </Button>
-        ) : (
-          <span className="size-12" aria-hidden />
-        )}
+        <span className="size-12" aria-hidden />
       </header>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-8">
+      <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-4 pb-8">
         {children}
-      </div>
+      </main>
     </div>
   );
 }

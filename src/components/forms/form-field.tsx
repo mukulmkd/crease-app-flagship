@@ -25,15 +25,29 @@ function FormField({
   className,
   children,
 }: FormFieldProps) {
-  const describedBy = error
-    ? `${htmlFor}-error`
-    : description
-      ? `${htmlFor}-description`
-      : undefined;
+  const generatedId = React.useId().replace(/:/g, "");
+  const child = React.isValidElement(children)
+    ? (children as React.ReactElement<{
+        id?: string;
+        "aria-invalid"?: boolean;
+        "aria-describedby"?: string;
+        "aria-required"?: boolean;
+      }>)
+    : null;
+  const fieldId = htmlFor ?? child?.props.id ?? `form-field-${generatedId}`;
+  const descriptionId = description ? `${fieldId}-description` : undefined;
+  const errorId = error ? `${fieldId}-error` : undefined;
+  const describedBy = [child?.props["aria-describedby"], descriptionId, errorId]
+    .filter(Boolean)
+    .join(" ");
+  const isCompositeElement =
+    child &&
+    typeof child.type === "string" &&
+    !["button", "input", "select", "textarea"].includes(child.type);
 
   return (
     <div data-slot="form-field" className={cn("grid gap-2", className)}>
-      <Label htmlFor={htmlFor} className="gap-1">
+      <Label htmlFor={fieldId} className="gap-1">
         {label}
         {required ? (
           <span className="text-destructive" aria-hidden>
@@ -41,34 +55,21 @@ function FormField({
           </span>
         ) : null}
       </Label>
-      {React.isValidElement(children)
-        ? React.cloneElement(
-            children as React.ReactElement<{
-              id?: string;
-              "aria-invalid"?: boolean;
-              "aria-describedby"?: string;
-            }>,
-            {
-              id: htmlFor,
-              "aria-invalid": Boolean(error) || undefined,
-              "aria-describedby": describedBy,
-            },
-          )
+      {child && !isCompositeElement
+        ? React.cloneElement(child, {
+            id: fieldId,
+            "aria-invalid": Boolean(error) || undefined,
+            "aria-describedby": describedBy || undefined,
+            "aria-required": required || child.props["aria-required"],
+          })
         : children}
-      {description && !error ? (
-        <p
-          id={htmlFor ? `${htmlFor}-description` : undefined}
-          className="text-caption text-muted-foreground"
-        >
+      {description ? (
+        <p id={descriptionId} className="text-caption text-muted-foreground">
           {description}
         </p>
       ) : null}
       {error ? (
-        <p
-          id={htmlFor ? `${htmlFor}-error` : undefined}
-          className="text-caption text-destructive"
-          role="alert"
-        >
+        <p id={errorId} className="text-caption text-destructive" role="alert">
           {error}
         </p>
       ) : null}

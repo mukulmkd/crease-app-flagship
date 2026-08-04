@@ -40,7 +40,7 @@ function MatchTravelList({
 
   return (
     <section aria-labelledby={headingId}>
-      <h2 id={headingId} className="font-heading text-xl font-bold uppercase">
+      <h2 id={headingId} className="font-heading text-xl font-semibold">
         {heading}
       </h2>
       <ul className="mt-2 divide-y divide-outline-variant rounded-xl bg-surface-container-low">
@@ -86,10 +86,7 @@ function MatchRidesSummary({
 
   return (
     <section aria-labelledby="rides-heading">
-      <h2
-        id="rides-heading"
-        className="font-heading text-xl font-bold uppercase"
-      >
+      <h2 id="rides-heading" className="font-heading text-xl font-semibold">
         Carpool rides
       </h2>
       <ul className="mt-2 space-y-2">
@@ -110,10 +107,10 @@ function MatchRidesSummary({
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex min-w-0 items-center gap-2">
                     <Car className="size-4 shrink-0 text-primary" aria-hidden />
-                    <span className="truncate font-heading text-lg font-bold uppercase">
+                    <span className="truncate font-heading text-lg font-semibold">
                       {label(String(ride.driverUserId))}
                     </span>
-                    <span className="shrink-0 text-[0.6rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
+                    <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                       Driver
                     </span>
                   </span>

@@ -1,5 +1,5 @@
 ---
-description: UI guidelines — Modern Cricket Club native PWA feel
+description: UI guidelines — Modern Scorebook Utility native PWA feel
 alwaysApply: true
 ---
 
@@ -7,10 +7,12 @@ alwaysApply: true
 
 Use Tailwind + shadcn/ui.
 
-Mobile first. Bottom navigation on phones (no hamburger drawer). Keep
-destinations role-aware. Sidebar on desktop.
+Mobile first. Bottom navigation on phones is exactly Home, Matches, Team, Pay,
+Profile (no hamburger drawer). Fund and Settings live in the Profile hub.
+Sidebar on desktop may expose those destinations directly.
 
-Support light/dark mode (light is the MCC scorebook canvas; dark keeps tonal clubhouse surfaces).
+Support light/dark mode (light = neutral stone + ink primary + amber selection;
+dark = Neutral Night charcoal — no green/lime anywhere).
 
 Include loading, empty and error states.
 
@@ -18,10 +20,12 @@ Large touch targets (≥ 48px).
 
 ## Native app feel
 
-- Stitch **Modern Cricket Club** is mandatory (`docs/UI.md`, rule `12-stitch-design-system`)
+- **Modern Scorebook Utility** is mandatory (`docs/UI.md`, rule `12-design-system`)
 - Chrome should feel like iOS/Android utilities (clear hierarchy, tonal surfaces, no decorative clutter)
 - Prefer bottom sheets for create-tournament, add-player, confirm, and pay flows
-- One-tap poll controls via `SegmentedControl`
-- Dual fonts: Barlow Condensed (display) + Manrope (UI)
+- One-tap polls via `MatchPollControl`; exclusive form choices via `SegmentedControl`
+- Dual fonts: Oswald (display) + Plus Jakarta Sans (UI)
 - Next match is a **match ticket**, not a small card in a grid
+- Home hierarchy is next match → vote → personal dues → alerts; Admin metrics follow
+- Use one `h1` per route and keep operational copy at least 12px
 - Hide actions the user cannot perform; services still authorize

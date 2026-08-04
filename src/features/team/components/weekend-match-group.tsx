@@ -79,10 +79,10 @@ function WeekendMatchGroup({
           onClick={() => setOpen((value) => !value)}
         >
           <span className="min-w-0">
-            <span className="block font-heading text-lg font-bold tracking-tight uppercase">
+            <span className="block font-heading text-lg font-semibold tracking-tight">
               {title}
             </span>
-            <span className="mt-0.5 block text-[0.65rem] text-muted-foreground">
+            <span className="mt-0.5 block text-xs text-muted-foreground">
               {count} · {weekendDayLabels(weekend)}
             </span>
             {weekendFeesPending ? (

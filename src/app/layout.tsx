@@ -1,23 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow_Condensed, Geist_Mono, Manrope } from "next/font/google";
+import { Geist_Mono, Oswald, Plus_Jakarta_Sans } from "next/font/google";
 
-import { APP_DESCRIPTION, APP_NAME } from "@/constants/app";
+import { APP_DESCRIPTION, APP_ICON_VERSION, APP_NAME } from "@/constants/app";
 import { brandColors } from "@/constants/design-tokens";
 import { AppProviders } from "@/providers/app-providers";
 
 import "@/styles/globals.css";
 
-/** Stitch Modern Cricket Club — Manrope UI + Barlow Condensed display. */
-const manrope = Manrope({
+/** Modern Scorebook Utility — Plus Jakarta UI + Oswald display. */
+const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
-const barlowCondensed = Barlow_Condensed({
+const oswald = Oswald({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -45,12 +45,20 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      {
+        url: `/icons/icon-192.png?v=${APP_ICON_VERSION}`,
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: `/icons/icon-512.png?v=${APP_ICON_VERSION}`,
+        sizes: "512x512",
+        type: "image/png",
+      },
     ],
     apple: [
       {
-        url: "/icons/apple-touch-icon.png",
+        url: `/icons/apple-touch-icon.png?v=${APP_ICON_VERSION}`,
         sizes: "180x180",
         type: "image/png",
       },
@@ -80,7 +88,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${manrope.variable} ${barlowCondensed.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${plusJakarta.variable} ${oswald.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <AppProviders>{children}</AppProviders>

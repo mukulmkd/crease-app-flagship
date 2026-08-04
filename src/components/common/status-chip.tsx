@@ -9,12 +9,12 @@ const statusChipVariants = cva(
     variants: {
       status: {
         success: "bg-success/15 text-success",
-        warning: "bg-warning/25 text-warning-foreground",
-        danger: "bg-secondary/15 text-secondary",
+        warning: "bg-warning/20 text-warning-foreground dark:text-warning",
+        danger: "bg-destructive/15 text-destructive",
         info: "bg-info/15 text-info",
         pending: "bg-info/15 text-info",
         neutral: "bg-surface-container-highest text-muted-foreground",
-        accent: "bg-primary-container/20 text-primary",
+        accent: "bg-primary/15 text-primary",
       },
     },
     defaultVariants: {
@@ -29,7 +29,7 @@ type StatusChipProps = React.ComponentProps<"span"> &
   };
 
 /**
- * Stitch status chip — roles, availability, match events.
+ * Status chip — roles, availability, match events.
  */
 function StatusChip({
   className,
