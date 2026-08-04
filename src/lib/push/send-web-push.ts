@@ -14,6 +14,14 @@ export type WebPushPayload = {
   notificationId?: string;
 };
 
+function safeEndpointHost(endpoint: string): string | undefined {
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return undefined;
+  }
+}
+
 function configureVapid(): boolean {
   if (!isWebPushConfigured()) return false;
   webpush.setVapidDetails(
@@ -54,12 +62,18 @@ export async function sendWebPushToUsers(
     await Promise.all(
       rows.map(async (row) => {
         try {
+          // TTL + urgency help Apple (web.push.apple.com) accept and deliver.
           await webpush.sendNotification(
             {
               endpoint: row.endpoint,
               keys: { p256dh: row.p256dh, auth: row.auth },
             },
             body,
+            {
+              TTL: 60 * 60 * 24,
+              urgency: "high",
+              contentEncoding: "aes128gcm",
+            },
           );
           sent += 1;
         } catch (error) {
@@ -67,13 +81,19 @@ export async function sendWebPushToUsers(
             error && typeof error === "object" && "statusCode" in error
               ? Number((error as { statusCode: number }).statusCode)
               : 0;
+          const bodyText =
+            error && typeof error === "object" && "body" in error
+              ? String((error as { body: unknown }).body)
+              : undefined;
           // Gone / expired subscription — drop it.
           if (statusCode === 404 || statusCode === 410) {
             await repo.deleteById(row.id).catch(() => undefined);
           } else {
             logger.warn("web_push.send_failed", {
               userId: row.userId,
+              endpointHost: safeEndpointHost(row.endpoint),
               statusCode: statusCode || undefined,
+              body: bodyText?.slice(0, 200),
               message: error instanceof Error ? error.message : "unknown",
             });
           }

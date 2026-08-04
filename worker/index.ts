@@ -3,6 +3,10 @@
 /**
  * Custom service worker chunk (bundled into next-pwa sw.js).
  * Shows OS notifications when Crease is backgrounded / closed.
+ *
+ * iOS requires a user-visible notification for every push event. Skipping
+ * showNotification (e.g. when a window looks "visible") can stop Apple from
+ * delivering further pushes — always show the banner.
  */
 
 declare const self: ServiceWorkerGlobalScope;
@@ -15,43 +19,51 @@ type CreasePushPayload = {
   notificationId?: string;
 };
 
+function readPushPayload(
+  event: PushEvent,
+): Required<Pick<CreasePushPayload, "title" | "body" | "url" | "tag">> {
+  let raw: CreasePushPayload | null = null;
+  try {
+    raw = (event.data?.json() as CreasePushPayload | null) ?? null;
+  } catch {
+    try {
+      const text = event.data?.text();
+      raw = text ? { body: text } : null;
+    } catch {
+      raw = null;
+    }
+  }
+
+  return {
+    title: raw?.title?.trim() || "Crease",
+    body: raw?.body?.trim() || "You have a new alert",
+    url: raw?.url?.trim() || "/home?alerts=1",
+    tag: raw?.tag?.trim() || raw?.notificationId || "crease-alert",
+  };
+}
+
 self.addEventListener("push", (event) => {
-  const raw = event.data?.json() as CreasePushPayload | null;
-  const title = raw?.title?.trim() || "Crease";
-  const body = raw?.body?.trim() || "You have a new alert";
-  const url = raw?.url?.trim() || "/home?alerts=1";
-  const tag = raw?.tag?.trim() || raw?.notificationId || "crease-alert";
+  const payload = readPushPayload(event);
 
   event.waitUntil(
     (async () => {
+      // Always show — required on iOS; Android may also show while foreground.
+      await self.registration.showNotification(payload.title, {
+        body: payload.body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: payload.tag,
+        renotify: true,
+        data: { url: payload.url },
+      });
+
       const clients = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
-      const visible = clients.some(
-        (client) =>
-          "visibilityState" in client && client.visibilityState === "visible",
-      );
-
-      // Foreground: Realtime already toasts + chimes. Only nudge a refresh —
-      // do not play a second sound via postMessage.
-      if (visible) {
-        for (const client of clients) {
-          client.postMessage({ type: "CREASE_PUSH_REFRESH", payload: raw });
-        }
-        return;
+      for (const client of clients) {
+        client.postMessage({ type: "CREASE_PUSH_REFRESH", payload });
       }
-
-      // Background / locked / killed: OS banner via the service worker.
-      await self.registration.showNotification(title, {
-        body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
-        tag,
-        renotify: true,
-        data: { url },
-        vibrate: [60, 40, 60, 40, 120],
-      });
     })(),
   );
 });
