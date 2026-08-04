@@ -6,15 +6,12 @@ import { BodySm, StatusChip } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
+import { getVapidPublicKey, isPushSupported } from "@/lib/push/browser";
 import {
-  getVapidPublicKey,
-  isPushSupported,
-  urlBase64ToUint8Array,
-} from "@/lib/push/browser";
-import {
-  deletePushSubscriptionAction,
-  savePushSubscriptionAction,
-} from "@/services/push.actions";
+  enrollPushSubscription,
+  optOutPushSubscription,
+} from "@/lib/push/client-subscribe";
+import { isPushOptedOut } from "@/lib/push/preference";
 
 type PermissionState = NotificationPermission | "unsupported";
 
@@ -26,12 +23,15 @@ function readPushPermission(): PermissionState {
 }
 
 /**
- * Enable OS push for the installed PWA (background / locked screen alerts).
+ * OS push preference — on by default after Allow; players may turn off here.
  */
 function PushAlertsSection() {
   const [permission, setPermission] =
     useState<PermissionState>(readPushPermission);
   const [subscribed, setSubscribed] = useState(false);
+  const [optedOut, setOptedOut] = useState(() =>
+    typeof window === "undefined" ? false : isPushOptedOut(),
+  );
   const [busy, setBusy] = useState(false);
   const vapidPublic = getVapidPublicKey();
 
@@ -52,48 +52,35 @@ function PushAlertsSection() {
   }, []);
 
   const enable = async () => {
-    if (!vapidPublic) {
-      toast.error({
-        title: "Push not configured",
-        description: "Missing VAPID public key on the server.",
-      });
-      return;
-    }
     setBusy(true);
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const result = await Notification.requestPermission();
-      setPermission(result);
-      if (result !== "granted") {
+      const result = await enrollPushSubscription({ force: true });
+      setPermission(readPushPermission());
+      setOptedOut(isPushOptedOut());
+      if (result === "subscribed") {
+        setSubscribed(true);
+        toast.success({ title: "Push alerts on" });
+        return;
+      }
+      if (result === "denied") {
         toast.error({
           title: "Permission blocked",
           description: "Allow notifications for Crease in system settings.",
         });
         return;
       }
-
-      const existing = await registration.pushManager.getSubscription();
-      const subscription =
-        existing ??
-        (await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            vapidPublic,
-          ) as BufferSource,
-        }));
-
-      const json = subscription.toJSON();
-      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-        throw new Error("Incomplete push subscription");
+      if (result === "no_vapid") {
+        toast.error({
+          title: "Push not configured",
+          description: "Missing VAPID public key on the server.",
+        });
+        return;
       }
-
-      await savePushSubscriptionAction({
-        endpoint: json.endpoint,
-        keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-        userAgent: navigator.userAgent,
-      });
-      setSubscribed(true);
-      toast.success({ title: "Push alerts enabled" });
+      if (result === "unsupported") {
+        toast.error({ title: "This browser cannot receive Web Push" });
+        return;
+      }
+      toast.error({ title: "Couldn’t enable push alerts" });
     } catch (error) {
       toast.error({ title: getMutationErrorMessage(error) });
     } finally {
@@ -104,13 +91,9 @@ function PushAlertsSection() {
   const disable = async () => {
     setBusy(true);
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      if (subscription) {
-        await deletePushSubscriptionAction(subscription.endpoint);
-        await subscription.unsubscribe();
-      }
+      await optOutPushSubscription();
       setSubscribed(false);
+      setOptedOut(true);
       toast.success({ title: "Push alerts turned off" });
     } catch (error) {
       toast.error({ title: getMutationErrorMessage(error) });
@@ -118,6 +101,8 @@ function PushAlertsSection() {
       setBusy(false);
     }
   };
+
+  const isOn = subscribed && !optedOut && permission === "granted";
 
   return (
     <section className="space-y-3 rounded-xl bg-surface-container-low p-4">
@@ -127,14 +112,14 @@ function PushAlertsSection() {
             Push alerts
           </p>
           <BodySm className="mt-1">
-            Get Crease alerts on your lock screen when the app is closed. On
-            iPhone, install Crease to the Home Screen first (Safari → Share →
-            Add to Home Screen).
+            Lock-screen alerts are on by default after you Allow once. Turn them
+            off anytime here. On iPhone, install Crease to the Home Screen first
+            (Safari → Share → Add to Home Screen).
           </BodySm>
         </div>
         {permission === "unsupported" ? (
           <StatusChip status="warning">Unsupported</StatusChip>
-        ) : subscribed ? (
+        ) : isOn ? (
           <StatusChip status="success">On</StatusChip>
         ) : (
           <StatusChip status="warning">Off</StatusChip>
@@ -149,7 +134,7 @@ function PushAlertsSection() {
         <BodySm className="text-muted-foreground">
           Server is missing VAPID keys — ask Admin to configure env.
         </BodySm>
-      ) : subscribed ? (
+      ) : isOn ? (
         <Button
           type="button"
           variant="ghost"
@@ -167,7 +152,7 @@ function PushAlertsSection() {
           loading={busy}
           onClick={() => void enable()}
         >
-          Enable push alerts
+          {optedOut ? "Turn push back on" : "Allow push alerts"}
         </Button>
       )}
     </section>

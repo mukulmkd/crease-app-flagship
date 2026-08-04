@@ -11,6 +11,7 @@ import { DesktopNav } from "@/components/navigation/desktop-nav";
 import {
   useUnreadNotificationCount,
   useNotificationAlerts,
+  useEnsureDefaultPush,
 } from "@/features/notifications";
 import { NotificationsSheet } from "@/features/notifications/components/notifications-sheet";
 import { NotificationsUiProvider } from "@/features/notifications/providers/notifications-ui-provider";
@@ -67,6 +68,7 @@ function AppShell({
   const pathname = usePathname();
   const unreadQuery = useUnreadNotificationCount();
   useNotificationAlerts();
+  useEnsureDefaultPush();
   const resolvedCount = notificationCount ?? unreadQuery.data ?? 0;
   const resolvedTitle = resolveShellTitle(pathname, title);
 

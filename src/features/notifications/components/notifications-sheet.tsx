@@ -45,7 +45,7 @@ function NotificationsSheet() {
           ) : items.length === 0 ? (
             <EmptyState
               title="You’re all caught up"
-              description="New alerts will land here. Enable push in Settings for lock-screen alerts."
+              description="New alerts will land here. Lock-screen push is on by default after you Allow once — turn it off in Settings anytime."
             />
           ) : (
             <ul className="space-y-2">

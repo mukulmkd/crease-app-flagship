@@ -42,7 +42,7 @@ function DemoModeSection({ demoMode, canEdit }: DemoModeSectionProps) {
             : "Demo notification sent",
         description:
           scope === "team"
-            ? "Open app → toast + chime. Closed → lock-screen push if enabled."
+            ? "Open app → toast + chime. Closed → lock-screen push (unless they turned it off)."
             : "Watch for the toast, bell badge, and chime.",
       });
     } catch (error) {
@@ -99,8 +99,7 @@ function DemoModeSection({ demoMode, canEdit }: DemoModeSectionProps) {
         <div className="space-y-2 border-t border-outline-variant/40 pt-4">
           <BodySm className="text-muted-foreground">
             Self-test the chime, or send a real inbox alert. Admins can fan out
-            to everyone (push when the app is closed, if they enabled push in
-            Settings).
+            to everyone (push reaches players who have not turned push off).
           </BodySm>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button
