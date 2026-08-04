@@ -16,7 +16,7 @@ Within ~5 seconds show:
 - Pending payments
 - Team fund balance
 - Recent notifications
-- Admin quick actions (create match, add expense, ask contribution) as secondary chips
+- Admin quick actions (create match, add player) as secondary chips; fund/expense management lives on `/expenses`
 
 ## Widgets (MVP)
 
@@ -27,6 +27,7 @@ Within ~5 seconds show:
 - Team fund balance
 - Notifications
 - Quick actions (role-aware, never competing with the ticket)
+- Team fund metric links to Admin-only `/expenses`
 
 ## Rules
 

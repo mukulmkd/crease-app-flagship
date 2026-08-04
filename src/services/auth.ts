@@ -307,12 +307,3 @@ export async function signOut() {
     rethrow(error);
   }
 }
-
-export async function getSession() {
-  if (!isSupabaseConfigured()) return null;
-  try {
-    return await repo().getSession();
-  } catch (error) {
-    rethrow(error);
-  }
-}

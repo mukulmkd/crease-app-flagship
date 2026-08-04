@@ -1,3 +1,3 @@
 "use client";
 
-export { useAuth, useSession } from "@/providers/auth-provider";
+export { useAuth } from "@/providers/auth-provider";

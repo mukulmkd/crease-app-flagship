@@ -6,9 +6,11 @@ import { CheckCircle2, ExternalLink, IndianRupee } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { CHARGE_STATUS_LABELS } from "@/constants/domain/labels";
+import { chargeStatusLabel } from "@/constants/domain/labels";
+import { isChargeSettled } from "@/features/payments/lib/charge-rollup";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { SettlementCharge } from "@/types/models";
+import { formatInrAmount } from "@/utils";
 
 function SummaryMetric({
   icon: Icon,
@@ -39,6 +41,8 @@ function ChargeCard({
   charge: SettlementCharge;
   highlight?: boolean;
 }) {
+  const settled = isChargeSettled(charge);
+
   return (
     <div
       className={
@@ -53,25 +57,28 @@ function ChargeCard({
           <div>
             <p className="text-sm font-semibold">Your share</p>
             <p className="text-xs text-muted-foreground">
-              Match ₹{Math.round(charge.matchFeeShareInr)}
+              Match ₹{formatInrAmount(charge.matchFeeShareInr)}
               {charge.carpoolFeeInr > 0
-                ? ` + carpool ₹${Math.round(charge.carpoolFeeInr)}`
+                ? ` + carpool ₹${formatInrAmount(charge.carpoolFeeInr)}`
                 : ""}
               {charge.carpoolCreditInr > 0
-                ? ` − credit ₹${Math.round(charge.carpoolCreditInr)}`
+                ? ` − carpool credit ₹${formatInrAmount(charge.carpoolCreditInr)}`
+                : ""}
+              {charge.tournamentCreditInr > 0
+                ? ` − tournament credit ₹${formatInrAmount(charge.tournamentCreditInr)}`
                 : ""}
             </p>
           </div>
         </div>
         <div className="text-right">
           <p className="font-heading text-2xl font-bold tabular-nums">
-            ₹{Math.round(charge.totalInr)}
+            ₹{formatInrAmount(charge.totalInr)}
           </p>
           <p className="inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-wide uppercase">
-            {charge.status === "paid" || charge.status === "offline_paid" ? (
+            {settled ? (
               <CheckCircle2 className="size-3 text-success" aria-hidden />
             ) : null}
-            {CHARGE_STATUS_LABELS[charge.status]}
+            {chargeStatusLabel(charge.status, charge.note)}
           </p>
         </div>
       </div>

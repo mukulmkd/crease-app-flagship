@@ -21,7 +21,8 @@ If Sunday’s match is not completed yet at 19:00, only Saturday may bill — Ad
 
 Players:
 
-1. Pay UPI (team VPA from Settings)
+1. Pay via UPI deeplink from `/payments` (team VPA from Settings + due amount),
+   or pay manually in any UPI app
 2. Submit UTR
 3. Upload compressed screenshot (`payment-proofs`)
 4. Mark paid

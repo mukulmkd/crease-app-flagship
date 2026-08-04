@@ -21,6 +21,7 @@ import type {
   TeamMembershipWithProfile,
 } from "@/types/models";
 import { MVP_TEAM } from "@/constants/domain/enums";
+import { TEAM_LOGOS_BUCKET } from "@/utils/team-logo";
 
 export type MembershipListFilter = RepositoryListParams & {
   teamId?: TeamId | string;
@@ -206,6 +207,28 @@ export class TeamRepository extends BaseRepository {
       .eq("status", "active");
     this.assertOk(error, "team.countActiveAdmins");
     return count ?? 0;
+  }
+
+  /** Upload a compressed logo under `{teamId}/{timestamp}.jpg`. */
+  async uploadLogo(teamId: TeamId | string, blob: Blob): Promise<string> {
+    const path = `${teamId}/${Date.now()}.jpg`;
+    const { error } = await this.client.storage
+      .from(TEAM_LOGOS_BUCKET)
+      .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    if (error) {
+      throw new AppError("EXTERNAL", error.message, 502, error);
+    }
+    return path;
+  }
+
+  /** Delete a previous logo object in the team-logos bucket. */
+  async deleteLogo(path: string): Promise<void> {
+    const { error } = await this.client.storage
+      .from(TEAM_LOGOS_BUCKET)
+      .remove([path]);
+    if (error) {
+      throw new AppError("EXTERNAL", error.message, 502, error);
+    }
   }
 }
 

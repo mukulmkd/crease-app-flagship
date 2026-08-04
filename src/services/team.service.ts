@@ -2,22 +2,15 @@ import { MVP_TEAM } from "@/constants/domain/enums";
 import { PERMISSIONS } from "@/constants/domain/team-permissions";
 import { requirePermission } from "@/lib/rbac/team-permissions";
 import {
+  assignPaymentCollectorSchema,
   listMembersQuerySchema,
   updateMembershipSchema,
   updateTeamSettingsSchema,
 } from "@/lib/validations/identity";
-import type { AuditLogRepository } from "@/repositories/audit-log.repository";
-import type { NotificationRepository } from "@/repositories/notification.repository";
-import {
-  createBrowserAuditLogRepository,
-  createBrowserNotificationRepository,
-  createBrowserTeamRepository,
-  createBrowserUserRepository,
-} from "@/repositories";
+import { createBrowserTeamRepository } from "@/repositories";
 import type { TeamRepository } from "@/repositories/team.repository";
-import type { UserRepository } from "@/repositories/user.repository";
 import type {
-  AddTeamMemberDto,
+  AssignPaymentCollectorDto,
   ListTeamMembersQuery,
   UpdateMembershipDto,
   UpdateTeamSettingsDto,
@@ -33,6 +26,7 @@ import {
   requireActiveMembership,
   requireAdmin,
 } from "@/services/shared/membership";
+import { teamLogoStoragePath } from "@/utils/team-logo";
 
 type Actor = ServiceActor | { actorId: ProfileId | string };
 
@@ -43,12 +37,7 @@ type Actor = ServiceActor | { actorId: ProfileId | string };
 export class TeamService extends BaseService {
   protected readonly serviceName = "team.service";
 
-  constructor(
-    private readonly teams: TeamRepository,
-    private readonly users: UserRepository,
-    private readonly notifications: NotificationRepository,
-    private readonly audits: AuditLogRepository,
-  ) {
+  constructor(private readonly teams: TeamRepository) {
     super();
   }
 
@@ -99,11 +88,52 @@ export class TeamService extends BaseService {
       );
       requirePermission(membership.role, PERMISSIONS.TEAM_SETTINGS_EDIT);
       const parsed = updateTeamSettingsSchema.parse(input);
+      const patch: {
+        name?: string;
+        logo_url?: string | null;
+        upi_vpa?: string | null;
+        whatsapp_notify_url?: string | null;
+        demo_mode?: boolean;
+      } = {};
+      if (parsed.name !== undefined) patch.name = parsed.name;
+      if (parsed.logoUrl !== undefined) patch.logo_url = parsed.logoUrl;
+      if (parsed.upiVpa !== undefined) patch.upi_vpa = parsed.upiVpa;
+      if (parsed.whatsappNotifyUrl !== undefined) {
+        patch.whatsapp_notify_url = parsed.whatsappNotifyUrl;
+      }
+      if (parsed.demoMode !== undefined) patch.demo_mode = parsed.demoMode;
+      return this.teams.update(MVP_TEAM.id, patch);
+    });
+  }
+
+  /**
+   * Exactly one Admin collects weekend UPI. Sets team.upi_vpa to their VPA.
+   * Call PaymentService.autoSettleCollectorDues after this so their own lines close.
+   */
+  async assignPaymentCollector(
+    input: AssignPaymentCollectorDto,
+    actor: Actor,
+  ): Promise<Team> {
+    return this.run(async () => {
+      const membership = await requireAdmin(
+        this.teams,
+        MVP_TEAM.id,
+        actor.actorId,
+      );
+      requirePermission(membership.role, PERMISSIONS.TEAM_SETTINGS_EDIT);
+      const parsed = assignPaymentCollectorSchema.parse(input);
+
+      const target = await this.teams.findMembership(
+        MVP_TEAM.id,
+        parsed.userId,
+      );
+      if (!target || target.status !== "active" || target.role !== "admin") {
+        throw this.conflict("Collector must be an active Admin");
+      }
+
       return this.teams.update(MVP_TEAM.id, {
-        name: parsed.name,
-        logo_url: parsed.logoUrl,
+        collector_user_id: parsed.userId,
         upi_vpa: parsed.upiVpa,
-        whatsapp_notify_url: parsed.whatsappNotifyUrl,
       });
     });
   }
@@ -131,6 +161,15 @@ export class TeamService extends BaseService {
           parsed.status === "left" ||
           parsed.status === "suspended")
       ) {
+        const team = await this.teams.getMvpTeam();
+        if (
+          team.collectorUserId &&
+          String(team.collectorUserId) === String(target.userId)
+        ) {
+          throw this.conflict(
+            "Assign another payment collector before demoting or removing this Admin",
+          );
+        }
         const admins = await this.teams.countActiveAdmins(MVP_TEAM.id);
         if (admins <= 1) {
           throw this.conflict("Cannot remove or demote the last Admin");
@@ -143,16 +182,68 @@ export class TeamService extends BaseService {
       });
     });
   }
+
+  /** Admin upload — square-cropped JPEG path stored on `teams.logo_url`. */
+  async updateTeamLogo(blob: Blob, actor: Actor): Promise<Team> {
+    return this.run(async () => {
+      const membership = await requireAdmin(
+        this.teams,
+        MVP_TEAM.id,
+        actor.actorId,
+      );
+      requirePermission(membership.role, PERMISSIONS.TEAM_SETTINGS_EDIT);
+
+      const existing = await this.teams.getMvpTeam();
+      const previousPath = teamLogoStoragePath(existing.logoUrl);
+      const nextPath = await this.teams.uploadLogo(MVP_TEAM.id, blob);
+      const team = await this.teams.update(MVP_TEAM.id, {
+        logo_url: nextPath,
+      });
+
+      if (previousPath && previousPath !== nextPath) {
+        try {
+          await this.teams.deleteLogo(previousPath);
+        } catch (error) {
+          this.warn("updateTeamLogo.delete_old_failed", {
+            path: previousPath,
+            message: error instanceof Error ? error.message : "unknown",
+          });
+        }
+      }
+
+      return team;
+    });
+  }
+
+  async removeTeamLogo(actor: Actor): Promise<Team> {
+    return this.run(async () => {
+      const membership = await requireAdmin(
+        this.teams,
+        MVP_TEAM.id,
+        actor.actorId,
+      );
+      requirePermission(membership.role, PERMISSIONS.TEAM_SETTINGS_EDIT);
+
+      const existing = await this.teams.getMvpTeam();
+      const previousPath = teamLogoStoragePath(existing.logoUrl);
+      const team = await this.teams.update(MVP_TEAM.id, { logo_url: null });
+
+      if (previousPath) {
+        try {
+          await this.teams.deleteLogo(previousPath);
+        } catch (error) {
+          this.warn("removeTeamLogo.delete_failed", {
+            path: previousPath,
+            message: error instanceof Error ? error.message : "unknown",
+          });
+        }
+      }
+
+      return team;
+    });
+  }
 }
 
 export function createBrowserTeamService(): TeamService {
-  return new TeamService(
-    createBrowserTeamRepository(),
-    createBrowserUserRepository(),
-    createBrowserNotificationRepository(),
-    createBrowserAuditLogRepository(),
-  );
+  return new TeamService(createBrowserTeamRepository());
 }
-
-/** Re-export for hooks that still expect add-member typing. */
-export type { AddTeamMemberDto };

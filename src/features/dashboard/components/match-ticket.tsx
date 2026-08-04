@@ -15,12 +15,12 @@ import {
 import { toast } from "@/components/feedback/toast";
 import { Progress } from "@/components/ui/progress";
 import { MATCH_CLASSIFICATION_LABELS } from "@/constants/domain/labels";
-import { SQUAD_MIN } from "@/constants/domain/enums";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
 import {
   useCastAvailabilityVote,
   useCastCarpoolVote,
   useMatchPolls,
+  useSquadLimits,
 } from "@/features/team/hooks";
 import {
   formatMatchDate,
@@ -35,6 +35,7 @@ type MatchTicketProps = {
 
 /** Dominant dashboard fixture surface from the Stitch match-ticket concept. */
 function MatchTicket({ match }: MatchTicketProps) {
+  const { min: squadMin } = useSquadLimits();
   const pollsOpen = match.status === "confirmed" && match.pollsEnabled;
   const pollsQuery = useMatchPolls(pollsOpen ? match.id : undefined);
   const castAvailability = useCastAvailabilityVote();
@@ -51,7 +52,7 @@ function MatchTicket({ match }: MatchTicketProps) {
   const carpoolDisabled =
     pollsLoading || Boolean(pollsQuery.data?.carpoolFrozen);
   const progress = pollsOpen
-    ? Math.min(100, Math.round((strengthCount / SQUAD_MIN) * 100))
+    ? Math.min(100, Math.round((strengthCount / squadMin) * 100))
     : 0;
 
   return (
@@ -104,9 +105,9 @@ function MatchTicket({ match }: MatchTicketProps) {
             <p className="font-heading text-base font-bold tabular-nums">
               {pollsOpen
                 ? squadFinalized
-                  ? `${squadCount} of ${SQUAD_MIN} selected`
+                  ? `${squadCount} of ${squadMin} selected`
                   : `${yesCount} available`
-                : `— of ${SQUAD_MIN} available`}
+                : `— of ${squadMin} available`}
             </p>
           </div>
           <Progress
@@ -188,7 +189,9 @@ function MatchTicket({ match }: MatchTicketProps) {
         </div>
         {match.status !== "confirmed" ? (
           <p className="text-center text-[0.65rem] text-white/55">
-            Confirm the match to open voting.
+            {match.pollsEnabled
+              ? "Future fixture. Polls open Monday at 9 AM IST in match week."
+              : "Future fixture. Publishes Monday at 9 AM IST; polls are off."}
           </p>
         ) : !match.pollsEnabled ? (
           <p className="text-center text-[0.65rem] text-white/55">

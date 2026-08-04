@@ -5,7 +5,6 @@ export const queryKeys = {
 
   auth: {
     all: () => [...queryKeys.root, "auth"] as const,
-    session: () => [...queryKeys.auth.all(), "session"] as const,
     profile: () => [...queryKeys.auth.all(), "profile"] as const,
   },
 
@@ -33,8 +32,6 @@ export const queryKeys = {
   tournaments: {
     all: () => [...queryKeys.root, "tournaments"] as const,
     list: () => [...queryKeys.tournaments.all(), "list"] as const,
-    detail: (tournamentId: string) =>
-      [...queryKeys.tournaments.all(), "detail", tournamentId] as const,
   },
 
   notifications: {
@@ -47,19 +44,30 @@ export const queryKeys = {
 
   payments: {
     all: () => [...queryKeys.root, "payments"] as const,
-    myCharges: () => [...queryKeys.payments.all(), "my-charges"] as const,
-    teamCharges: () => [...queryKeys.payments.all(), "team-charges"] as const,
+    myWeekendDues: () =>
+      [...queryKeys.payments.all(), "my-weekend-dues"] as const,
+    adminWeekendDues: () =>
+      [...queryKeys.payments.all(), "admin-weekend-dues"] as const,
     settlements: () => [...queryKeys.payments.all(), "settlements"] as const,
-    reimbursements: () =>
-      [...queryKeys.payments.all(), "reimbursements"] as const,
+    weekendFeeGenerateStatus: (weekStartDate: string) =>
+      [
+        ...queryKeys.payments.all(),
+        "fee-generate-status",
+        weekStartDate,
+      ] as const,
+    adminReimbursements: () =>
+      [...queryKeys.payments.all(), "admin-reimbursements"] as const,
     matchReport: (matchId: string) =>
       [...queryKeys.payments.all(), "match-report", matchId] as const,
+    matchCollectionStatuses: () =>
+      [...queryKeys.payments.all(), "match-collection-statuses"] as const,
+    weekendSummary: (settlementId: string) =>
+      [...queryKeys.payments.all(), "weekend-summary", settlementId] as const,
   },
 
   fund: {
     all: () => [...queryKeys.root, "fund"] as const,
-    balance: () => [...queryKeys.fund.all(), "balance"] as const,
-    transactions: () => [...queryKeys.fund.all(), "transactions"] as const,
+    hub: () => [...queryKeys.fund.all(), "hub"] as const,
   },
 
   dashboard: {

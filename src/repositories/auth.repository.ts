@@ -22,6 +22,25 @@ export type CompleteProfilePayload = {
   avatarUrl?: string | null;
 };
 
+/** Transport failure (offline, aborted reload, service worker) — not a 401. */
+function isNetworkError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const name = "name" in error ? String(error.name) : "";
+  if (name === "AuthRetryableFetchError" || name === "AbortError") return true;
+  const message = "message" in error ? String(error.message).toLowerCase() : "";
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("network") ||
+    message.includes("load failed")
+  );
+}
+
+function networkErrorMessage(cause: unknown): string {
+  const message =
+    cause instanceof Error && cause.message ? cause.message : "Network error";
+  return `Could not reach Supabase auth (${message})`;
+}
+
 /**
  * Auth data access — sole owner of supabase.auth calls.
  */
@@ -145,8 +164,18 @@ export class AuthRepository extends BaseRepository {
   }
 
   async getUser(): Promise<User | null> {
-    const { data, error } = await this.client.auth.getUser();
+    let result: Awaited<ReturnType<typeof this.client.auth.getUser>>;
+    try {
+      result = await this.client.auth.getUser();
+    } catch (cause) {
+      // Aborted / offline fetch is not an auth failure — do not sign the user out.
+      throw new AppError("EXTERNAL", networkErrorMessage(cause), 502, cause);
+    }
+    const { data, error } = result;
     if (error) {
+      if (isNetworkError(error)) {
+        throw new AppError("EXTERNAL", networkErrorMessage(error), 502, error);
+      }
       throw new AppError("UNAUTHORIZED", error.message, 401, error);
     }
     return data.user;

@@ -7,7 +7,6 @@ import {
 } from "../_shared/cron.ts";
 
 const TEAM_SLUG = "ranches-thunders";
-const SQUAD_MIN = 11;
 
 Deno.serve(async (req) => {
   const denied = requireCronSecret(req);
@@ -16,7 +15,7 @@ Deno.serve(async (req) => {
   const client = serviceClient();
   const { data: team } = await client
     .from("teams")
-    .select("id")
+    .select("id, demo_mode")
     .eq("slug", TEAM_SLUG)
     .maybeSingle();
   if (!team) {
@@ -25,6 +24,8 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const SQUAD_MIN = team.demo_mode ? 4 : 11;
 
   const today = istToday();
   const { data: matches } = await client

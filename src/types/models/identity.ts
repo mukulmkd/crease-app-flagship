@@ -27,6 +27,10 @@ export type Team = Timestamps & {
   upiVpa: string | null;
   whatsappNotifyUrl: string | null;
   carpoolFeeInr: number;
+  /** QA: squad of 4, past weekend fixtures, dummy payment proofs. */
+  demoMode: boolean;
+  /** Active Admin who collects weekend UPI — exactly one when set. */
+  collectorUserId: ProfileId | null;
   archivedAt: IsoDateTime | null;
 };
 

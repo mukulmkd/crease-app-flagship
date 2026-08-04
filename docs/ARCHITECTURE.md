@@ -29,7 +29,7 @@ src/
 ├── services/
 ├── repositories/
 ├── providers/
-├── lib/platform/      # Supabase platform barrel
+├── lib/               # errors, env, supabase clients, query, rbac, …
 ├── types/
 ├── constants/
 └── styles/

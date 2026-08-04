@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  Bell,
   ChevronDown,
   CreditCard,
   Loader2,
@@ -141,12 +140,6 @@ function ProfileMenu({ name, role, imageUrl, className }: ProfileMenuProps) {
             <Link href="/payments">
               <CreditCard />
               Payments
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/notifications">
-              <Bell />
-              Alerts
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

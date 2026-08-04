@@ -39,11 +39,14 @@ Still pending:
 ### End-to-end testing before Cron enablement
 
 - Keep deployed Edge Functions unscheduled until manual end-to-end testing is complete:
+  - `activate-weekend-matches`
   - `freeze-polls`
   - `strength-reminders`
   - `carpool-assignment-reminders`
   - `weekend-settlement`
 - During E2E, manually invoke each function and verify:
+  - future weekend stays scheduled at create; Monday publisher confirms it,
+    activates polls only when enabled, and sends one squad notification
   - availability freeze for tomorrow when 11+ are available; below 11 stays
     open, alerts Admin, then waits for explicit Admin confirmation at 11–12
   - **carpool** freeze after kickoff for today's match (no auto-complete)
@@ -57,6 +60,7 @@ Still pending:
 - Confirm `CRON_SECRET` is set in Supabase secrets
 - Verify each function returns successful JSON on manual `curl`
 - Add schedules in Supabase Dashboard Cron (or `pg_cron`):
+  - `activate-weekend-matches` Monday **09:00 IST** (`30 3 * * 1` UTC)
   - `freeze-polls` daily **18:00 IST** (availability for tomorrow)
   - Prefer also scheduling `freeze-polls` **hourly** (or around weekend kickoffs) so carpool locks promptly after start
   - `carpool-assignment-reminders` daily **14:00 IST**
@@ -64,11 +68,25 @@ Still pending:
   - `weekend-settlement` Sun **19:00 IST**
 - Re-run verification after schedules are enabled
 
+### Admin “Nudge unpaid in group”
+
+- **In-app is live:** creates payment notifications for unpaid players only
+  (`nudgeUnpaidWeekendPlayers` → `broadcastTeamNotificationAction` with
+  `userIds`)
+- **WhatsApp group is wired, not simulated:** POSTs `{ text }` to
+  `teams.whatsapp_notify_url` (same pattern as match confirm / fund ask)
+- Still pending before relying on it in production:
+  - Configure a real group webhook URL on the team (Settings)
+  - E2E: tap Nudge on weekend summary and confirm the group message lands
+  - Without a URL (or if the webhook fails), the button still succeeds — WA
+    is non-blocking and silently skipped
+
 ## Notes
 
 - Core Admin flows are implemented and can be tested without scheduled Cron jobs
 - Inbox + WhatsApp paths are the active notification channels
-- Web Push / VAPID remains deferred
+- Web Push / VAPID is live — Settings → Push alerts; OS banners when PWA is
+  backgrounded. Cron needs `APP_URL` + `CRON_SECRET` pointing at the app.
 - App fan-out requires `SUPABASE_SERVICE_ROLE_KEY` on the server
   (`broadcastTeamNotificationAction`); without it broadcasts log a warning and skip
 

@@ -27,8 +27,34 @@ export type Tournament = Timestamps &
     plannedMatchCount: number;
     totalFeesInr: number;
     status: TournamentStatus;
+    /** Admin who prepaid entry fees; credited per match on settlement. */
+    feesPaidByUserId: ProfileId | null;
     createdBy: ProfileId | null;
   };
+
+/** Tournament row + settlement progress for Matches → Tournaments tab. */
+export type TournamentSummary = {
+  tournament: Tournament;
+  /** Matches whose weekend fees are Confirm settled. */
+  settledMatchCount: number;
+  /** plannedMatchCount − settledMatchCount (floored at 0). */
+  remainingMatchCount: number;
+  scheduledMatchCount: number;
+  feePoolPerMatchInr: number;
+};
+
+/** Fixture-scoped tournament progress for a match detail card. */
+export type MatchTournamentContext = {
+  tournament: Tournament;
+  /** 1-based index among non-cancelled fixtures (by date). */
+  matchNumber: number;
+  plannedMatchCount: number;
+  /** Fees still unsettled across the tournament. */
+  remainingMatchCount: number;
+  feePoolPerMatchInr: number;
+  /** Finalized playing squad size; null until squad is locked. */
+  squadSize: number | null;
+};
 
 export type Match = Timestamps &
   TeamScoped & {
@@ -51,6 +77,8 @@ export type Match = Timestamps &
     carpoolAssignedAt: IsoDateTime | null;
     /** Cron claimed the 2 PM Admin assignment reminder. */
     carpoolAssignmentRemindedAt: IsoDateTime | null;
+    /** Weekend fees for this match confirmed settled. */
+    feesSettledAt: IsoDateTime | null;
     confirmedAt: IsoDateTime | null;
     createdBy: ProfileId | null;
   };

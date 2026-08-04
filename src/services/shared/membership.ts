@@ -2,9 +2,9 @@ import type { MembershipRole } from "@/constants/domain/enums";
 import type { TeamRepository } from "@/repositories/team.repository";
 import type { ProfileId, TeamId } from "@/types/common";
 import type { TeamMembership } from "@/types/models";
-import { forbidden, notFound } from "@/services/shared/errors";
+import { forbidden } from "@/services/shared/errors";
 
-export function isAdminRole(role: MembershipRole): boolean {
+function isAdminRole(role: MembershipRole): boolean {
   return role === "admin";
 }
 
@@ -30,13 +30,4 @@ export async function requireAdmin(
     throw forbidden("Admin role required");
   }
   return membership;
-}
-
-export async function requireTeamExists(
-  teamRepo: TeamRepository,
-  teamId: TeamId | string,
-) {
-  const team = await teamRepo.findById(teamId);
-  if (!team) throw notFound("Team not found");
-  return team;
 }

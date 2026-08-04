@@ -8,12 +8,17 @@ export const addExpenseSchema = z.object({
   note: z.string().trim().max(500).nullable().optional(),
 });
 
-export const fundOpeningBalanceSchema = z.object({
-  amountInr: z.number(),
-  note: z.string().trim().max(500).optional(),
+export const createContributionAskSchema = z.object({
+  amountPerPlayerInr: z
+    .number()
+    .positive("Enter amount per player")
+    .default(FUND_CONTRIBUTION_ASK_INR),
+  note: z.string().trim().max(500).nullable().optional(),
 });
 
-export const createContributionAskSchema = z.object({
-  amountPerPlayerInr: z.number().positive().default(FUND_CONTRIBUTION_ASK_INR),
+export const recordContributionSchema = z.object({
+  userId: z.string().uuid(),
+  amountInr: z.number().positive("Enter a contribution amount"),
   note: z.string().trim().max(500).nullable().optional(),
+  askId: z.string().uuid().nullable().optional(),
 });

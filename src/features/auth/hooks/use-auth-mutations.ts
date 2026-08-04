@@ -11,7 +11,7 @@ import * as authService from "@/services/auth";
 
 const PHONE_STORAGE_KEY = "crease.auth.phone";
 
-export function persistAuthPhone(phone: string) {
+function persistAuthPhone(phone: string) {
   if (typeof window !== "undefined") {
     sessionStorage.setItem(PHONE_STORAGE_KEY, phone);
   }
@@ -22,7 +22,7 @@ export function readAuthPhone() {
   return sessionStorage.getItem(PHONE_STORAGE_KEY);
 }
 
-export function clearAuthPhone() {
+function clearAuthPhone() {
   if (typeof window !== "undefined") {
     sessionStorage.removeItem(PHONE_STORAGE_KEY);
   }

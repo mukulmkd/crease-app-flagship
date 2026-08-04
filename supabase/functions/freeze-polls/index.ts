@@ -8,8 +8,6 @@ import {
 } from "../_shared/cron.ts";
 
 const TEAM_SLUG = "ranches-thunders";
-const SQUAD_MIN = 11;
-const SQUAD_MAX = 12;
 
 /** True when Asia/Kolkata now is past match kickoff. Missing time → end of match day. */
 function isMatchStartedIst(
@@ -33,7 +31,7 @@ Deno.serve(async (req) => {
   const client = serviceClient();
   const { data: team } = await client
     .from("teams")
-    .select("id")
+    .select("id, demo_mode")
     .eq("slug", TEAM_SLUG)
     .maybeSingle();
   if (!team) {
@@ -42,6 +40,9 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const SQUAD_MIN = team.demo_mode ? 4 : 11;
+  const SQUAD_MAX = team.demo_mode ? 4 : 12;
 
   const now = new Date().toISOString();
   const tomorrow = addDaysIso(istToday(), 1);

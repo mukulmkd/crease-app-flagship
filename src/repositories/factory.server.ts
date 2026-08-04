@@ -1,5 +1,4 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { TypedSupabaseClient } from "@/lib/supabase/types";
 import type { BaseRepository } from "@/repositories/base.repository";
 import type { RepositoryConstructor } from "@/repositories/factory";
 
@@ -11,5 +10,3 @@ export async function createServerRepository<T extends BaseRepository>(
 ): Promise<T> {
   return new Ctor(await createServerSupabaseClient());
 }
-
-export type { TypedSupabaseClient };

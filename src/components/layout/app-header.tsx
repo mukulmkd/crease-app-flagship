@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { TeamLogoBadge } from "@/components/common/team-logo-badge";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
@@ -37,6 +38,11 @@ function AppHeader({
           {title}
         </p>
       </div>
+
+      <TeamLogoBadge
+        className="absolute left-1/2 -translate-x-1/2"
+        imageClassName="size-10 rounded-lg"
+      />
 
       <div className="flex items-center gap-1">
         <Link

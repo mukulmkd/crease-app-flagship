@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { BodySm } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
-import { SQUAD_MAX, SQUAD_MIN } from "@/constants/domain/enums";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
-import { useFinalizePlayingSquad } from "@/features/team/hooks";
+import {
+  useFinalizePlayingSquad,
+  useSquadLimits,
+  useTeamMembers,
+} from "@/features/team/hooks";
 
 type AvailablePlayer = {
   userId: string;
@@ -20,28 +23,52 @@ type MatchSquadFinalizeProps = {
 };
 
 /**
- * Admin confirms 11–12, or selects 11–12 from an oversubscribed pool.
+ * Admin confirms the playing squad (XI/XII production, or 4 in demo mode).
+ * Demo mode lists every active member so Admin can fill the squad without votes.
  */
 function MatchSquadFinalize({ matchId, available }: MatchSquadFinalizeProps) {
+  const { min: squadMin, max: squadMax, demoMode } = useSquadLimits();
+  const membersQuery = useTeamMembers({ status: "active", limit: 100 });
   const finalize = useFinalizePlayingSquad();
-  const [selected, setSelected] = useState<string[]>(() =>
-    available.length <= SQUAD_MAX
-      ? available.map((player) => player.userId)
-      : [],
+
+  const pool = useMemo(() => {
+    if (!demoMode) return available;
+    const members = membersQuery.data?.items ?? [];
+    return members.map((m) => ({
+      userId: String(m.userId),
+      fullName: m.profile.fullName,
+    }));
+  }, [demoMode, available, membersQuery.data?.items]);
+
+  const defaultSelected = useMemo(
+    () => pool.slice(0, squadMax).map((p) => p.userId),
+    [pool, squadMax],
   );
+  const poolKey = defaultSelected.join("|");
+
+  const [selectedOverride, setSelectedOverride] = useState<string[] | null>(
+    null,
+  );
+  const [seenPoolKey, setSeenPoolKey] = useState(poolKey);
+  if (poolKey !== seenPoolKey) {
+    setSeenPoolKey(poolKey);
+    setSelectedOverride(null);
+  }
+
+  const selected = selectedOverride ?? defaultSelected;
 
   const toggle = (userId: string) => {
-    setSelected((current) => {
+    setSelectedOverride(() => {
+      const current = selectedOverride ?? defaultSelected;
       if (current.includes(userId)) {
         return current.filter((id) => id !== userId);
       }
-      if (current.length >= SQUAD_MAX) return current;
+      if (current.length >= squadMax) return current;
       return [...current, userId];
     });
   };
 
-  const canSubmit =
-    selected.length >= SQUAD_MIN && selected.length <= SQUAD_MAX;
+  const canSubmit = selected.length >= squadMin && selected.length <= squadMax;
 
   return (
     <section className="space-y-3 rounded-xl bg-surface-container-low p-4">
@@ -50,12 +77,13 @@ function MatchSquadFinalize({ matchId, available }: MatchSquadFinalizeProps) {
           Finalize playing squad
         </h2>
         <BodySm>
-          {available.length} available. Select {SQUAD_MIN}–{SQUAD_MAX} for fees
-          and match day.
+          {demoMode
+            ? `Demo · select ${squadMin}–${squadMax} active members (votes cast automatically).`
+            : `${available.length} available. Select ${squadMin}–${squadMax} for fees and match day.`}
         </BodySm>
       </div>
       <ul className="divide-y divide-outline-variant rounded-lg bg-surface">
-        {available.map((player) => {
+        {pool.map((player) => {
           const checked = selected.includes(player.userId);
           return (
             <li key={player.userId}>
@@ -66,7 +94,7 @@ function MatchSquadFinalize({ matchId, available }: MatchSquadFinalizeProps) {
                   checked={checked}
                   disabled={
                     finalize.isPending ||
-                    (!checked && selected.length >= SQUAD_MAX)
+                    (!checked && selected.length >= squadMax)
                   }
                   onChange={() => toggle(player.userId)}
                 />
@@ -77,7 +105,25 @@ function MatchSquadFinalize({ matchId, available }: MatchSquadFinalizeProps) {
             </li>
           );
         })}
+        {pool.length === 0 ? (
+          <li className="px-3 py-3 text-sm text-muted-foreground">
+            {demoMode
+              ? "No active members yet — add players in Team."
+              : "No available voters yet."}
+          </li>
+        ) : null}
       </ul>
+      {demoMode && pool.length >= squadMin ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={finalize.isPending}
+          onClick={() => setSelectedOverride(defaultSelected)}
+        >
+          Select first {Math.min(pool.length, squadMax)} members
+        </Button>
+      ) : null}
       <Button
         type="button"
         className="w-full"
@@ -92,7 +138,7 @@ function MatchSquadFinalize({ matchId, available }: MatchSquadFinalizeProps) {
           }
         }}
       >
-        Confirm squad ({selected.length}/{SQUAD_MAX})
+        Confirm squad ({selected.length}/{squadMax})
       </Button>
     </section>
   );

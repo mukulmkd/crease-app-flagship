@@ -4,7 +4,6 @@ import { SegmentedControl } from "@/components/forms/segmented-control";
 import { BodySm } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
 import { Progress } from "@/components/ui/progress";
-import { SQUAD_MAX, SQUAD_MIN } from "@/constants/domain/enums";
 import type { MembershipRole } from "@/constants/domain/enums";
 import {
   hasPermission,
@@ -12,11 +11,18 @@ import {
 } from "@/constants/domain/team-permissions";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
 import {
+  useCarpoolAssignments,
   useCastAvailabilityVote,
   useCastCarpoolVote,
   useMatchPolls,
+  useSquadLimits,
 } from "@/features/team/hooks";
 import { MatchSquadFinalize } from "@/features/team/components/match-squad-finalize";
+import {
+  MatchRidesSummary,
+  MatchTravelList,
+} from "@/features/team/components/match-travel-summary";
+import { buildTravelIndex } from "@/features/team/lib/carpool-travel";
 
 type MatchPollPanelProps = {
   matchId: string;
@@ -24,7 +30,9 @@ type MatchPollPanelProps = {
 };
 
 function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
+  const { min: squadMin, max: squadMax, demoMode } = useSquadLimits();
   const pollsQuery = useMatchPolls(matchId);
+  const ridesQuery = useCarpoolAssignments(matchId);
   const castAvailability = useCastAvailabilityVote();
   const castCarpool = useCastCarpoolVote();
 
@@ -65,11 +73,11 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
   const yesCount = availability?.yesCount ?? 0;
   const squadCount = squadUserIds.length;
   const strengthLabel = squadFinalized
-    ? `${squadCount} / ${SQUAD_MAX}`
+    ? `${squadCount} / ${squadMax}`
     : `${yesCount} available`;
   const progress = Math.min(
     100,
-    Math.round(((squadFinalized ? squadCount : yesCount) / SQUAD_MIN) * 100),
+    Math.round(((squadFinalized ? squadCount : yesCount) / squadMin) * 100),
   );
   const myAvailability = availability?.myVote?.availability;
   const myCarpool = carpool?.myVote?.carpool;
@@ -78,9 +86,19 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
   const showAdminFinalize =
     canOverride &&
     !squadFinalized &&
-    yesCount >= SQUAD_MIN &&
-    (availabilityFrozen || finalizationPending || yesCount > SQUAD_MAX);
+    (demoMode
+      ? true
+      : yesCount >= squadMin &&
+        (availabilityFrozen || finalizationPending || yesCount > squadMax));
   const availablePool = roster.filter((r) => r.availability === "yes");
+  const squadRows = roster.filter((r) => r.inSquad);
+  const rides = ridesQuery.data ?? [];
+  const carpoolAssigned = Boolean(pollsQuery.data.match.carpoolAssignedAt);
+  const travelSummary = carpoolAssigned
+    ? `Passengers ${buildTravelIndex(rides).passengerCount}`
+    : `Carpool ${carpool?.carpoolCount ?? 0}`;
+  const nameFor = (userId: string) =>
+    roster.find((r) => r.userId === userId)?.fullName ?? null;
 
   const playingOpts = [
     { value: "yes" as const, label: "Playing" },
@@ -96,16 +114,16 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
       ? "Playing squad and travel locked — Admin can still override"
       : "Playing squad locked — travel votes stay open until kickoff"
     : availabilityFrozen
-      ? yesCount > SQUAD_MAX
-        ? "Availability frozen — Admin must pick the XI/XII"
+      ? yesCount > squadMax
+        ? "Availability frozen — Admin must pick the playing squad"
         : "Availability frozen — squad not finalized yet"
       : finalizationPending
-        ? yesCount >= SQUAD_MIN
-          ? "Voting stays open — Admin must confirm the playing XI/XII"
-          : `Voting stays open — recruit players, then confirm at ${SQUAD_MIN}–${SQUAD_MAX}`
-        : yesCount > SQUAD_MAX
+        ? yesCount >= squadMin
+          ? "Voting stays open — Admin must confirm the playing squad"
+          : `Voting stays open — recruit players, then confirm at ${squadMin}–${squadMax}`
+        : yesCount > squadMax
           ? "Pool is oversubscribed — Admin should finalize before freeze time"
-          : "Availability is a pool (no hard cap). Final XI/XII locks at freeze.";
+          : `Availability is a pool (no hard cap). Final ${squadMin}–${squadMax} locks at freeze.`;
 
   return (
     <div className="space-y-5">
@@ -129,9 +147,8 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
           className="h-2 [&_[data-slot=progress-indicator]]:bg-accent"
         />
         <BodySm>
-          Target {SQUAD_MIN}–{SQUAD_MAX}
-          {squadFinalized ? ` · Available ${yesCount}` : ""} · Carpool{" "}
-          {carpool?.carpoolCount ?? 0}
+          Target {squadMin}–{squadMax}
+          {squadFinalized ? ` · Available ${yesCount}` : ""} · {travelSummary}
         </BodySm>
       </section>
 
@@ -191,40 +208,27 @@ function MatchPollPanel({ matchId, role }: MatchPollPanelProps) {
         </section>
       ) : null}
 
-      <section aria-labelledby="opted-in-heading">
-        <h2
-          id="opted-in-heading"
-          className="font-heading text-xl font-bold uppercase"
-        >
-          {squadFinalized ? "Playing squad" : "Who’s available"}
-        </h2>
-        <ul className="mt-2 divide-y divide-outline-variant rounded-xl bg-surface-container-low">
-          {(squadFinalized
-            ? roster.filter((r) => r.inSquad)
-            : availablePool
-          ).map((r) => (
-            <li
-              key={r.userId}
-              className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-            >
-              <span className="font-medium">
-                {r.fullName?.trim() || "Player"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {r.carpool === "carpool" ? "Carpool" : "Own"}
-              </span>
-            </li>
-          ))}
-          {(squadFinalized ? roster.filter((r) => r.inSquad) : availablePool)
-            .length === 0 ? (
-            <li className="px-4 py-3 text-sm text-muted-foreground">
-              {squadFinalized
-                ? "No playing squad finalized yet."
-                : "No one has opted in yet."}
-            </li>
-          ) : null}
-        </ul>
-      </section>
+      <MatchTravelList
+        headingId="opted-in-heading"
+        heading={squadFinalized ? "Playing squad" : "Who’s available"}
+        rows={squadFinalized ? squadRows : availablePool}
+        emptyLabel={
+          squadFinalized
+            ? "No playing squad finalized yet."
+            : "No one has opted in yet."
+        }
+        rides={rides}
+        assigned={carpoolAssigned}
+        nameFor={nameFor}
+      />
+
+      {carpoolAssigned ? (
+        <MatchRidesSummary
+          rides={rides}
+          assigned={carpoolAssigned}
+          nameFor={nameFor}
+        />
+      ) : null}
     </div>
   );
 }

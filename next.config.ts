@@ -3,12 +3,16 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  // Production always; opt-in for LAN/mobile QA via ENABLE_PWA_DEV=true.
+  disable:
+    process.env.NODE_ENV === "development" &&
+    process.env.ENABLE_PWA_DEV !== "true",
   // Custom client registration handles update checks + reload (see PwaUpdateProvider).
   register: false,
   reloadOnOnline: true,
   cacheStartUrl: true,
   dynamicStartUrl: true,
+  customWorkerSrc: "worker",
   workboxOptions: {
     skipWaiting: true,
     clientsClaim: true,

@@ -9,12 +9,11 @@ Extract reusable components. Prefer composition over one-off JSX.
 
 ## Design-system shared components
 
-Typography (`Display`, `Title`, `Heading`, `Body`, `BodySm`, `Caption`, `Overline`, `LabelText`)  
-SectionHeader · StatusChip · UserAvatar · BrandMark  
-AppCard · FormField · SegmentedControl  
-EmptyState / LoadingState / ErrorState / LoadingCard  
-AppDialog / BottomSheet / AppDrawer  
-DataTable · toast helpers
+Typography (`Title`, `Body`, `BodySm`)  
+SectionHeader · StatusChip · UserAvatar · BrandMark · TeamLogoBadge  
+FormField · SegmentedControl  
+EmptyState / LoadingState / ErrorState  
+BottomSheet · toast helpers
 
 ## Feature UI patterns (reuse these)
 
@@ -26,10 +25,10 @@ DataTable · toast helpers
 ## Rules
 
 - Primitives live in `components/ui` (shadcn).
-- Compose higher-level UI in `common` / `cards` / `forms` / `dialogs` / `feedback` / `tables`.
+- Compose higher-level UI in `common` / `forms` / `dialogs` / `feedback`.
 - Display/stat copy must use `font-heading` (Barlow Condensed).
 - Selected states on segmented controls use lime accent — do not invent parallel toggles.
-- Avoid nesting cards inside cards; prefer tonal sections and hairline dividers.
+- Avoid nesting cards inside cards; prefer tonal surfaces and hairline dividers.
 - Keep feature files under ~250 lines; extract day sections / sheets / tickets.
 
 Reuse before creating new components.

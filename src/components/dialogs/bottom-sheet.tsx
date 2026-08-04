@@ -7,10 +7,8 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/utils";
 
@@ -46,20 +44,16 @@ function BottomSheetContent({
   );
 }
 
-const BottomSheetTrigger = DrawerTrigger;
 const BottomSheetClose = DrawerClose;
 const BottomSheetHeader = DrawerHeader;
-const BottomSheetFooter = DrawerFooter;
 const BottomSheetTitle = DrawerTitle;
 const BottomSheetDescription = DrawerDescription;
 
 export {
   BottomSheet,
-  BottomSheetTrigger,
   BottomSheetClose,
   BottomSheetContent,
   BottomSheetHeader,
-  BottomSheetFooter,
   BottomSheetTitle,
   BottomSheetDescription,
 };

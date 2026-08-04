@@ -5,8 +5,6 @@
  * NEXT_PUBLIC_AUTH_DEV_OTP to disable.
  */
 
-import { MVP_TEAM } from "@/constants/domain/enums";
-
 export const DEV_AUTH_FIXED_OTP = "123456";
 
 export type DevAuthPersona = {
@@ -16,14 +14,6 @@ export type DevAuthPersona = {
   email: string;
   membershipRole: "admin" | "player";
 };
-
-export const DEV_TEAM = {
-  id: MVP_TEAM.id,
-  name: MVP_TEAM.name,
-  slug: MVP_TEAM.slug,
-} as const;
-
-export const DEV_TEAM_ID = MVP_TEAM.id;
 
 export const DEV_AUTH_PERSONAS: readonly DevAuthPersona[] = [
   {

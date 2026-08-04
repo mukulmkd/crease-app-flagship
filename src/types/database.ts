@@ -45,6 +45,8 @@ export type Database = {
           upi_vpa: string | null;
           whatsapp_notify_url: string | null;
           carpool_fee_inr: number;
+          demo_mode: boolean;
+          collector_user_id: string | null;
           archived_at: string | null;
           created_at: string;
           updated_at: string;
@@ -57,6 +59,8 @@ export type Database = {
           upi_vpa?: string | null;
           whatsapp_notify_url?: string | null;
           carpool_fee_inr?: number;
+          demo_mode?: boolean;
+          collector_user_id?: string | null;
           archived_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -98,6 +102,7 @@ export type Database = {
           planned_match_count: number;
           total_fees_inr: number;
           status: "draft" | "active" | "completed" | "cancelled";
+          fees_paid_by_user_id: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -109,6 +114,7 @@ export type Database = {
           planned_match_count: number;
           total_fees_inr: number;
           status?: "draft" | "active" | "completed" | "cancelled";
+          fees_paid_by_user_id?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -139,6 +145,7 @@ export type Database = {
           squad_finalized_at: string | null;
           carpool_assigned_at: string | null;
           carpool_assignment_reminded_at: string | null;
+          fees_settled_at: string | null;
           confirmed_at: string | null;
           created_by: string | null;
           created_at: string;
@@ -166,6 +173,7 @@ export type Database = {
           squad_finalized_at?: string | null;
           carpool_assigned_at?: string | null;
           carpool_assignment_reminded_at?: string | null;
+          fees_settled_at?: string | null;
           confirmed_at?: string | null;
           created_by?: string | null;
           created_at?: string;
@@ -279,6 +287,7 @@ export type Database = {
           week_start_date: string;
           status: "open" | "collecting" | "settled" | "cancelled";
           notified_at: string | null;
+          organizer_payout_reminded_at: string | null;
           settled_at: string | null;
           created_at: string;
           updated_at: string;
@@ -289,6 +298,7 @@ export type Database = {
           week_start_date: string;
           status?: "open" | "collecting" | "settled" | "cancelled";
           notified_at?: string | null;
+          organizer_payout_reminded_at?: string | null;
           settled_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -308,12 +318,14 @@ export type Database = {
           match_fee_share_inr: number;
           carpool_fee_inr: number;
           carpool_credit_inr: number;
+          tournament_credit_inr: number;
           total_inr: number;
           status: "pending" | "paid" | "offline_paid" | "waived";
           utr: string | null;
           screenshot_path: string | null;
           paid_at: string | null;
           marked_paid_by: string | null;
+          note: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -326,12 +338,14 @@ export type Database = {
           match_fee_share_inr?: number;
           carpool_fee_inr?: number;
           carpool_credit_inr?: number;
+          tournament_credit_inr?: number;
           total_inr: number;
           status?: "pending" | "paid" | "offline_paid" | "waived";
           utr?: string | null;
           screenshot_path?: string | null;
           paid_at?: string | null;
           marked_paid_by?: string | null;
+          note?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -371,6 +385,42 @@ export type Database = {
         };
         Update: Partial<
           Database["public"]["Tables"]["settlement_reimbursements"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      settlement_organizer_payouts: {
+        Row: {
+          id: string;
+          settlement_id: string;
+          team_id: string;
+          match_id: string | null;
+          payee_name: string | null;
+          amount_inr: number;
+          status: "pending" | "paid" | "offline_paid";
+          utr: string | null;
+          screenshot_path: string | null;
+          paid_at: string | null;
+          marked_paid_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          settlement_id: string;
+          team_id: string;
+          match_id?: string | null;
+          payee_name?: string | null;
+          amount_inr: number;
+          status?: "pending" | "paid" | "offline_paid";
+          utr?: string | null;
+          screenshot_path?: string | null;
+          paid_at?: string | null;
+          marked_paid_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["settlement_organizer_payouts"]["Insert"]
         >;
         Relationships: [];
       };
@@ -427,6 +477,7 @@ export type Database = {
           amount_inr: number;
           note: string | null;
           expense_id: string | null;
+          contribution_id: string | null;
           created_by: string | null;
           created_at: string;
         };
@@ -438,6 +489,7 @@ export type Database = {
           amount_inr: number;
           note?: string | null;
           expense_id?: string | null;
+          contribution_id?: string | null;
           created_by?: string | null;
           created_at?: string;
         };
@@ -474,6 +526,34 @@ export type Database = {
         >;
         Relationships: [];
       };
+      fund_contributions: {
+        Row: {
+          id: string;
+          team_id: string;
+          user_id: string;
+          amount_inr: number;
+          ask_id: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          user_id: string;
+          amount_inr: number;
+          ask_id?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["fund_contributions"]["Insert"]
+        >;
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;
@@ -500,6 +580,34 @@ export type Database = {
         };
         Update: Partial<
           Database["public"]["Tables"]["notifications"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          team_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          team_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["push_subscriptions"]["Insert"]
         >;
         Relationships: [];
       };

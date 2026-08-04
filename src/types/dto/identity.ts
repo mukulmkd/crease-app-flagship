@@ -9,6 +9,14 @@ export type UpdateTeamSettingsDto = {
   logoUrl?: string | null;
   upiVpa?: string | null;
   whatsappNotifyUrl?: string | null;
+  demoMode?: boolean;
+};
+
+/** Assign the single Admin who collects weekend UPI payments. */
+export type AssignPaymentCollectorDto = {
+  userId: string;
+  /** Collector's UPI VPA — becomes the team payment destination. */
+  upiVpa: string;
 };
 
 export type AddTeamMemberDto = {
@@ -34,6 +42,16 @@ export type CreateTournamentDto = {
   name: string;
   plannedMatchCount: number;
   totalFeesInr: number;
+  /** Required when totalFeesInr > 0 — Admin who prepaid entry. */
+  feesPaidByUserId: string | null;
+};
+
+export type UpdateTournamentDto = {
+  tournamentId: string;
+  name?: string;
+  plannedMatchCount?: number;
+  totalFeesInr?: number;
+  feesPaidByUserId?: string | null;
 };
 
 export type CreateMatchDto = {
@@ -55,6 +73,8 @@ export type CreateWeekendMatchesDto = {
 
 export type UpdateMatchDto = {
   matchId: string;
+  /** Demo mode only — any Saturday/Sunday (including past). */
+  matchDate?: string;
   classification?: MatchClassification;
   tournamentId?: string | null;
   opposition?: string | null;
@@ -72,20 +92,4 @@ export type CastAvailabilityVoteDto = {
 export type CastCarpoolVoteDto = {
   matchId: string;
   vote: "carpool" | "self";
-};
-
-export type OverrideVoteDto = {
-  matchId: string;
-  userId: string;
-  availability?: "yes" | "no";
-  carpool?: "carpool" | "self";
-};
-
-export type CreateNotificationDto = {
-  userId: string;
-  teamId?: string | null;
-  type: "match" | "poll" | "payment" | "fund" | "membership" | "system";
-  title: string;
-  body: string;
-  data?: Record<string, unknown>;
 };

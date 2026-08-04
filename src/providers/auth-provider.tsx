@@ -100,17 +100,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/** @deprecated Prefer SessionProvider — same implementation. */
-export const SessionProvider = AuthProvider;
-
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {
     throw new Error("useAuth must be used within AuthProvider");
   }
   return ctx;
-}
-
-export function useSession() {
-  return useAuth();
 }

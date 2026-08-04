@@ -1,7 +1,14 @@
 # Feature: Notifications
 
-Channels: in-app inbox + WhatsApp webhook (group and/or individual via `phones`).
-Web Push deferred.
+Channels: in-app alerts sheet + Web Push (OS) + WhatsApp webhook.
+
+## UI
+
+- Top-right **bell** opens an alerts **bottom sheet** (mark-read)
+- Unread badge via `useUnreadNotificationCount`
+- Home “Recent alerts” teaser opens the same sheet
+- Web Push deep-link: `/home?alerts=1`
+- Push enable/disable: Settings → Push alerts
 
 ## Triggers (implemented)
 
@@ -28,11 +35,6 @@ role. Player-triggered events (availability flip) work because of this.
 - Voter is excluded via `excludeUserId`
 - Admin-only broadcasts pass `adminOnly: true`
 - WhatsApp payload: `{ text }` for group; `{ text, phones }` for individuals
+- Web Push after insert (non-blocking); Cron uses `APP_URL` → `/api/internal/push`
 - Delivery failures are logged and never fail the triggering mutation
 - Cron Edge Functions insert directly with the service role
-
-## UI
-
-- `/notifications` inbox with mark-read
-- TopAppBar unread badge via `useUnreadNotificationCount`
-- Home recent alert teaser from dashboard snapshot

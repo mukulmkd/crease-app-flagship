@@ -1,19 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { CheckCircle2, CircleAlert, IndianRupee, Users } from "lucide-react";
 
 import { BodySm, StatusChip } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import {
-  CHARGE_STATUS_LABELS,
+  chargeStatusLabel,
   SETTLEMENT_STATUS_LABELS,
 } from "@/constants/domain/labels";
 import {
+  rollupCharges,
+  isChargeSettled,
+} from "@/features/payments/lib/charge-rollup";
+import {
   ChargeCard,
   PaymentProofLinks,
+  SummaryMetric,
 } from "@/features/team/components/past-match-charge";
 import { formatMatchDate } from "@/features/team/lib/match-format";
 import type { SettlementCharge, WeekendSettlement } from "@/types/models";
+import { formatInrAmount } from "@/utils";
 
 type PastMatchFeesProps = {
   canManageSettlement: boolean;
@@ -32,8 +39,11 @@ function PastMatchFees({
   charges,
   nameFor,
 }: PastMatchFeesProps) {
+  const rollup = rollupCharges(charges);
+  const hasFees = charges.length > 0 || Boolean(myCharge);
+
   return (
-    <section aria-labelledby="my-payment-heading" className="space-y-2">
+    <section aria-labelledby="my-payment-heading" className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2
           id="my-payment-heading"
@@ -58,12 +68,12 @@ function PastMatchFees({
 
       {settlementError ? (
         <BodySm>Could not load fee details.</BodySm>
-      ) : !settlement && !myCharge ? (
+      ) : !settlement && !hasFees ? (
         <div className="rounded-xl bg-surface-container-low px-4 py-3">
           <BodySm>No weekend fees were generated for this fixture yet.</BodySm>
           {canManageSettlement ? (
             <Button asChild variant="tonal" size="sm" className="mt-3">
-              <Link href="/payments">Open Payments</Link>
+              <Link href="/payments">Generate on Payments</Link>
             </Button>
           ) : null}
         </div>
@@ -78,6 +88,37 @@ function PastMatchFees({
             </BodySm>
           ) : null}
 
+          {canManageSettlement && charges.length > 0 ? (
+            <div
+              className="grid grid-cols-3 gap-2"
+              aria-label="Match payment summary"
+            >
+              <SummaryMetric
+                icon={IndianRupee}
+                value={`₹${formatInrAmount(rollup.billedInr)}`}
+                label="Billed"
+              />
+              <SummaryMetric
+                icon={CheckCircle2}
+                value={`₹${formatInrAmount(rollup.paidInr)}`}
+                label="Collected"
+              />
+              <SummaryMetric
+                icon={Users}
+                value={
+                  rollup.pendingCount > 0
+                    ? `₹${formatInrAmount(rollup.pendingInr)}`
+                    : "—"
+                }
+                label={
+                  rollup.pendingCount > 0
+                    ? `${rollup.pendingCount} unpaid`
+                    : "All clear"
+                }
+              />
+            </div>
+          ) : null}
+
           {myCharge ? <ChargeCard charge={myCharge} highlight /> : null}
 
           {canManageSettlement && charges.length > 0 ? (
@@ -85,26 +126,60 @@ function PastMatchFees({
               {charges.map((charge) => (
                 <li key={charge.id} className="space-y-2 px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold">
-                        {nameFor(String(charge.userId))}
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 text-sm font-semibold">
+                        <span className="truncate">
+                          {nameFor(String(charge.userId))}
+                        </span>
+                        {isChargeSettled(charge) ? (
+                          <span
+                            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success/20"
+                            aria-label="Paid"
+                          >
+                            <CheckCircle2
+                              className="size-5 fill-success/15 text-success"
+                              aria-hidden
+                            />
+                          </span>
+                        ) : charge.status === "pending" ? (
+                          <span
+                            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-destructive/15"
+                            aria-label="Payment pending"
+                          >
+                            <CircleAlert
+                              className="size-5 fill-destructive/10 text-destructive"
+                              aria-hidden
+                            />
+                          </span>
+                        ) : null}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Match ₹{Math.round(charge.matchFeeShareInr)}
+                        Match ₹{formatInrAmount(charge.matchFeeShareInr)}
                         {charge.carpoolFeeInr > 0
-                          ? ` + carpool ₹${Math.round(charge.carpoolFeeInr)}`
+                          ? ` + carpool ₹${formatInrAmount(charge.carpoolFeeInr)}`
                           : ""}
                         {charge.carpoolCreditInr > 0
-                          ? ` − credit ₹${Math.round(charge.carpoolCreditInr)}`
+                          ? ` − carpool credit ₹${formatInrAmount(charge.carpoolCreditInr)}`
+                          : ""}
+                        {charge.tournamentCreditInr > 0
+                          ? ` − tournament credit ₹${formatInrAmount(charge.tournamentCreditInr)}`
                           : ""}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-heading text-lg font-bold tabular-nums">
-                        ₹{Math.round(charge.totalInr)}
+                        ₹{formatInrAmount(charge.totalInr)}
                       </p>
-                      <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
-                        {CHARGE_STATUS_LABELS[charge.status]}
+                      <p
+                        className={
+                          charge.status === "pending"
+                            ? "text-[0.65rem] font-bold tracking-wide text-destructive uppercase"
+                            : isChargeSettled(charge)
+                              ? "text-[0.65rem] font-bold tracking-wide text-success uppercase"
+                              : "text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase"
+                        }
+                      >
+                        {chargeStatusLabel(charge.status, charge.note)}
                       </p>
                     </div>
                   </div>

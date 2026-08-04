@@ -43,8 +43,3 @@ export async function createServerSupabaseClient(): Promise<TypedSupabaseClient>
     },
   );
 }
-
-/** @deprecated Prefer createServerSupabaseClient() */
-export async function createClient() {
-  return createServerSupabaseClient();
-}

@@ -56,5 +56,5 @@ function StatusChip({
   );
 }
 
-export { StatusChip, statusChipVariants };
+export { StatusChip };
 export type { StatusChipProps };

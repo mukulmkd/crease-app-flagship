@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,12 +23,13 @@ import { WeekendDaySection } from "@/features/team/components/weekend-day-sectio
 import {
   useCreateWeekendMatches,
   useMatches,
+  useMvpTeam,
   useTournaments,
 } from "@/features/team/hooks";
 import { formatMatchDate } from "@/features/team/lib/match-format";
 import {
   emptyDayDefaults,
-  listUpcomingWeekends,
+  listWeekendsForCreate,
   weekendMatchFormSchema,
   type WeekendDayKey,
   type WeekendMatchFormValues,
@@ -58,17 +58,38 @@ function weekendLabel(
   offset: number,
   saturday: string,
   sunday: string,
+  thisWeekendSaturday: string,
 ): string {
   const range = `${formatMatchDate(saturday)} – ${formatMatchDate(sunday)}`;
-  if (offset === 0) return `This weekend · ${range}`;
-  if (offset === 1) return `Next weekend · ${range}`;
-  return `In ${offset} weeks · ${range}`;
+  if (saturday === thisWeekendSaturday) return `This weekend · ${range}`;
+  if (sunday < thisWeekendSaturday || saturday < thisWeekendSaturday) {
+    return `Past weekend · ${range}`;
+  }
+  const weeksAhead = Math.round(
+    (new Date(saturday).getTime() - new Date(thisWeekendSaturday).getTime()) /
+      (7 * 24 * 60 * 60 * 1000),
+  );
+  if (weeksAhead === 1) return `Next weekend · ${range}`;
+  return `In ${weeksAhead} weeks · ${range}`;
 }
 
 /** Admin creates independently configured Saturday and Sunday fixtures. */
 function CreateWeekendMatchForm() {
   const router = useRouter();
-  const weekends = useMemo(() => listUpcomingWeekends(8), []);
+  const teamQuery = useMvpTeam();
+  const demoMode = Boolean(teamQuery.data?.demoMode);
+  const weekends = useMemo(
+    () =>
+      listWeekendsForCreate({
+        upcomingCount: 8,
+        pastCount: demoMode ? 4 : 0,
+      }),
+    [demoMode],
+  );
+  const thisWeekendSaturday = useMemo(
+    () => listWeekendsForCreate({ upcomingCount: 1 })[0]!.saturday,
+    [],
+  );
   const tournaments = useTournaments();
   const matches = useMatches();
   const createMatches = useCreateWeekendMatches();
@@ -76,21 +97,29 @@ function CreateWeekendMatchForm() {
   const [tournamentTarget, setTournamentTarget] =
     useState<WeekendDayKey>("saturday");
 
+  const defaultOffset = useMemo(() => {
+    const idx = weekends.findIndex((w) => w.saturday === thisWeekendSaturday);
+    return idx >= 0 ? idx : 0;
+  }, [weekends, thisWeekendSaturday]);
+
   const form = useForm<WeekendMatchFormValues>({
     resolver: zodResolver(weekendMatchFormSchema),
     defaultValues: {
-      weekendOffset: 0,
+      weekendOffset: defaultOffset,
       saturday: { ...emptyDayDefaults, enabled: true, pollsEnabled: true },
       sunday: { ...emptyDayDefaults, pollsEnabled: true },
     },
   });
+
+  useEffect(() => {
+    form.setValue("weekendOffset", defaultOffset);
+  }, [defaultOffset, form]);
 
   const weekendOffset = useWatch({
     control: form.control,
     name: "weekendOffset",
   });
   const weekend = weekends[weekendOffset] ?? weekends[0]!;
-  const isThisWeekend = weekendOffset === 0;
   const existingDates = useMemo(
     () =>
       new Set(
@@ -102,11 +131,11 @@ function CreateWeekendMatchForm() {
   const sundayUnavailable = existingDates.has(weekend.sunday);
   const allDaysUnavailable = saturdayUnavailable && sundayUnavailable;
 
-  // Future weekends default polls off; this weekend defaults on.
+  // Safe for every weekend: future fixture polls stay draft until Monday 09:00.
   useEffect(() => {
-    form.setValue("saturday.pollsEnabled", isThisWeekend);
-    form.setValue("sunday.pollsEnabled", isThisWeekend);
-  }, [form, isThisWeekend]);
+    form.setValue("saturday.pollsEnabled", true);
+    form.setValue("sunday.pollsEnabled", true);
+  }, [form, weekendOffset]);
 
   // A day with an existing fixture cannot be selected. If exactly one day is
   // free, select it automatically so Admin can create the missing fixture.
@@ -137,15 +166,25 @@ function CreateWeekendMatchForm() {
     try {
       const created = await createMatches.mutateAsync({ matches });
       const anyPolls = matches.some((match) => match.pollsEnabled);
+      const publishesMonday = created.every(
+        (match) =>
+          match.status === "pending_confirm" || match.status === "draft",
+      );
       toast.success({
-        title:
-          created.length > 1
+        title: publishesMonday
+          ? `${created.length > 1 ? "Weekend matches" : "Match"} scheduled`
+          : created.length > 1
             ? "Weekend matches created"
-            : anyPolls
-              ? "Match created — confirm to open polls"
-              : "Match created — polls stay off until you enable them",
+            : "Match created",
+        description: publishesMonday
+          ? anyPolls
+            ? "Publishes Monday at 9 AM IST, then polls open and the squad is notified."
+            : "Publishes Monday at 9 AM IST. Polls will remain off."
+          : anyPolls
+            ? "Polls are live and the squad was notified."
+            : "Polls stay off until you enable them.",
       });
-      router.push(`/matches/${created[0]?.id}`);
+      router.push("/matches");
     } catch (error) {
       toast.error({ title: getMutationErrorMessage(error) });
     }
@@ -159,11 +198,22 @@ function CreateWeekendMatchForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="sm" className="-ml-3">
-          <Link href="/matches" aria-label="Back to matches">
-            <ArrowLeft aria-hidden />
-            Matches
-          </Link>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="-ml-2"
+          aria-label="Go back"
+          onClick={() => {
+            // Deep links (share / notification) have no in-app history to pop.
+            if (window.history.length > 1) {
+              router.back();
+              return;
+            }
+            router.push("/matches");
+          }}
+        >
+          <ArrowLeft aria-hidden />
         </Button>
       </div>
 
@@ -172,7 +222,9 @@ function CreateWeekendMatchForm() {
           Weekend matches
         </h1>
         <BodySm className="mt-1">
-          Pick any upcoming weekend. Configure Saturday and Sunday separately.
+          {demoMode
+            ? "Demo mode: pick a past or upcoming weekend. Configure Saturday and Sunday separately."
+            : "Pick any upcoming weekend. Configure Saturday and Sunday separately."}
         </BodySm>
       </header>
 
@@ -192,7 +244,12 @@ function CreateWeekendMatchForm() {
             <SelectContent>
               {weekends.map((dates, offset) => (
                 <SelectItem key={dates.saturday} value={String(offset)}>
-                  {weekendLabel(offset, dates.saturday, dates.sunday)}
+                  {weekendLabel(
+                    offset,
+                    dates.saturday,
+                    dates.sunday,
+                    thisWeekendSaturday,
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>

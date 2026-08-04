@@ -6,10 +6,7 @@ import { logger } from "@/lib/logging/logger";
 /**
  * Map PostgREST / Supabase errors to AppError. No business rules.
  */
-export function mapSupabaseError(
-  error: PostgrestError,
-  context?: string,
-): AppError {
+function mapSupabaseError(error: PostgrestError, context?: string): AppError {
   logger.error("repository.supabase_error", {
     context,
     code: error.code,

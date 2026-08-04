@@ -59,17 +59,20 @@ export async function enqueueForActiveMembers(
   if (options?.adminsOnly) query = query.eq("role", "admin");
 
   const { data: members } = await query;
+  const userIds = (members ?? []).map((m) => m.user_id as string);
 
-  for (const member of members ?? []) {
+  for (const userId of userIds) {
     await client.from("notifications").insert({
       team_id: teamId,
-      user_id: member.user_id,
+      user_id: userId,
       type: payload.type,
       title: payload.title,
       body: payload.body,
       data: payload.data ?? {},
     });
   }
+
+  await dispatchAppWebPush(userIds, payload);
 }
 
 export async function enqueueForUsers(
@@ -96,6 +99,36 @@ export async function enqueueForUsers(
       data: payload.data ?? {},
     })),
   );
+
+  await dispatchAppWebPush(uniqueUserIds, payload);
+}
+
+/** POST to the Next.js app so VAPID private key stays off Edge Functions. */
+async function dispatchAppWebPush(
+  userIds: string[],
+  payload: { type: string; title: string; body: string },
+): Promise<void> {
+  const appUrl = Deno.env.get("APP_URL")?.replace(/\/$/, "");
+  const secret = Deno.env.get("CRON_SECRET");
+  if (!appUrl || !secret || userIds.length === 0) return;
+  try {
+    await fetch(`${appUrl}/api/internal/push`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify({
+        userIds,
+        title: payload.title,
+        body: payload.body,
+        url: "/home?alerts=1",
+        tag: `crease-${payload.type}`,
+      }),
+    });
+  } catch {
+    // Non-blocking
+  }
 }
 
 export async function notifyWhatsApp(

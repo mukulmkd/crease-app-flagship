@@ -11,6 +11,11 @@ export function formatMatchDate(isoDate: string): string {
   });
 }
 
+/** Compact Sat–Sun range for payment weekend cards. */
+export function formatWeekendRange(saturday: string, sunday: string): string {
+  return `${formatMatchDate(saturday)} – ${formatMatchDate(sunday)}`;
+}
+
 export function formatMatchTime(startTime: Match["startTime"]): string {
   if (startTime === "06:30:00") return "6:30 AM";
   if (startTime === "09:30:00") return "9:30 AM";

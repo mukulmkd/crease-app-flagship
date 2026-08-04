@@ -1,8 +1,7 @@
 "use client";
 
-import { Car, Trophy, Users } from "lucide-react";
+import { Car, CarFront, UserRound, Users } from "lucide-react";
 
-import { BodySm } from "@/components/common";
 import { ErrorState, LoadingState } from "@/components/feedback";
 import type { MembershipRole } from "@/constants/domain/enums";
 import {
@@ -13,10 +12,11 @@ import { useMatchSettlementReport } from "@/features/payments/hooks";
 import { SummaryMetric } from "@/features/team/components/past-match-charge";
 import { PastMatchFees } from "@/features/team/components/past-match-fees";
 import {
-  useCarpoolAssignments,
-  useMatchPolls,
-  useTournament,
-} from "@/features/team/hooks";
+  MatchRidesSummary,
+  MatchTravelList,
+} from "@/features/team/components/match-travel-summary";
+import { useCarpoolAssignments, useMatchPolls } from "@/features/team/hooks";
+import { buildTravelIndex } from "@/features/team/lib/carpool-travel";
 import {
   formatMatchDate,
   formatMatchTime,
@@ -29,13 +29,13 @@ type PastMatchReportProps = {
 };
 
 /**
- * Read-only historical match report — squad, fees, settlement, tournament.
+ * Read-only historical match report — squad, fees, settlement.
+ * Tournament progress lives on the match detail ticket card above.
  */
 function PastMatchReport({ match, role }: PastMatchReportProps) {
   const pollsQuery = useMatchPolls(match.id);
   const carpoolQuery = useCarpoolAssignments(match.id);
   const settlementQuery = useMatchSettlementReport(match.id);
-  const tournamentQuery = useTournament(match.tournamentId);
   const canManageSettlement = hasPermission(
     role,
     PERMISSIONS.SETTLEMENT_MANAGE,
@@ -64,26 +64,24 @@ function PastMatchReport({ match, role }: PastMatchReportProps) {
       polls.squadFinalized ? row.inSquad : row.availability === "yes",
     ) ?? [];
   const rides = carpoolQuery.data ?? [];
-  const passengerIds = new Set(
-    rides.flatMap((ride) => ride.passengerUserIds.map(String)),
-  );
-  const driverIds = new Set(rides.map((ride) => String(ride.driverUserId)));
-  const carpoolCount = passengerIds.size;
+  const carpoolAssigned = Boolean(match.carpoolAssignedAt);
+  const travelIndex = buildTravelIndex(rides);
+  // Squad travel breakdown — drivers + passengers + own ≈ played.
+  const driverCount = played.filter((row) =>
+    travelIndex.passengerCountByDriver.has(row.userId),
+  ).length;
+  const passengerCount = played.filter((row) =>
+    travelIndex.driverByPassenger.has(row.userId),
+  ).length;
   const ownTravelCount = played.filter(
-    (row) => !passengerIds.has(row.userId) && !driverIds.has(row.userId),
+    (row) =>
+      !travelIndex.driverByPassenger.has(row.userId) &&
+      !travelIndex.passengerCountByDriver.has(row.userId),
   ).length;
   const report = settlementQuery.data;
   const settlement = report?.settlement ?? null;
-
-  function travelLabel(userId: string): string {
-    if (driverIds.has(userId)) {
-      const ride = rides.find((r) => String(r.driverUserId) === userId);
-      const count = ride?.passengerUserIds.length ?? 0;
-      return count > 0 ? `Driver · ${count} pax` : "Driver";
-    }
-    if (passengerIds.has(userId)) return "Passenger";
-    return "Own";
-  }
+  const nameFor = (userId: string) =>
+    polls?.roster.find((row) => row.userId === userId)?.fullName ?? null;
 
   return (
     <div className="space-y-6">
@@ -91,63 +89,45 @@ function PastMatchReport({ match, role }: PastMatchReportProps) {
         <h2 className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
           Final squad
         </h2>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <SummaryMetric
             icon={Users}
             value={String(played.length)}
             label="Played"
           />
           <SummaryMetric
+            icon={CarFront}
+            value={String(driverCount)}
+            label="Drivers"
+          />
+          <SummaryMetric
             icon={Car}
-            value={String(carpoolCount)}
+            value={String(passengerCount)}
             label="Passengers"
           />
           <SummaryMetric
-            icon={Users}
+            icon={UserRound}
             value={String(ownTravelCount)}
             label="Own"
           />
         </div>
       </section>
 
-      {match.classification === "tournament" ? (
-        <TournamentBlock
-          loading={tournamentQuery.isLoading}
-          name={tournamentQuery.data?.name}
-          plannedMatchCount={tournamentQuery.data?.plannedMatchCount}
-          totalFeesInr={tournamentQuery.data?.totalFeesInr}
-        />
-      ) : null}
+      <MatchTravelList
+        headingId="who-played-heading"
+        heading="Who played"
+        rows={played}
+        emptyLabel="No playing squad was recorded for this match."
+        rides={rides}
+        assigned={carpoolAssigned}
+        nameFor={nameFor}
+      />
 
-      <section aria-labelledby="who-played-heading">
-        <h2
-          id="who-played-heading"
-          className="font-heading text-xl font-bold uppercase"
-        >
-          Who played
-        </h2>
-        <ul className="mt-2 divide-y divide-outline-variant rounded-xl bg-surface-container-low">
-          {played.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-muted-foreground">
-              No playing squad was recorded for this match.
-            </li>
-          ) : (
-            played.map((row) => (
-              <li
-                key={row.userId}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-              >
-                <span className="font-medium">
-                  {row.fullName?.trim() || "Player"}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {travelLabel(row.userId)}
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
-      </section>
+      <MatchRidesSummary
+        rides={rides}
+        assigned={carpoolAssigned}
+        nameFor={nameFor}
+      />
 
       <PastMatchFees
         canManageSettlement={canManageSettlement}
@@ -155,10 +135,7 @@ function PastMatchReport({ match, role }: PastMatchReportProps) {
         settlementError={settlementQuery.isError}
         myCharge={report?.viewerCharge ?? null}
         charges={report?.charges ?? []}
-        nameFor={(userId) =>
-          polls?.roster.find((row) => row.userId === userId)?.fullName ??
-          "Player"
-        }
+        nameFor={(userId) => nameFor(userId) ?? "Player"}
       />
 
       <section aria-labelledby="timeline-heading" className="space-y-2">
@@ -178,43 +155,6 @@ function PastMatchReport({ match, role }: PastMatchReportProps) {
         </ol>
       </section>
     </div>
-  );
-}
-
-function TournamentBlock({
-  loading,
-  name,
-  plannedMatchCount,
-  totalFeesInr,
-}: {
-  loading: boolean;
-  name?: string;
-  plannedMatchCount?: number;
-  totalFeesInr?: number;
-}) {
-  return (
-    <section
-      aria-label="Tournament"
-      className="rounded-xl bg-surface-container-low px-4 py-3"
-    >
-      <p className="flex items-center gap-2 text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
-        <Trophy className="size-3.5 text-primary" aria-hidden />
-        Tournament
-      </p>
-      {loading ? (
-        <BodySm className="mt-1">Loading tournament…</BodySm>
-      ) : name ? (
-        <div className="mt-1 space-y-0.5">
-          <p className="font-heading text-xl font-bold uppercase">{name}</p>
-          <BodySm>
-            {plannedMatchCount} planned matches · ₹
-            {Math.round(totalFeesInr ?? 0)} total fees
-          </BodySm>
-        </div>
-      ) : (
-        <BodySm className="mt-1">Tournament details unavailable.</BodySm>
-      )}
-    </section>
   );
 }
 

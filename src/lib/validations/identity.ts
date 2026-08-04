@@ -11,26 +11,19 @@ import {
   uuidSchema,
 } from "@/lib/validations/common";
 
-export const createProfileSchema = z.object({
-  fullName: nonEmptyStringSchema.min(2).max(100),
-  avatarUrl: optionalUrlSchema,
-});
-
-export const updateProfileSchema = createProfileSchema.partial().extend({
-  phone: z.string().trim().min(8).max(20).nullable().optional(),
-});
-
-export const completeProfileSchema = z.object({
-  fullName: nonEmptyStringSchema.min(2).max(100),
-  avatarUrl: optionalUrlSchema,
-});
-
 /** MVP: team is seeded; settings update only. */
 export const updateTeamSettingsSchema = z.object({
   name: nonEmptyStringSchema.min(2).max(80).optional(),
   logoUrl: optionalUrlSchema,
   upiVpa: z.string().trim().min(3).max(120).nullable().optional(),
   whatsappNotifyUrl: optionalUrlSchema,
+  demoMode: z.boolean().optional(),
+});
+
+/** Exactly one Admin collects fees; UPI VPA is required on assign. */
+export const assignPaymentCollectorSchema = z.object({
+  userId: uuidSchema,
+  upiVpa: z.string().trim().min(3).max(120),
 });
 
 export const addTeamMemberSchema = z.object({

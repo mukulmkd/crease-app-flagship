@@ -38,6 +38,18 @@ export async function compressImageForUpload(
  * Square-crop + resize + compress for profile avatars (public `avatars` bucket).
  * Accepts gallery/camera photos from any device; always outputs JPEG ≤ maxBytes.
  */
+/**
+ * Square-crop + resize for team logos shown in app chrome (≤512px JPEG).
+ * Same pipeline as avatars — logos sit in a rounded square mark slot.
+ */
+export async function compressTeamLogoForUpload(
+  file: File,
+  maxBytes = 200_000,
+  maxEdge = 512,
+): Promise<Blob> {
+  return compressAvatarForUpload(file, maxBytes, maxEdge);
+}
+
 export async function compressAvatarForUpload(
   file: File,
   maxBytes = 200_000,

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Supabase platform
 
-Import platform primitives from `@/lib/platform`.
+Import platform primitives from leaf modules (`@/lib/errors`, `@/lib/supabase/client`, `@/lib/logging/logger`, `@/lib/env`, repositories/factories) — not a catch-all barrel.
 
 ## Required flow
 

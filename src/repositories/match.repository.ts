@@ -60,6 +60,17 @@ export class MatchRepository extends BaseRepository {
     return match;
   }
 
+  async listMatchesByIds(ids: string[]): Promise<Match[]> {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (unique.length === 0) return [];
+    const { data, error } = await this.client
+      .from("matches")
+      .select("*")
+      .in("id", unique);
+    this.assertOk(error, "match.listByIds");
+    return (data ?? []).map(mapMatch);
+  }
+
   async findMatchByDate(
     teamId: TeamId | string,
     matchDate: string,
@@ -152,6 +163,47 @@ export class MatchRepository extends BaseRepository {
       .single();
     this.assertOk(error, "tournament.create");
     return mapTournament(this.requireData(data, "tournament.create"));
+  }
+
+  async updateTournament(
+    id: TournamentId | string,
+    input: TablesUpdate<"tournaments">,
+  ): Promise<Tournament> {
+    const { data, error } = await this.client
+      .from("tournaments")
+      .update(input)
+      .eq("id", id)
+      .select("*")
+      .single();
+    this.assertOk(error, "tournament.update");
+    return mapTournament(this.requireData(data, "tournament.update"));
+  }
+
+  async listMatchesForTournament(
+    tournamentId: TournamentId | string,
+  ): Promise<Match[]> {
+    const { data, error } = await this.client
+      .from("matches")
+      .select("*")
+      .eq("tournament_id", tournamentId)
+      .order("match_date", { ascending: true })
+      .order("id", { ascending: true });
+    this.assertOk(error, "match.listForTournament");
+    return (data ?? []).map(mapMatch);
+  }
+
+  async markMatchesFeesSettled(
+    matchIds: string[],
+    settledAt: string,
+  ): Promise<void> {
+    const unique = [...new Set(matchIds.filter(Boolean))];
+    if (unique.length === 0) return;
+    const { error } = await this.client
+      .from("matches")
+      .update({ fees_settled_at: settledAt })
+      .in("id", unique)
+      .is("fees_settled_at", null);
+    this.assertOk(error, "match.markFeesSettled");
   }
 
   async findPoll(

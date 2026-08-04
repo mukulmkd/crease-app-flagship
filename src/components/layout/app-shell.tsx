@@ -8,7 +8,12 @@ import { AppHeader } from "@/components/layout/app-header";
 import { TopAppBar } from "@/components/layout/top-app-bar";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { DesktopNav } from "@/components/navigation/desktop-nav";
-import { useUnreadNotificationCount } from "@/features/notifications";
+import {
+  useUnreadNotificationCount,
+  useNotificationAlerts,
+} from "@/features/notifications";
+import { NotificationsSheet } from "@/features/notifications/components/notifications-sheet";
+import { NotificationsUiProvider } from "@/features/notifications/providers/notifications-ui-provider";
 import { cn } from "@/utils";
 
 const TITLE_BY_PATH: Record<string, string> = {
@@ -17,8 +22,8 @@ const TITLE_BY_PATH: Record<string, string> = {
   "/team": "Team",
   "/profile": "Profile",
   "/payments": "Payments",
+  "/expenses": "Expenses",
   "/settings": "Settings",
-  "/notifications": "Notifications",
 };
 
 function resolveShellTitle(pathname: string, title?: string) {
@@ -49,7 +54,7 @@ type AppShellProps = {
 
 /**
  * Application chrome — responsive PWA shell.
- * Mobile: sticky top bar + bottom nav (+ drawer)
+ * Mobile: sticky top bar + bottom nav
  * Tablet: icon rail + sticky top bar + footer
  * Desktop: expanded sidebar + sticky header + footer
  */
@@ -61,52 +66,59 @@ function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const unreadQuery = useUnreadNotificationCount();
+  useNotificationAlerts();
   const resolvedCount = notificationCount ?? unreadQuery.data ?? 0;
   const resolvedTitle = resolveShellTitle(pathname, title);
 
   return (
-    <div
-      data-slot="app-shell"
-      className={cn("flex min-h-dvh bg-background text-foreground", className)}
-    >
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-3 focus:text-primary-foreground"
+    <NotificationsUiProvider>
+      <div
+        data-slot="app-shell"
+        className={cn(
+          "flex min-h-dvh bg-background text-foreground",
+          className,
+        )}
       >
-        Skip to main content
-      </a>
-
-      <div className="hidden md:flex lg:hidden">
-        <DesktopNav collapsed />
-      </div>
-      <div className="hidden lg:flex">
-        <DesktopNav collapsed={false} />
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopAppBar
-          title={resolvedTitle}
-          notificationCount={resolvedCount}
-          className="lg:hidden"
-        />
-        <AppHeader title={resolvedTitle} notificationCount={resolvedCount} />
-
-        <main
-          id="main-content"
-          tabIndex={-1}
-          className={cn(
-            "mx-auto w-full max-w-6xl flex-1 scroll-smooth px-4 py-4 outline-none",
-            "pb-bottom-nav md:px-6 md:pb-6",
-            pathname === "/home" && "max-w-md py-2 md:max-w-6xl md:py-6",
-          )}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-3 focus:text-primary-foreground"
         >
-          {children}
-        </main>
+          Skip to main content
+        </a>
 
-        <AppFooter />
-        <BottomNav />
+        <div className="hidden md:flex lg:hidden">
+          <DesktopNav collapsed />
+        </div>
+        <div className="hidden lg:flex">
+          <DesktopNav collapsed={false} />
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopAppBar
+            title={resolvedTitle}
+            notificationCount={resolvedCount}
+            className="lg:hidden"
+          />
+          <AppHeader title={resolvedTitle} notificationCount={resolvedCount} />
+
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className={cn(
+              "mx-auto w-full max-w-6xl flex-1 scroll-smooth px-4 py-4 outline-none",
+              "pb-bottom-nav md:px-6 md:pb-6",
+              pathname === "/home" && "max-w-md py-2 md:max-w-6xl md:py-6",
+            )}
+          >
+            {children}
+          </main>
+
+          <AppFooter />
+          <BottomNav />
+        </div>
       </div>
-    </div>
+      <NotificationsSheet />
+    </NotificationsUiProvider>
   );
 }
 

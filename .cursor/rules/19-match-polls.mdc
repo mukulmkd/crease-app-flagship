@@ -40,6 +40,7 @@ Every confirmed match has exactly two polls:
 
 - Pre-match carpool poll is **intent only** — fees ignore poll votes
 - After kickoff, Admin assigns real drivers + passengers (`match_carpool_rides`)
+- **Any active player** may drive or ride — not limited to the playing squad or Admins
 - Passenger pays **₹100**; driver earns **₹100 credit per passenger**
 - Empty assignment (nobody carpooled) is valid once Admin saves it
 - Match day **14:00 IST** Cron reminds Admins (in-app + individual WhatsApp)

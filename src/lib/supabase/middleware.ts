@@ -2,19 +2,15 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { MVP_TEAM } from "@/constants/domain/enums";
-import type { MembershipRole } from "@/constants/domain/enums";
-import {
-  TEAM_PERMISSIONS,
-  type TeamPermission,
-} from "@/constants/domain/team-permissions";
 import { resolveRouteGuard } from "@/lib/auth/route-protection";
 import { isSupabaseConfigured } from "@/lib/env";
 import { logger } from "@/lib/logging/logger";
-import { canTeamPermission } from "@/lib/rbac/team-permissions";
 import type { Database } from "@/types/database";
 
 /**
  * Session refresh + route protection at the network boundary.
+ * MVP is single-team: membership is enough; fine-grained RBAC is enforced
+ * in services (and UI hides). No `/team/[id]/…` permission matrix.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -83,61 +79,5 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // RBAC — team route guarding (membership + permission).
-  if (user && isActiveMember) {
-    const guard = resolveTeamRoutePermissionGuard(path);
-    if (guard) {
-      const { teamId, required } = guard;
-      try {
-        const { data: membership } = await supabase
-          .from("team_memberships")
-          .select("role")
-          .eq("team_id", teamId)
-          .eq("user_id", user.id)
-          .eq("status", "active")
-          .maybeSingle();
-
-        if (!membership) {
-          const redirectUrl = request.nextUrl.clone();
-          redirectUrl.pathname = "/access-denied";
-          return NextResponse.redirect(redirectUrl);
-        }
-
-        const role = membership.role as MembershipRole | null;
-        if (!canTeamPermission(role, required)) {
-          const redirectUrl = request.nextUrl.clone();
-          redirectUrl.pathname = `/team/${teamId}`;
-          redirectUrl.searchParams.set("redirect", path);
-          return NextResponse.redirect(redirectUrl);
-        }
-      } catch (error) {
-        logger.warn("team_rbac.guard_failed", {
-          message: error instanceof Error ? error.message : "unknown",
-          path,
-        });
-      }
-    }
-  }
-
   return supabaseResponse;
-}
-
-function resolveTeamRoutePermissionGuard(
-  path: string,
-): { teamId: string; required: TeamPermission } | null {
-  const match = path.match(/^\/team\/([^/]+)(?:\/(members|invite|settings))?$/);
-  if (!match) return null;
-
-  const teamId = match[1]!;
-  if (teamId === "new") return null;
-  const section = match[2];
-
-  if (!section) return { teamId, required: TEAM_PERMISSIONS.view_team };
-  if (section === "members") {
-    return { teamId, required: TEAM_PERMISSIONS.view_members };
-  }
-  if (section === "invite") {
-    return { teamId, required: TEAM_PERMISSIONS.invite_member };
-  }
-  return { teamId, required: TEAM_PERMISSIONS.view_team };
 }

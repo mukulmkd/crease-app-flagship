@@ -77,6 +77,11 @@ function ProfileShell() {
       )
     : "Not set";
   const roleLabel = role ? membershipRoleLabel(role) : "Member";
+  const isCollector =
+    Boolean(teamQuery.data?.collectorUserId) &&
+    Boolean(membershipQuery.data?.userId) &&
+    String(teamQuery.data?.collectorUserId) ===
+      String(membershipQuery.data?.userId);
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-6 pb-8">
@@ -91,6 +96,9 @@ function ProfileShell() {
             <StatusChip status={membershipRoleChip(role)}>
               {roleLabel}
             </StatusChip>
+          ) : null}
+          {isCollector ? (
+            <StatusChip status="info">Collector</StatusChip>
           ) : null}
           <StatusChip status="success">Active</StatusChip>
         </div>

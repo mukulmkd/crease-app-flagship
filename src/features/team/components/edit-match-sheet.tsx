@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -18,13 +18,18 @@ import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
-import { useUpdateMatch } from "@/features/team/hooks";
+import { useSquadLimits, useUpdateMatch } from "@/features/team/hooks";
 import type { Match } from "@/types/models";
 
 const editSchema = z.object({
+  matchDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+    .optional(),
   opposition: z.string().trim().max(120).optional(),
   groundMapsUrl: z.string().trim().optional(),
   matchFeesInr: z.number().nonnegative().optional(),
+  startTime: z.enum(["06:30:00", "09:30:00"]),
 });
 
 type EditValues = z.infer<typeof editSchema>;
@@ -35,19 +40,36 @@ type EditMatchSheetProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+function matchStartTime(match: Match): "06:30:00" | "09:30:00" {
+  return match.startTime === "09:30:00" ? "09:30:00" : "06:30:00";
+}
+
 function EditMatchSheet({ match, open, onOpenChange }: EditMatchSheetProps) {
   const updateMatch = useUpdateMatch();
-  const [startTime, setStartTime] = useState<"06:30:00" | "09:30:00">(
-    match.startTime === "09:30:00" ? "09:30:00" : "06:30:00",
-  );
+  const { demoMode } = useSquadLimits();
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
+      matchDate: match.matchDate,
       opposition: match.opposition ?? "",
       groundMapsUrl: match.groundMapsUrl ?? "",
       matchFeesInr: match.matchFeesInr ?? undefined,
+      startTime: matchStartTime(match),
     },
   });
+
+  const startTime = useWatch({ control: form.control, name: "startTime" });
+
+  useEffect(() => {
+    if (!open) return;
+    form.reset({
+      matchDate: match.matchDate,
+      opposition: match.opposition ?? "",
+      groundMapsUrl: match.groundMapsUrl ?? "",
+      matchFeesInr: match.matchFeesInr ?? undefined,
+      startTime: matchStartTime(match),
+    });
+  }, [open, match, form]);
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
@@ -57,7 +79,9 @@ function EditMatchSheet({ match, open, onOpenChange }: EditMatchSheetProps) {
             Edit match
           </BottomSheetTitle>
           <BottomSheetDescription>
-            Update fixture details before or after confirm.
+            {demoMode
+              ? "Demo mode — you can set any Saturday or Sunday, including past dates."
+              : "Update fixture details anytime before kickoff."}
           </BottomSheetDescription>
         </BottomSheetHeader>
         <form
@@ -66,9 +90,12 @@ function EditMatchSheet({ match, open, onOpenChange }: EditMatchSheetProps) {
             try {
               await updateMatch.mutateAsync({
                 matchId: match.id,
+                ...(demoMode && values.matchDate
+                  ? { matchDate: values.matchDate }
+                  : {}),
                 opposition: values.opposition || null,
                 groundMapsUrl: values.groundMapsUrl || null,
-                startTime,
+                startTime: values.startTime,
                 matchFeesInr: values.matchFeesInr ?? null,
               });
               toast.success({ title: "Match updated" });
@@ -78,6 +105,15 @@ function EditMatchSheet({ match, open, onOpenChange }: EditMatchSheetProps) {
             }
           })}
         >
+          {demoMode ? (
+            <FormField
+              label="Match date"
+              description="Saturday or Sunday (past dates allowed in demo)"
+              error={form.formState.errors.matchDate?.message}
+            >
+              <Input type="date" {...form.register("matchDate")} />
+            </FormField>
+          ) : null}
           <FormField
             label="Opposition"
             error={form.formState.errors.opposition?.message}
@@ -102,11 +138,22 @@ function EditMatchSheet({ match, open, onOpenChange }: EditMatchSheetProps) {
                 { value: "09:30:00", label: "9:30 AM" },
               ]}
               value={startTime}
-              onValueChange={setStartTime}
+              onValueChange={(value) =>
+                form.setValue("startTime", value, { shouldValidate: true })
+              }
             />
           </div>
           <FormField
-            label="Match fees (INR)"
+            label={
+              match.classification === "tournament"
+                ? "Match fees (INR, ground / day)"
+                : "Match fees (INR)"
+            }
+            description={
+              match.classification === "tournament"
+                ? "Separate from prepaid tournament entry fees"
+                : undefined
+            }
             error={form.formState.errors.matchFeesInr?.message}
           >
             <Input

@@ -18,6 +18,9 @@ import {
   useCarpoolAssignments,
   useMatchPolls,
   useSaveCarpoolAssignments,
+  useSeedDemoCarpool,
+  useSquadLimits,
+  useTeamMembers,
 } from "@/features/team/hooks";
 import type { MatchCarpoolRide } from "@/types/models";
 
@@ -71,14 +74,17 @@ function CarpoolAssignForm({
   matchId,
   squad,
   initialRides,
+  demoMode,
   onClose,
 }: {
   matchId: string;
   squad: SquadRow[];
   initialRides: RideDraft[];
+  demoMode: boolean;
   onClose: () => void;
 }) {
   const save = useSaveCarpoolAssignments();
+  const seedDemo = useSeedDemoCarpool();
   const [rides, setRides] = useState<RideDraft[]>(initialRides);
 
   const nameById = useMemo(() => {
@@ -100,6 +106,36 @@ function CarpoolAssignForm({
 
   return (
     <div className="space-y-4 px-4 pb-6">
+      {demoMode ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          loading={seedDemo.isPending}
+          disabled={squad.length === 0}
+          onClick={async () => {
+            try {
+              const result = await seedDemo.mutateAsync(matchId);
+              toast.success({
+                title:
+                  result.rides.length > 0
+                    ? "Dummy carpool assigned"
+                    : "Saved — nobody carpooled",
+                description:
+                  result.rides.length > 0
+                    ? "First squad member drives; others are passengers."
+                    : undefined,
+              });
+              onClose();
+            } catch (error) {
+              toast.error({ title: getMutationErrorMessage(error) });
+            }
+          }}
+        >
+          Fill dummy carpool
+        </Button>
+      ) : null}
+
       {rides.map((ride, rideIndex) => {
         const availableDrivers = squad.filter(
           (row) => row.userId === ride.driverUserId || !usedIds.has(row.userId),
@@ -172,7 +208,7 @@ function CarpoolAssignForm({
                 Passengers
               </legend>
               {availablePassengers.length === 0 ? (
-                <BodySm>No remaining squad members.</BodySm>
+                <BodySm>No remaining players.</BodySm>
               ) : (
                 availablePassengers.map((row) => {
                   const checked = ride.passengerUserIds.includes(row.userId);
@@ -280,24 +316,40 @@ function MatchCarpoolAssign({
   open,
   onOpenChange,
 }: MatchCarpoolAssignProps) {
+  const { demoMode } = useSquadLimits();
   const pollsQuery = useMatchPolls(matchId);
+  const membersQuery = useTeamMembers({ status: "active", limit: 100 });
   const assignmentsQuery = useCarpoolAssignments(matchId);
 
-  const squad = useMemo(() => {
-    const roster = pollsQuery.data?.roster ?? [];
-    return roster.filter((row) =>
-      pollsQuery.data?.squadFinalized
-        ? row.inSquad
-        : row.availability === "yes",
+  // Drivers/passengers = every active member (Admin or player). Poll roster
+  // is only used for carpool-intent hints on the names.
+  const players = useMemo(() => {
+    const carpoolByUser = new Map(
+      (pollsQuery.data?.roster ?? []).map((row) => [row.userId, row.carpool]),
     );
-  }, [pollsQuery.data]);
+    return (membersQuery.data?.items ?? [])
+      .map((member) => {
+        const userId = String(member.userId);
+        return {
+          userId,
+          fullName: member.profile.fullName,
+          carpool: carpoolByUser.get(userId) ?? null,
+        };
+      })
+      .sort((a, b) =>
+        (a.fullName ?? "").localeCompare(b.fullName ?? "", undefined, {
+          sensitivity: "base",
+        }),
+      );
+  }, [membersQuery.data, pollsQuery.data]);
 
   const initialRides = useMemo(
-    () => buildInitialRides(assignmentsQuery.data ?? [], squad),
-    [assignmentsQuery.data, squad],
+    () => buildInitialRides(assignmentsQuery.data ?? [], players),
+    [assignmentsQuery.data, players],
   );
 
-  const formKey = `${matchId}-${assignmentsQuery.dataUpdatedAt}-${open ? "open" : "closed"}`;
+  const membersReady = Boolean(membersQuery.data);
+  const formKey = `${matchId}-${assignmentsQuery.dataUpdatedAt}-${membersQuery.dataUpdatedAt}-${open ? "open" : "closed"}`;
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
@@ -307,19 +359,23 @@ function MatchCarpoolAssign({
             Assign carpool
           </BottomSheetTitle>
           <BottomSheetDescription>
-            Who drove whom after the match. Passengers pay ₹100; drivers get
-            ₹100 credit per passenger. Save empty if nobody carpooled.
+            {demoMode
+              ? "Demo · any player can drive or ride. Passengers pay ₹0.25; drivers get ₹0.25 credit per passenger. Or fill a dummy ride in one tap."
+              : "Who drove whom after the match. Any active player can drive or ride. Passengers pay ₹100; drivers get ₹100 credit per passenger."}
           </BottomSheetDescription>
         </BottomSheetHeader>
 
-        {open ? (
+        {open && membersReady ? (
           <CarpoolAssignForm
             key={formKey}
             matchId={matchId}
-            squad={squad}
+            squad={players}
             initialRides={initialRides}
+            demoMode={demoMode}
             onClose={() => onOpenChange(false)}
           />
+        ) : open ? (
+          <BodySm className="px-4 pb-6">Loading players…</BodySm>
         ) : null}
       </BottomSheetContent>
     </BottomSheet>

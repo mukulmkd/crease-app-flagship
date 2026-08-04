@@ -1,4 +1,4 @@
-import { MVP_TEAM, SQUAD_MAX, SQUAD_MIN } from "@/constants/domain/enums";
+import { MVP_TEAM, squadLimits } from "@/constants/domain/enums";
 import { PERMISSIONS } from "@/constants/domain/team-permissions";
 import { requirePermission } from "@/lib/rbac/team-permissions";
 import {
@@ -6,16 +6,15 @@ import {
   castCarpoolVoteSchema,
   cancelMatchSchema,
   completeMatchSchema,
-  confirmMatchSchema,
   createMatchSchema,
   createTournamentSchema,
   enableMatchPollsSchema,
   finalizePlayingSquadSchema,
   freezePollsSchema,
   saveCarpoolAssignmentsSchema,
-  unfreezePollsSchema,
-  overrideVoteSchema,
+  seedDemoCarpoolSchema,
   updateMatchSchema,
+  updateTournamentSchema,
 } from "@/lib/validations/match";
 import type { MatchRepository } from "@/repositories/match.repository";
 import type { TeamRepository } from "@/repositories/team.repository";
@@ -29,27 +28,33 @@ import type {
   CreateMatchDto,
   CreateTournamentDto,
   CreateWeekendMatchesDto,
-  OverrideVoteDto,
   UpdateMatchDto,
+  UpdateTournamentDto,
 } from "@/types/dto";
 import type { MatchId, Paginated, ProfileId } from "@/types/common";
 import type {
   Match,
   MatchCarpoolRide,
   MatchPoll,
+  MatchTournamentContext,
   PollVote,
   Tournament,
+  TournamentSummary,
 } from "@/types/models";
 import { BaseService, type ServiceActor } from "@/services/base.service";
 import {
   requireActiveMembership,
   requireAdmin,
 } from "@/services/shared/membership";
+import { seedDemoAvailabilityVotesAction } from "@/services/match.actions";
 import { broadcastTeamNotificationAction } from "@/services/notification.actions";
+import { createBrowserPaymentService } from "@/services/payment.service";
 import {
   isImmediateWeekendDate,
   isMatchStartedIst,
   todayIsoDate,
+  tournamentMatchFeePoolInr,
+  weekendContainingDate,
 } from "@/utils";
 
 type Actor = ServiceActor | { actorId: ProfileId | string };
@@ -82,8 +87,6 @@ export type MatchPollsSnapshot = {
   /** Finalized playing 11–12 (fees charge these only). */
   squadFinalized: boolean;
   squadUserIds: string[];
-  /** @deprecated Prefer availabilityFrozen — kept for transitional callers. */
-  frozen: boolean;
 };
 
 function isWeekendDate(isoDate: string): boolean {
@@ -142,14 +145,57 @@ export class MatchService extends BaseService {
     });
   }
 
-  async getTournament(tournamentId: string, actor: Actor): Promise<Tournament> {
+  /**
+   * Tournament fee pool + progress for one fixture (match N of planned,
+   * remaining unsettled, squad size for fee split).
+   */
+  async getMatchTournamentContext(
+    matchId: string,
+    actor: Actor,
+  ): Promise<MatchTournamentContext> {
     return this.run(async () => {
       await requireActiveMembership(this.teams, MVP_TEAM.id, actor.actorId);
-      const tournament = await this.matches.findTournamentById(tournamentId);
+      const match = await this.matches.findMatchByIdOrThrow(matchId);
+      if (match.teamId !== MVP_TEAM.id) {
+        throw this.notFound("Match not found");
+      }
+      if (match.classification !== "tournament" || !match.tournamentId) {
+        throw this.validation("Match is not linked to a tournament");
+      }
+      const tournament = await this.matches.findTournamentById(
+        match.tournamentId,
+      );
       if (!tournament || tournament.teamId !== MVP_TEAM.id) {
         throw this.notFound("Tournament not found");
       }
-      return tournament;
+
+      const fixtures = (
+        await this.matches.listMatchesForTournament(tournament.id)
+      ).filter((row) => row.status !== "cancelled");
+      const index = fixtures.findIndex(
+        (row) => String(row.id) === String(match.id),
+      );
+      const settledMatchCount = fixtures.filter((row) =>
+        Boolean(row.feesSettledAt),
+      ).length;
+
+      let squadSize: number | null = null;
+      if (match.squadFinalizedAt) {
+        const squad = await this.matches.listSquadMembers(match.id);
+        squadSize = squad.length;
+      }
+
+      return {
+        tournament,
+        matchNumber: index >= 0 ? index + 1 : 0,
+        plannedMatchCount: tournament.plannedMatchCount,
+        remainingMatchCount: Math.max(
+          0,
+          tournament.plannedMatchCount - settledMatchCount,
+        ),
+        feePoolPerMatchInr: tournamentMatchFeePoolInr(tournament),
+        squadSize,
+      };
     });
   }
 
@@ -165,14 +211,128 @@ export class MatchService extends BaseService {
       );
       requirePermission(membership.role, PERMISSIONS.TOURNAMENT_CREATE);
       const parsed = createTournamentSchema.parse(input);
+      const feesPaidByUserId = await this.resolveTournamentFeesPayer(
+        parsed.totalFeesInr,
+        parsed.feesPaidByUserId,
+      );
       return this.matches.createTournament({
         team_id: MVP_TEAM.id,
         name: parsed.name,
         planned_match_count: parsed.plannedMatchCount,
         total_fees_inr: parsed.totalFeesInr,
+        fees_paid_by_user_id: feesPaidByUserId,
         status: "active",
         created_by: actor.actorId,
       });
+    });
+  }
+
+  /**
+   * Admin may edit name / planned count / total fees while the tournament is
+   * still active (not yet moved to Past after the last match fees settle).
+   */
+  async updateTournament(
+    input: UpdateTournamentDto,
+    actor: Actor,
+  ): Promise<Tournament> {
+    return this.run(async () => {
+      const membership = await requireAdmin(
+        this.teams,
+        MVP_TEAM.id,
+        actor.actorId,
+      );
+      requirePermission(membership.role, PERMISSIONS.TOURNAMENT_EDIT);
+      const parsed = updateTournamentSchema.parse(input);
+      const tournament = await this.matches.findTournamentById(
+        parsed.tournamentId,
+      );
+      if (!tournament) throw this.notFound("Tournament not found");
+      if (
+        tournament.status === "completed" ||
+        tournament.status === "cancelled"
+      ) {
+        throw this.conflict("Past tournaments cannot be edited");
+      }
+
+      const fixtures = await this.matches.listMatchesForTournament(
+        tournament.id,
+      );
+      const settledCount = fixtures.filter(
+        (m) => m.status !== "cancelled" && m.feesSettledAt,
+      ).length;
+      const nextPlanned =
+        parsed.plannedMatchCount ?? tournament.plannedMatchCount;
+      if (nextPlanned < settledCount) {
+        throw this.conflict(
+          `Planned matches cannot be below ${settledCount} already settled`,
+        );
+      }
+
+      const nextFees =
+        parsed.totalFeesInr !== undefined
+          ? parsed.totalFeesInr
+          : tournament.totalFeesInr;
+      const nextPayerRaw =
+        parsed.feesPaidByUserId !== undefined
+          ? parsed.feesPaidByUserId
+          : tournament.feesPaidByUserId
+            ? String(tournament.feesPaidByUserId)
+            : null;
+      const feesPaidByUserId = await this.resolveTournamentFeesPayer(
+        nextFees,
+        nextPayerRaw,
+      );
+
+      const updated = await this.matches.updateTournament(tournament.id, {
+        ...(parsed.name !== undefined ? { name: parsed.name } : {}),
+        ...(parsed.plannedMatchCount !== undefined
+          ? { planned_match_count: parsed.plannedMatchCount }
+          : {}),
+        ...(parsed.totalFeesInr !== undefined
+          ? { total_fees_inr: parsed.totalFeesInr }
+          : {}),
+        fees_paid_by_user_id: feesPaidByUserId,
+      });
+
+      // Per-match ground fees stay on the match row; settlement re-reads the
+      // tournament pool live when planned count / total fees change.
+      if (
+        settledCount >= updated.plannedMatchCount &&
+        updated.plannedMatchCount > 0
+      ) {
+        return this.matches.updateTournament(updated.id, {
+          status: "completed",
+        });
+      }
+      return updated;
+    });
+  }
+
+  async listTournamentSummaries(actor: Actor): Promise<TournamentSummary[]> {
+    return this.run(async () => {
+      await requireActiveMembership(this.teams, MVP_TEAM.id, actor.actorId);
+      const page = await this.matches.listTournaments(MVP_TEAM.id);
+      const summaries: TournamentSummary[] = [];
+      for (const tournament of page.items) {
+        const fixtures = await this.matches.listMatchesForTournament(
+          tournament.id,
+        );
+        const activeFixtures = fixtures.filter((m) => m.status !== "cancelled");
+        const settledMatchCount = activeFixtures.filter((m) =>
+          Boolean(m.feesSettledAt),
+        ).length;
+        summaries.push({
+          tournament,
+          settledMatchCount,
+          remainingMatchCount: Math.max(
+            0,
+            tournament.plannedMatchCount - settledMatchCount,
+          ),
+          scheduledMatchCount: activeFixtures.length,
+          feePoolPerMatchInr: tournamentMatchFeePoolInr(tournament),
+        });
+      }
+      return summaries;
     });
   }
 
@@ -199,6 +359,13 @@ export class MatchService extends BaseService {
 
       const pollsEnabled =
         parsed.pollsEnabled ?? isImmediateWeekendDate(parsed.matchDate);
+      const demoMode = await this.isDemoMode();
+      // Production publishes only the current/upcoming weekend. Demo-mode past
+      // fixtures remain immediate so Admin can run the post-match payment E2E.
+      const publishImmediately =
+        isImmediateWeekendDate(parsed.matchDate) ||
+        (demoMode && parsed.matchDate < todayIsoDate());
+      const now = new Date().toISOString();
 
       const match = await this.matches.createMatch({
         team_id: MVP_TEAM.id,
@@ -209,12 +376,18 @@ export class MatchService extends BaseService {
         ground_maps_url: parsed.groundMapsUrl || null,
         start_time: parsed.startTime ?? null,
         match_fees_inr: parsed.matchFeesInr ?? null,
-        status: "pending_confirm",
+        status: publishImmediately ? "confirmed" : "pending_confirm",
+        confirmed_at: publishImmediately ? now : null,
         polls_enabled: pollsEnabled,
         created_by: actor.actorId,
       });
 
       await this.ensureDraftPolls(match.id);
+      if (publishImmediately && match.pollsEnabled) {
+        await this.activatePolls(match.id);
+        await this.notifyMembersToVote(match);
+        void this.notifyWhatsApp(match);
+      }
       return match;
     });
   }
@@ -261,8 +434,21 @@ export class MatchService extends BaseService {
       if (match.status === "cancelled" || match.status === "completed") {
         throw this.conflict("Cannot edit a cancelled or completed match");
       }
-      if (match.matchDate < todayIsoDate()) {
+      const demoMode = await this.isDemoMode();
+      if (!demoMode && match.matchDate < todayIsoDate()) {
         throw this.conflict("Past matches are read-only");
+      }
+
+      if (parsed.matchDate !== undefined) {
+        if (!demoMode) {
+          throw this.forbidden("Match date can only be changed in demo mode");
+        }
+        if (!isWeekendDate(parsed.matchDate)) {
+          throw this.validation("Match date must be Saturday or Sunday");
+        }
+        if (parsed.matchDate !== match.matchDate) {
+          await this.assertMatchDateAvailable(parsed.matchDate, match.id);
+        }
       }
 
       const classification = parsed.classification ?? match.classification;
@@ -278,6 +464,9 @@ export class MatchService extends BaseService {
       }
 
       return this.matches.updateMatch(match.id, {
+        ...(parsed.matchDate !== undefined
+          ? { match_date: parsed.matchDate }
+          : {}),
         classification,
         tournament_id: classification === "warmup" ? null : tournamentId,
         opposition:
@@ -299,42 +488,6 @@ export class MatchService extends BaseService {
             ? parsed.pollsEnabled
             : match.pollsEnabled,
       });
-    });
-  }
-
-  async confirmMatch(matchId: string, actor: Actor): Promise<Match> {
-    return this.run(async () => {
-      const membership = await requireAdmin(
-        this.teams,
-        MVP_TEAM.id,
-        actor.actorId,
-      );
-      requirePermission(membership.role, PERMISSIONS.MATCH_CONFIRM);
-      confirmMatchSchema.parse({ matchId });
-
-      const match = await this.matches.findMatchByIdOrThrow(matchId);
-      if (match.status === "confirmed") return match;
-      if (match.status === "cancelled" || match.status === "completed") {
-        throw this.conflict("Cannot confirm a cancelled or completed match");
-      }
-
-      await this.ensureDraftPolls(match.id);
-
-      if (match.pollsEnabled) {
-        await this.activatePolls(match.id);
-      }
-
-      const confirmed = await this.matches.updateMatch(match.id, {
-        status: "confirmed",
-        confirmed_at: new Date().toISOString(),
-      });
-
-      if (confirmed.pollsEnabled) {
-        await this.notifyMembersToVote(confirmed);
-        void this.notifyWhatsApp(confirmed);
-      }
-
-      return confirmed;
     });
   }
 
@@ -422,10 +575,11 @@ export class MatchService extends BaseService {
         match.pollsFrozen ||
         availability?.poll.status === "frozen" ||
         availability?.poll.status === "closed";
+      const demoMode = await this.isDemoMode();
       const carpoolFrozen =
         carpool?.poll.status === "frozen" ||
         carpool?.poll.status === "closed" ||
-        isMatchStartedIst(match.matchDate, match.startTime);
+        (!demoMode && isMatchStartedIst(match.matchDate, match.startTime));
 
       return {
         match,
@@ -436,7 +590,6 @@ export class MatchService extends BaseService {
         carpoolFrozen,
         squadFinalized: Boolean(match.squadFinalizedAt),
         squadUserIds,
-        frozen: availabilityFrozen,
       };
     });
   }
@@ -495,7 +648,8 @@ export class MatchService extends BaseService {
         !match.squadFinalizationPendingAt
       ) {
         const yesCount = await this.matches.countAvailabilityYes(poll.id);
-        if (yesCount > SQUAD_MAX) {
+        const { max } = await this.getSquadLimits();
+        if (yesCount > max) {
           // Player-triggered fan-out is best-effort and must not delay voting.
           void this.notifyAdminOversubscribedVote(match, yesCount);
         }
@@ -530,11 +684,13 @@ export class MatchService extends BaseService {
         throw this.conflict("Carpool poll is not open");
       }
 
-      // Carpool stays open after availability freeze; locks at kickoff.
+      // Carpool stays open after availability freeze; locks at kickoff
+      // (kickoff lock skipped in demo so past-date fixtures stay votable).
+      const demoMode = await this.isDemoMode();
       const isOverride =
         poll.status === "frozen" ||
         poll.status === "closed" ||
-        isMatchStartedIst(match.matchDate, match.startTime);
+        (!demoMode && isMatchStartedIst(match.matchDate, match.startTime));
       if (isOverride) {
         requirePermission(membership.role, PERMISSIONS.MATCH_POLL_OVERRIDE);
       }
@@ -545,47 +701,6 @@ export class MatchService extends BaseService {
         availability: null,
         carpool: parsed.vote,
       });
-    });
-  }
-
-  async overrideVote(input: OverrideVoteDto, actor: Actor): Promise<void> {
-    return this.run(async () => {
-      const membership = await requireAdmin(
-        this.teams,
-        MVP_TEAM.id,
-        actor.actorId,
-      );
-      requirePermission(membership.role, PERMISSIONS.MATCH_POLL_OVERRIDE);
-      const parsed = overrideVoteSchema.parse(input);
-      if (!parsed.availability && !parsed.carpool) {
-        throw this.validation("Provide availability and/or carpool vote");
-      }
-
-      const match = await this.matches.findMatchByIdOrThrow(parsed.matchId);
-      if (parsed.availability) {
-        const poll = await this.matches.findPoll(match.id, "availability");
-        if (!poll) throw this.notFound("Availability poll not found");
-        const previous = await this.matches.findVote(poll.id, parsed.userId);
-        await this.matches.upsertVote({
-          poll_id: String(poll.id),
-          user_id: parsed.userId,
-          availability: parsed.availability,
-          carpool: null,
-        });
-        if (previous?.availability === "yes" && parsed.availability === "no") {
-          void this.notifyAvailabilityFlip(match, parsed.userId);
-        }
-      }
-      if (parsed.carpool) {
-        const poll = await this.matches.findPoll(match.id, "carpool");
-        if (!poll) throw this.notFound("Carpool poll not found");
-        await this.matches.upsertVote({
-          poll_id: String(poll.id),
-          user_id: parsed.userId,
-          availability: null,
-          carpool: parsed.carpool,
-        });
-      }
     });
   }
 
@@ -620,9 +735,11 @@ export class MatchService extends BaseService {
       : [];
     const yesCount = yesUserIds.length;
 
+    const { min, max } = await this.getSquadLimits();
+
     // Below minimum, this is a request for more players—not a lock. Mark the
     // pending state so Admin can recruit and explicitly confirm the XI/XII.
-    if (yesCount < SQUAD_MIN) {
+    if (yesCount < min) {
       const pending = match.squadFinalizationPendingAt
         ? match
         : await this.matches.updateMatch(match.id, {
@@ -652,7 +769,7 @@ export class MatchService extends BaseService {
           squad_finalization_pending_at: null,
         });
 
-    if (yesCount >= SQUAD_MIN && yesCount <= SQUAD_MAX) {
+    if (yesCount >= min && yesCount <= max) {
       frozen = await this.writeFinalizedSquad(frozen, yesUserIds);
       await this.notifySquadFinalized(frozen, yesCount);
       return frozen;
@@ -688,16 +805,44 @@ export class MatchService extends BaseService {
       );
       if (!availability) throw this.notFound("Availability poll not found");
 
-      const yesSet = new Set(
-        (await this.matches.listVotes(availability.id))
-          .filter((v) => v.availability === "yes")
-          .map((v) => String(v.userId)),
-      );
-      for (const userId of parsed.userIds) {
-        if (!yesSet.has(userId)) {
-          throw this.validation(
-            "Every selected player must have voted available",
-          );
+      const demoMode = await this.isDemoMode();
+      const { min, max } = await this.getSquadLimits();
+      if (parsed.userIds.length < min || parsed.userIds.length > max) {
+        throw this.validation(`Playing squad must be ${min}–${max} players`);
+      }
+
+      // Demo: Admin may pick any active member. RLS blocks voting for someone
+      // else, so the yes votes are seeded by a service-role Server Action.
+      if (demoMode) {
+        const members = await this.teams.listMemberships({
+          teamId: MVP_TEAM.id,
+          status: "active",
+          limit: 100,
+        });
+        const activeIds = new Set(members.items.map((m) => String(m.userId)));
+        for (const userId of parsed.userIds) {
+          if (!activeIds.has(userId)) {
+            throw this.validation(
+              "Every selected player must be an active member",
+            );
+          }
+        }
+        await seedDemoAvailabilityVotesAction({
+          matchId: String(match.id),
+          userIds: parsed.userIds,
+        });
+      } else {
+        const yesSet = new Set(
+          (await this.matches.listVotes(availability.id))
+            .filter((v) => v.availability === "yes")
+            .map((v) => String(v.userId)),
+        );
+        for (const userId of parsed.userIds) {
+          if (!yesSet.has(userId)) {
+            throw this.validation(
+              "Every selected player must have voted available",
+            );
+          }
         }
       }
 
@@ -739,13 +884,16 @@ export class MatchService extends BaseService {
         actor.actorId,
       );
       requirePermission(membership.role, PERMISSIONS.MATCH_POLL_OVERRIDE);
-      unfreezePollsSchema.parse({ matchId });
+      freezePollsSchema.parse({ matchId });
 
       const match = await this.matches.findMatchByIdOrThrow(matchId);
       if (match.status !== "confirmed") {
         throw this.conflict("Only confirmed matches can reopen availability");
       }
-      if (isMatchStartedIst(match.matchDate, match.startTime)) {
+      if (
+        !(await this.isDemoMode()) &&
+        isMatchStartedIst(match.matchDate, match.startTime)
+      ) {
         throw this.conflict("Cannot unfreeze after the match has started");
       }
       if (!match.pollsFrozen && !match.squadFinalizedAt) return match;
@@ -782,7 +930,16 @@ export class MatchService extends BaseService {
       );
       requirePermission(membership.role, PERMISSIONS.MATCH_CONFIRM);
       completeMatchSchema.parse({ matchId });
-      return this.completeMatchInternal(matchId);
+      const completed = await this.completeMatchInternal(matchId);
+
+      // Completion is the billing trigger. Regeneration is silent and preserves
+      // paid/offline/waived charges while adding this newly completed fixture.
+      const weekStartDate = weekendContainingDate(completed.matchDate).saturday;
+      await createBrowserPaymentService().generateWeekendSettlementInternal(
+        weekStartDate,
+      );
+
+      return completed;
     });
   }
 
@@ -792,7 +949,8 @@ export class MatchService extends BaseService {
     if (match.status !== "confirmed") {
       throw this.conflict("Only confirmed matches can be completed");
     }
-    if (!isMatchStartedIst(match.matchDate, match.startTime)) {
+    const demoMode = await this.isDemoMode();
+    if (!demoMode && !isMatchStartedIst(match.matchDate, match.startTime)) {
       throw this.conflict("Cannot complete a match before kickoff");
     }
     if (!match.pollsFrozen) {
@@ -824,8 +982,12 @@ export class MatchService extends BaseService {
 
       const match = await this.matches.findMatchByIdOrThrow(matchId);
       if (match.status === "cancelled") return match;
-      if (match.status !== "confirmed") {
-        throw this.conflict("Only confirmed matches can be cancelled");
+      if (
+        match.status !== "confirmed" &&
+        match.status !== "pending_confirm" &&
+        match.status !== "draft"
+      ) {
+        throw this.conflict("Only scheduled matches can be cancelled");
       }
 
       const polls = await this.matches.listPollsForMatch(match.id);
@@ -883,7 +1045,8 @@ export class MatchService extends BaseService {
           "Carpool can only be assigned on confirmed matches",
         );
       }
-      if (!isMatchStartedIst(match.matchDate, match.startTime)) {
+      const demoMode = await this.isDemoMode();
+      if (!demoMode && !isMatchStartedIst(match.matchDate, match.startTime)) {
         throw this.conflict("Wait until kickoff before assigning carpool");
       }
       if (!match.squadFinalizedAt) {
@@ -892,18 +1055,24 @@ export class MatchService extends BaseService {
         );
       }
 
-      const squad = await this.matches.listSquadMembers(match.id);
-      const squadIds = new Set(squad.map((m) => String(m.userId)));
-      if (squadIds.size === 0) {
+      if ((await this.matches.listSquadMembers(match.id)).length === 0) {
         throw this.conflict("Playing squad is empty");
       }
+
+      // Drivers/passengers may be any active member — not only the playing squad.
+      const members = await this.teams.listMemberships({
+        teamId: MVP_TEAM.id,
+        status: "active",
+        limit: 100,
+      });
+      const memberIds = new Set(members.items.map((m) => String(m.userId)));
 
       const drivers = new Set<string>();
       const passengers = new Set<string>();
 
       for (const ride of parsed.rides) {
-        if (!squadIds.has(ride.driverUserId)) {
-          throw this.conflict("Driver must be in the playing squad");
+        if (!memberIds.has(ride.driverUserId)) {
+          throw this.conflict("Driver must be an active team member");
         }
         if (drivers.has(ride.driverUserId)) {
           throw this.conflict("Duplicate driver in carpool assignment");
@@ -915,8 +1084,8 @@ export class MatchService extends BaseService {
           throw this.conflict("Each driver must have at least one passenger");
         }
         for (const passengerId of uniquePassengers) {
-          if (!squadIds.has(passengerId)) {
-            throw this.conflict("Passenger must be in the playing squad");
+          if (!memberIds.has(passengerId)) {
+            throw this.conflict("Passenger must be an active team member");
           }
           if (passengerId === ride.driverUserId) {
             throw this.conflict("Driver cannot also be their own passenger");
@@ -1030,20 +1199,77 @@ export class MatchService extends BaseService {
     }
   }
 
-  private async assertMatchDateAvailable(matchDate: string): Promise<void> {
+  private async assertMatchDateAvailable(
+    matchDate: string,
+    exceptMatchId?: string,
+  ): Promise<void> {
     const existing = await this.matches.findMatchByDate(MVP_TEAM.id, matchDate);
-    if (existing) {
+    if (existing && String(existing.id) !== exceptMatchId) {
       throw this.conflict(
         `A match is already scheduled for ${matchDate}. Edit the existing match instead.`,
       );
     }
   }
 
+  /**
+   * Demo mode: assign a simple ride — first squad member drives, others ride.
+   * With fewer than 2 players, saves "nobody carpooled".
+   */
+  async seedDemoCarpool(
+    matchId: string,
+    actor: Actor,
+  ): Promise<{ match: Match; rides: MatchCarpoolRide[] }> {
+    return this.run(async () => {
+      if (!(await this.isDemoMode())) {
+        throw this.forbidden("Dummy carpool is only available in demo mode");
+      }
+      const membership = await requireAdmin(
+        this.teams,
+        MVP_TEAM.id,
+        actor.actorId,
+      );
+      requirePermission(membership.role, PERMISSIONS.MATCH_CONFIRM);
+      seedDemoCarpoolSchema.parse({ matchId });
+
+      const match = await this.matches.findMatchByIdOrThrow(matchId);
+      if (match.status !== "confirmed") {
+        throw this.conflict("Confirm the match before assigning carpool");
+      }
+      if (!match.squadFinalizedAt) {
+        throw this.conflict("Finalize the playing squad first");
+      }
+
+      const squad = await this.matches.listSquadMembers(match.id);
+      const ids = squad.map((m) => String(m.userId));
+      const rides =
+        ids.length >= 2
+          ? [
+              {
+                driverUserId: ids[0]!,
+                passengerUserIds: ids.slice(1),
+              },
+            ]
+          : [];
+
+      return this.saveCarpoolAssignments({ matchId, rides }, actor);
+    });
+  }
+
+  private async isDemoMode(): Promise<boolean> {
+    const team = await this.teams.getMvpTeam();
+    return Boolean(team.demoMode);
+  }
+
+  private async getSquadLimits(): Promise<{ min: number; max: number }> {
+    return squadLimits(await this.isDemoMode());
+  }
+
   private async notifyMembersToVote(match: Match): Promise<void> {
+    const { min, max } = await this.getSquadLimits();
     await broadcastTeamNotificationAction({
       type: "match",
-      title: "Match confirmed — please vote",
-      body: `Availability and carpool polls are open for ${match.matchDate}. Target playing XI/XII is ${SQUAD_MIN}–${SQUAD_MAX}.`,
+      title: "New match — please vote",
+      body: `Availability and carpool polls are open for ${match.matchDate}. Target playing squad is ${min}–${max}.`,
       data: { matchId: match.id },
       adminOnly: true,
     });
@@ -1101,7 +1327,7 @@ export class MatchService extends BaseService {
       await broadcastTeamNotificationAction({
         type: "poll",
         title: `${ordinal(yesCount)} player voted available`,
-        body: `${yesCount} players are now available for ${match.matchDate}. Finalize the playing ${SQUAD_MIN}–${SQUAD_MAX} before freeze time.`,
+        body: `${yesCount} players are now available for ${match.matchDate}. Finalize the playing squad before freeze time.`,
         data: {
           matchId: match.id,
           event: "squad_oversubscribed",
@@ -1118,10 +1344,11 @@ export class MatchService extends BaseService {
     match: Match,
     yesCount: number,
   ): Promise<void> {
+    const { min, max } = await this.getSquadLimits();
     await broadcastTeamNotificationAction({
       type: "poll",
       title: "Short squad — voting stays open",
-      body: `Only ${yesCount} available for ${match.matchDate}. Recruit more players, then confirm the playing ${SQUAD_MIN}–${SQUAD_MAX}.`,
+      body: `Only ${yesCount} available for ${match.matchDate}. Recruit more players, then confirm the playing ${min}–${max}.`,
       data: {
         matchId: match.id,
         event: "squad_incomplete",
@@ -1144,7 +1371,7 @@ export class MatchService extends BaseService {
 
   private async notifyWhatsApp(match: Match): Promise<void> {
     void this.postWhatsAppText(
-      `Ranches Thunders match confirmed for ${match.matchDate}. Vote availability + carpool in Crease.`,
+      `Ranches Thunders match on ${match.matchDate}. Vote availability + carpool in Crease.`,
     );
   }
 
@@ -1166,6 +1393,25 @@ export class MatchService extends BaseService {
     } catch {
       // Non-blocking
     }
+  }
+
+  /** Entry fees > 0 require an active Admin payer; zero fees clear the field. */
+  private async resolveTournamentFeesPayer(
+    totalFeesInr: number,
+    feesPaidByUserId: string | null,
+  ): Promise<string | null> {
+    if (totalFeesInr <= 0) return null;
+    if (!feesPaidByUserId) {
+      throw this.validation("Select which Admin prepaid the tournament fees");
+    }
+    const payer = await this.teams.findMembership(
+      MVP_TEAM.id,
+      feesPaidByUserId,
+    );
+    if (!payer || payer.status !== "active" || payer.role !== "admin") {
+      throw this.validation("Tournament fees payer must be an active Admin");
+    }
+    return feesPaidByUserId;
   }
 }
 

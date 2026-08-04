@@ -3,12 +3,12 @@
 import { useAuth } from "@/hooks/use-auth";
 import type { ProfileId } from "@/types/common";
 
-export type ActorContext = {
+type ActorContext = {
   actorId: ProfileId;
 };
 
 /** Actor id for service calls — null when signed out. */
-export function useActorId(): ProfileId | null {
+function useActorId(): ProfileId | null {
   const { user } = useAuth();
   return (user?.id as ProfileId | undefined) ?? null;
 }

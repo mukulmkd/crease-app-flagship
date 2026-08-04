@@ -33,23 +33,6 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-/** @deprecated Use PERMISSIONS */
-export const TEAM_PERMISSIONS = {
-  view_team: "team:view" as const,
-  view_members: "team:view_members" as const,
-  create_team: "team:create" as const,
-  update_team: PERMISSIONS.TEAM_SETTINGS_EDIT,
-  archive_team: "team:archive" as const,
-  invite_member: PERMISSIONS.TEAM_MEMBER_ADD,
-  manage_members: PERMISSIONS.TEAM_MEMBER_REMOVE,
-  accept_invitation: "team:accept_invitation" as const,
-  reject_invitation: "team:reject_invitation" as const,
-  leave_team: "team:leave" as const,
-} as const;
-
-export type TeamPermission =
-  (typeof TEAM_PERMISSIONS)[keyof typeof TEAM_PERMISSIONS];
-
 const ADMIN_PERMISSIONS: readonly Permission[] = [
   PERMISSIONS.TEAM_MEMBER_ADD,
   PERMISSIONS.TEAM_MEMBER_REMOVE,
@@ -78,29 +61,9 @@ const PLAYER_PERMISSIONS: readonly Permission[] = [
   PERMISSIONS.FUND_VIEW,
 ];
 
-export const ROLE_PERMISSIONS: Record<MembershipRole, readonly Permission[]> = {
+const ROLE_PERMISSIONS: Record<MembershipRole, readonly Permission[]> = {
   admin: ADMIN_PERMISSIONS,
   player: PLAYER_PERMISSIONS,
-};
-
-/** @deprecated Use ROLE_PERMISSIONS */
-export const TEAM_ROLE_PERMISSIONS: Record<
-  MembershipRole,
-  readonly TeamPermission[]
-> = {
-  admin: [
-    TEAM_PERMISSIONS.view_team,
-    TEAM_PERMISSIONS.view_members,
-    TEAM_PERMISSIONS.update_team,
-    TEAM_PERMISSIONS.invite_member,
-    TEAM_PERMISSIONS.manage_members,
-    TEAM_PERMISSIONS.leave_team,
-  ],
-  player: [
-    TEAM_PERMISSIONS.view_team,
-    TEAM_PERMISSIONS.view_members,
-    TEAM_PERMISSIONS.leave_team,
-  ],
 };
 
 export function hasPermission(

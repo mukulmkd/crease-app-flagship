@@ -100,5 +100,5 @@ function SegmentedControl<T extends string>({
   );
 }
 
-export { SegmentedControl, segmentedControlVariants };
+export { SegmentedControl };
 export type { SegmentedControlProps, SegmentOption };

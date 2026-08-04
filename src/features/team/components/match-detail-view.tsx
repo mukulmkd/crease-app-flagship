@@ -25,15 +25,17 @@ import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutation
 import { EditMatchSheet } from "@/features/team/components/edit-match-sheet";
 import { MatchCarpoolAssign } from "@/features/team/components/match-carpool-assign";
 import { MatchPollPanel } from "@/features/team/components/match-poll-panel";
+import { MatchTournamentCard } from "@/features/team/components/match-tournament-card";
 import { PastMatchReport } from "@/features/team/components/past-match-report";
 import {
   useCancelMatch,
   useCompleteMatch,
-  useConfirmMatch,
   useEnableMatchPolls,
   useFreezePolls,
   useMatch,
+  useMatchTournamentContext,
   useMyMembership,
+  useSquadLimits,
   useUnfreezePolls,
 } from "@/features/team/hooks";
 import {
@@ -41,7 +43,7 @@ import {
   formatMatchTime,
   matchOpposition,
 } from "@/features/team/lib/match-format";
-import { isMatchStartedIst, todayIsoDate } from "@/utils";
+import { formatInrAmount, isMatchStartedIst, todayIsoDate } from "@/utils";
 import { useState } from "react";
 
 type MatchDetailViewProps = {
@@ -51,8 +53,14 @@ type MatchDetailViewProps = {
 function MatchDetailView({ matchId }: MatchDetailViewProps) {
   const router = useRouter();
   const membershipQuery = useMyMembership();
+  const { demoMode } = useSquadLimits();
   const matchQuery = useMatch(matchId);
-  const confirmMatch = useConfirmMatch();
+  const match = matchQuery.data;
+  const isTournament = match?.classification === "tournament";
+  const tournamentContextQuery = useMatchTournamentContext(
+    matchId,
+    Boolean(isTournament),
+  );
   const freezePolls = useFreezePolls();
   const unfreezePolls = useUnfreezePolls();
   const enablePolls = useEnableMatchPolls();
@@ -62,7 +70,7 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
   const [carpoolOpen, setCarpoolOpen] = useState(false);
 
   const role = membershipQuery.data?.role;
-  const canConfirm = hasPermission(role, PERMISSIONS.MATCH_CONFIRM);
+  const canManageMatch = hasPermission(role, PERMISSIONS.MATCH_CONFIRM);
   const canEdit = hasPermission(role, PERMISSIONS.MATCH_EDIT);
   const canFreeze = hasPermission(role, PERMISSIONS.MATCH_POLL_OVERRIDE);
 
@@ -70,7 +78,7 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
     return <LoadingState label="Loading match" />;
   }
 
-  if (matchQuery.isError || !matchQuery.data) {
+  if (matchQuery.isError || !match) {
     return (
       <ErrorState
         title="Match not found"
@@ -78,17 +86,21 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
       />
     );
   }
-
-  const match = matchQuery.data;
-  const needsConfirm =
-    match.status === "draft" || match.status === "pending_confirm";
   const today = todayIsoDate();
   const isUpcoming =
     match.matchDate >= today &&
     match.status !== "cancelled" &&
     match.status !== "completed";
-  // Admin may edit upcoming fixtures only; past matches stay read-only.
-  const showEdit = canEdit && isUpcoming;
+  const isTerminal =
+    match.status === "cancelled" || match.status === "completed";
+  // Demo unlocks past fixtures for Admin E2E (edit, polls, carpool, complete).
+  const manageLive = isUpcoming || (demoMode && !isTerminal);
+  const showEdit = canEdit && manageLive;
+  const showPollPanel =
+    match.status === "confirmed" && match.pollsEnabled && manageLive;
+  const showPastReport = !manageLive && match.status !== "cancelled";
+  const kickoffReached =
+    demoMode || isMatchStartedIst(match.matchDate, match.startTime);
 
   return (
     <div className="space-y-6">
@@ -163,36 +175,66 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
                 "Ground TBD"
               )}
             </div>
-            <div className="flex items-center gap-2 text-white/75">
-              <IndianRupee className="size-4 text-[#c9f64b]" aria-hidden />
-              Match fee{" "}
-              {match.matchFeesInr != null ? `₹${match.matchFeesInr}` : "TBD"}
-            </div>
+            {isTournament ? (
+              <>
+                <div className="flex items-center gap-2 text-white/75">
+                  <IndianRupee className="size-4 text-[#c9f64b]" aria-hidden />
+                  Tournament fee for this match{" "}
+                  {tournamentContextQuery.data
+                    ? `₹${formatInrAmount(tournamentContextQuery.data.feePoolPerMatchInr)}`
+                    : "…"}
+                </div>
+                <div className="flex items-center gap-2 text-white/75 sm:col-span-2">
+                  <IndianRupee className="size-4 text-[#c9f64b]" aria-hidden />
+                  Match fees{" "}
+                  {match.matchFeesInr != null
+                    ? `₹${formatInrAmount(match.matchFeesInr)}`
+                    : "TBD"}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-white/75">
+                <IndianRupee className="size-4 text-[#c9f64b]" aria-hidden />
+                Match fee{" "}
+                {match.matchFeesInr != null
+                  ? `₹${formatInrAmount(match.matchFeesInr)}`
+                  : "TBD"}
+              </div>
+            )}
           </div>
         </div>
       </article>
 
-      {match.status === "confirmed" && match.pollsEnabled && isUpcoming ? (
+      {isTournament ? (
+        <MatchTournamentCard
+          loading={tournamentContextQuery.isLoading}
+          context={tournamentContextQuery.data}
+        />
+      ) : null}
+
+      {showPollPanel ? (
         <MatchPollPanel matchId={match.id} role={role} />
-      ) : !isUpcoming && match.status !== "cancelled" ? (
+      ) : showPastReport ? (
         <PastMatchReport match={match} role={role} />
       ) : match.status === "confirmed" && !match.pollsEnabled ? (
         <BodySm>
-          Match is confirmed, but polls are off. Enable polls when you want the
-          squad to vote.
+          Polls are off for this fixture. Enable them when you want the squad to
+          vote.
+        </BodySm>
+      ) : match.status === "pending_confirm" || match.status === "draft" ? (
+        <BodySm>
+          Scheduled for a future weekend. It will publish automatically at 9:00
+          AM IST on Monday of match week
+          {match.pollsEnabled
+            ? ", then polls will open and notify the squad."
+            : "."}
         </BodySm>
       ) : match.status === "cancelled" ? (
         <BodySm>This match was cancelled.</BodySm>
-      ) : (
-        <BodySm>
-          {match.pollsEnabled
-            ? "Confirm to open availability and carpool polls for the squad."
-            : "Confirm the fixture now. Polls stay off until you enable them."}
-        </BodySm>
-      )}
+      ) : null}
 
-      {canConfirm &&
-      isUpcoming &&
+      {canManageMatch &&
+      manageLive &&
       match.status === "confirmed" &&
       !match.pollsEnabled ? (
         <Button
@@ -213,7 +255,7 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
       ) : null}
 
       {canFreeze &&
-      isUpcoming &&
+      manageLive &&
       match.status === "confirmed" &&
       match.pollsEnabled &&
       !match.pollsFrozen &&
@@ -235,8 +277,8 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
                 description: frozen.squadFinalizedAt
                   ? undefined
                   : frozen.squadFinalizationPendingAt
-                    ? "Recruit more players, then confirm the playing XI/XII."
-                    : "Finalize the XI/XII from the poll panel if needed.",
+                    ? "Recruit more players, then confirm the playing squad."
+                    : "Finalize the squad from the poll panel if needed.",
               });
             } catch (error) {
               toast.error({ title: getMutationErrorMessage(error) });
@@ -248,7 +290,7 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
       ) : null}
 
       {canFreeze &&
-      isUpcoming &&
+      manageLive &&
       match.status === "confirmed" &&
       match.pollsEnabled &&
       match.pollsFrozen ? (
@@ -270,9 +312,7 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
         </Button>
       ) : null}
 
-      {canConfirm &&
-      match.status === "confirmed" &&
-      isMatchStartedIst(match.matchDate, match.startTime) ? (
+      {canManageMatch && match.status === "confirmed" && kickoffReached ? (
         <Button
           type="button"
           variant="tonal"
@@ -285,12 +325,12 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
         </Button>
       ) : null}
 
-      {canConfirm &&
+      {canManageMatch &&
       match.status === "confirmed" &&
       match.pollsFrozen &&
       match.carpoolAssignedAt &&
       match.squadFinalizedAt &&
-      isMatchStartedIst(match.matchDate, match.startTime) ? (
+      kickoffReached ? (
         <Button
           type="button"
           variant="tonal"
@@ -309,7 +349,10 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
         </Button>
       ) : null}
 
-      {canConfirm && match.status === "confirmed" ? (
+      {canManageMatch &&
+      (match.status === "confirmed" ||
+        match.status === "pending_confirm" ||
+        match.status === "draft") ? (
         <Button
           type="button"
           variant="outline"
@@ -335,35 +378,6 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
         </Button>
       ) : null}
 
-      {canConfirm && isUpcoming && needsConfirm ? (
-        <div className="sticky bottom-[calc(var(--bottom-nav-height)+0.5rem)] z-10 space-y-2 bg-background/95 py-2 md:static md:bg-transparent">
-          <BodySm>
-            {match.pollsEnabled
-              ? "Confirming opens both polls and notifies the squad."
-              : "Confirming publishes the fixture. Polls stay off until you enable them."}
-          </BodySm>
-          <Button
-            type="button"
-            className="h-14 w-full"
-            loading={confirmMatch.isPending}
-            onClick={async () => {
-              try {
-                await confirmMatch.mutateAsync(match.id);
-                toast.success({
-                  title: match.pollsEnabled
-                    ? "Match confirmed — polls are live"
-                    : "Match confirmed — polls still off",
-                });
-              } catch (error) {
-                toast.error({ title: getMutationErrorMessage(error) });
-              }
-            }}
-          >
-            Confirm match
-          </Button>
-        </div>
-      ) : null}
-
       {showEdit ? (
         <EditMatchSheet
           match={match}
@@ -372,7 +386,7 @@ function MatchDetailView({ matchId }: MatchDetailViewProps) {
         />
       ) : null}
 
-      {canConfirm ? (
+      {canManageMatch ? (
         <MatchCarpoolAssign
           matchId={match.id}
           open={carpoolOpen}

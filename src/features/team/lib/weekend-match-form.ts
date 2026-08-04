@@ -8,13 +8,13 @@ const dayFieldsSchema = z.object({
   groundMapsUrl: z.string().trim().optional(),
   startTime: z.enum(["06:30:00", "09:30:00"]).optional(),
   matchFeesInr: z.number().nonnegative().optional(),
-  /** Enable polls when the match is confirmed. */
+  /** Open now for the immediate weekend, or Monday 09:00 IST for a future one. */
   pollsEnabled: z.boolean(),
 });
 
 export const weekendMatchFormSchema = z
   .object({
-    weekendOffset: z.number().int().min(0).max(12),
+    weekendOffset: z.number().int().min(0).max(20),
     saturday: dayFieldsSchema,
     sunday: dayFieldsSchema,
   })
@@ -57,8 +57,4 @@ export const emptyDayDefaults = {
   pollsEnabled: true,
 };
 
-export {
-  listUpcomingWeekends,
-  nextWeekendDates,
-  weekendDatesAtOffset,
-} from "@/utils";
+export { listWeekendsForCreate } from "@/utils";

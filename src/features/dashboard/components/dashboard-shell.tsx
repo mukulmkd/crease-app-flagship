@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   BellRing,
   Car,
   IndianRupee,
   Plus,
-  Receipt,
   Users,
   WalletCards,
 } from "lucide-react";
@@ -20,21 +18,18 @@ import {
 } from "@/constants/domain/team-permissions";
 import { DashboardGreeting } from "@/features/dashboard/components/dashboard-greeting";
 import { MatchTicket } from "@/features/dashboard/components/match-ticket";
+import { PastWeekendMatchPaymentCard } from "@/features/dashboard/components/past-weekend-match-payment-card";
 import { useDashboardSnapshot } from "@/features/dashboard/hooks";
-import {
-  AddExpenseSheet,
-  ContributionAskSheet,
-} from "@/features/fund/components/fund-sheets";
+import { useNotificationsUi } from "@/features/notifications/providers/notifications-ui-provider";
 import { formatMatchDate } from "@/features/team/lib/match-format";
-import { nextWeekendDates } from "@/utils";
+import { formatInrAmount, nextWeekendDates } from "@/utils";
 
 /**
  * Home command center — summarize the weekend, do not manage it.
  */
 function DashboardShell() {
   const snapshotQuery = useDashboardSnapshot();
-  const [expenseOpen, setExpenseOpen] = useState(false);
-  const [askOpen, setAskOpen] = useState(false);
+  const { openAlerts } = useNotificationsUi();
 
   if (snapshotQuery.isError) {
     return (
@@ -55,12 +50,11 @@ function DashboardShell() {
   const role = snap.membership.role;
   const canCreate = hasPermission(role, PERMISSIONS.MATCH_CREATE);
   const canAdd = hasPermission(role, PERMISSIONS.TEAM_MEMBER_ADD);
-  const canExpense = hasPermission(role, PERMISSIONS.FUND_EXPENSE_ADD);
-  const canAsk = hasPermission(role, PERMISSIONS.FUND_CONTRIBUTION_ASK);
   // Ops status rail is Admin-only (team unpaid total + fund control surface).
   const showAdminStatus = hasPermission(role, PERMISSIONS.SETTLEMENT_MANAGE);
   const weekendMatches = snap.weekendMatches;
   const moreUpcomingMatches = snap.moreUpcomingMatches;
+  const pastWeekendSummaries = snap.pastWeekendPaymentSummaries;
   const carpoolTotal = snap.pollSummaries
     .filter((summary) =>
       weekendMatches.some((match) => match.id === summary.matchId),
@@ -73,6 +67,10 @@ function DashboardShell() {
     weekendMatches.length > 0
       ? `This weekend · ${thisWeekendTitle}`
       : `This weekend · ${formatMatchDate(weekend.saturday)} · ${formatMatchDate(weekend.sunday)}`;
+  const pastWeekendHeading = `Last weekend · ${formatMatchDate(snap.pastWeekendWeekStart)} · ${formatMatchDate(
+    // Sunday = Saturday + 1 day displayed via summaries or week start +1
+    pastWeekendSunday(snap.pastWeekendWeekStart),
+  )}`;
 
   return (
     <div className="space-y-4">
@@ -115,6 +113,33 @@ function DashboardShell() {
         </section>
       ) : null}
 
+      {showAdminStatus && pastWeekendSummaries.length > 0 ? (
+        <section
+          aria-labelledby="past-weekend-payments-heading"
+          className="space-y-3"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <h2
+              id="past-weekend-payments-heading"
+              className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
+            >
+              {pastWeekendHeading}
+            </h2>
+            <Link
+              href="/payments"
+              className="text-[0.65rem] font-semibold text-primary underline-offset-2 hover:underline"
+            >
+              Payments
+            </Link>
+          </div>
+          <ul className="space-y-2">
+            {pastWeekendSummaries.map((row) => (
+              <PastWeekendMatchPaymentCard key={row.matchId} summary={row} />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {showAdminStatus ? (
         <section aria-label={thisWeekendTitle} className="space-y-2">
           <h2 className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase">
@@ -135,7 +160,7 @@ function DashboardShell() {
               icon={IndianRupee}
               value={
                 snap.unpaidCount > 0
-                  ? `₹${Math.round(snap.unpaidTotalInr)}`
+                  ? `₹${formatInrAmount(snap.unpaidTotalInr)}`
                   : "—"
               }
               label="Unpaid fees"
@@ -149,9 +174,10 @@ function DashboardShell() {
             />
             <StatusMetric
               icon={WalletCards}
-              value={`₹${Math.round(snap.fundBalanceInr)}`}
+              value={`₹${formatInrAmount(snap.fundBalanceInr)}`}
               label="Team fund"
               hint="club balance on hand"
+              href="/expenses"
             />
           </div>
         </section>
@@ -165,9 +191,10 @@ function DashboardShell() {
           <BellRing className="size-3.5" aria-hidden />
           Recent alerts
         </h2>
-        <Link
-          href="/notifications"
-          className="mt-2 flex min-h-16 items-center gap-3 rounded-xl bg-surface-container px-4 py-3 transition-colors hover:bg-surface-container-high"
+        <button
+          type="button"
+          onClick={openAlerts}
+          className="mt-2 flex min-h-16 w-full items-center gap-3 rounded-xl bg-surface-container px-4 py-3 text-left transition-colors hover:bg-surface-container-high"
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <BellRing className="size-4" aria-hidden />
@@ -180,12 +207,12 @@ function DashboardShell() {
               {recent?.body ?? "Match and payment alerts will appear here."}
             </span>
           </span>
-        </Link>
+        </button>
       </section>
 
-      {(canCreate || canAdd || canExpense || canAsk) && (
+      {(canCreate || canAdd) && (
         <section aria-label="Admin actions">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2">
             {canCreate ? (
               <Button
                 asChild
@@ -212,45 +239,23 @@ function DashboardShell() {
                 </Link>
               </Button>
             ) : null}
-            {canExpense ? (
-              <Button
-                type="button"
-                variant="tonal"
-                size="sm"
-                className="min-h-12 w-full rounded-full text-[0.65rem]"
-                onClick={() => setExpenseOpen(true)}
-              >
-                <Receipt aria-hidden />
-                Add expense
-              </Button>
-            ) : null}
-            {canAsk ? (
-              <Button
-                type="button"
-                variant="tonal"
-                size="sm"
-                className="min-h-12 w-full rounded-full text-[0.65rem]"
-                onClick={() => setAskOpen(true)}
-              >
-                <IndianRupee aria-hidden />
-                Ask ₹300
-              </Button>
-            ) : null}
           </div>
         </section>
       )}
-
-      {canExpense ? (
-        <AddExpenseSheet open={expenseOpen} onOpenChange={setExpenseOpen} />
-      ) : null}
-      {canAsk ? (
-        <ContributionAskSheet open={askOpen} onOpenChange={setAskOpen} />
-      ) : null}
     </div>
   );
 }
 
 type MetricIcon = typeof Users;
+
+function pastWeekendSunday(saturdayIso: string): string {
+  const [y, m, d] = saturdayIso.split("-").map(Number);
+  const sunday = new Date(y!, (m ?? 1) - 1, (d ?? 1) + 1);
+  const year = sunday.getFullYear();
+  const month = String(sunday.getMonth() + 1).padStart(2, "0");
+  const day = String(sunday.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 /** e.g. "Sat 1 Aug · Sun 2 Aug" from weekend fixtures. */
 function weekendStatusTitle(matches: Array<{ matchDate: string }>): string {

@@ -1,7 +1,7 @@
 import type { Paginated, SortDirection } from "@/types/common";
 
-export const DEFAULT_PAGE_LIMIT = 20;
-export const MAX_PAGE_LIMIT = 100;
+const DEFAULT_PAGE_LIMIT = 20;
+const MAX_PAGE_LIMIT = 100;
 
 export type RepositoryListParams = {
   /** Opaque offset cursor — stringified integer from prior nextCursor. */

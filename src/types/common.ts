@@ -17,16 +17,17 @@ export type SettlementReimbursementId = Brand<
   string,
   "SettlementReimbursementId"
 >;
+export type SettlementOrganizerPayoutId = Brand<
+  string,
+  "SettlementOrganizerPayoutId"
+>;
 export type MatchCarpoolRideId = Brand<string, "MatchCarpoolRideId">;
 export type TeamFundAccountId = Brand<string, "TeamFundAccountId">;
 export type ExpenseId = Brand<string, "ExpenseId">;
 export type FundTransactionId = Brand<string, "FundTransactionId">;
 export type FundContributionAskId = Brand<string, "FundContributionAskId">;
+export type FundContributionId = Brand<string, "FundContributionId">;
 export type NotificationId = Brand<string, "NotificationId">;
-export type AuditLogId = Brand<string, "AuditLogId">;
-
-/** Legacy unbranded id — prefer branded *Id types. */
-export type Id = string;
 
 export type IsoDateTime = string;
 export type IsoDate = string;
@@ -49,13 +50,6 @@ export type Paginated<T> = {
 };
 
 export type SortDirection = "asc" | "desc";
-
-export type ListQueryBase = {
-  limit?: number;
-  cursor?: string;
-  sortBy?: string;
-  sortDirection?: SortDirection;
-};
 
 export type JsonValue =
   string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };

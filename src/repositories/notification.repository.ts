@@ -5,7 +5,7 @@ import type { TypedSupabaseClient } from "@/lib/supabase/types";
 import { BaseRepository } from "@/repositories/base.repository";
 import { mapNotification } from "@/repositories/shared/mappers";
 import type { RepositoryListParams } from "@/repositories/shared/pagination";
-import type { TablesInsert, TablesUpdate } from "@/types/database";
+import type { Tables, TablesInsert, TablesUpdate } from "@/types/database";
 import type {
   NotificationId,
   Paginated,
@@ -57,16 +57,6 @@ export class NotificationRepository extends BaseRepository {
     return this.paginate((data ?? []).map(mapNotification), limit, offset);
   }
 
-  async create(input: TablesInsert<"notifications">): Promise<Notification> {
-    const { data, error } = await this.client
-      .from("notifications")
-      .insert(input)
-      .select("*")
-      .single();
-    this.assertOk(error, "notification.create");
-    return mapNotification(this.requireData(data, "notification.create"));
-  }
-
   async createMany(rows: TablesInsert<"notifications">[]): Promise<number> {
     if (rows.length === 0) return 0;
     const { error } = await this.client.from("notifications").insert(rows);
@@ -88,24 +78,39 @@ export class NotificationRepository extends BaseRepository {
     return mapNotification(this.requireData(data, "notification.update"));
   }
 
-  async existsByIdempotencyKey(params: {
-    userId: string;
-    idempotencyKey: string;
-  }): Promise<boolean> {
-    const { data, error } = await this.client
-      .from("notifications")
-      .select("id")
-      .eq("user_id", params.userId)
-      .contains("data", { idempotencyKey: params.idempotencyKey })
-      .limit(1);
-    this.assertOk(error, "notification.existsByIdempotencyKey");
-    return (data?.length ?? 0) > 0;
-  }
-
   async findByIdOrThrow(id: NotificationId | string): Promise<Notification> {
     const row = await this.findById(id);
     if (!row) throw new AppError("NOT_FOUND", "Notification not found", 404);
     return row;
+  }
+
+  /**
+   * Live INSERT stream for one member. Caller must unsubscribe on unmount.
+   * Relies on `notifications` being in `supabase_realtime` + RLS.
+   */
+  subscribeToUserInserts(
+    userId: ProfileId | string,
+    onInsert: (notification: Notification) => void,
+  ): () => void {
+    const channel = this.client
+      .channel(`notifications-inserts:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          onInsert(mapNotification(payload.new as Tables<"notifications">));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void this.client.removeChannel(channel);
+    };
   }
 }
 

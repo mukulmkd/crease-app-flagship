@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   getMatchService,
+  getPaymentService,
   getTeamService,
   invalidateQueries,
   queryKeys,
@@ -14,15 +15,16 @@ import { patchPollSnapshot } from "@/features/team/lib/poll-cache";
 import { addTeamMemberAction } from "@/services/team-member.actions";
 import type {
   AddTeamMemberDto,
+  AssignPaymentCollectorDto,
   CastAvailabilityVoteDto,
   CastCarpoolVoteDto,
   CreateTournamentDto,
   CreateWeekendMatchesDto,
   ListTeamMembersQuery,
-  OverrideVoteDto,
   UpdateMatchDto,
   UpdateMembershipDto,
   UpdateTeamSettingsDto,
+  UpdateTournamentDto,
 } from "@/types/dto";
 
 export function useMvpTeam() {
@@ -100,6 +102,53 @@ export function useUpdateTeamSettings() {
   });
 }
 
+export function useUpdateTeamLogo() {
+  const actor = useActor();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (blob: Blob) => {
+      requireActor(actor);
+      return getTeamService().updateTeamLogo(blob, actor);
+    },
+    onSuccess: async () => {
+      await invalidateQueries.teams(client);
+    },
+  });
+}
+
+export function useRemoveTeamLogo() {
+  const actor = useActor();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => {
+      requireActor(actor);
+      return getTeamService().removeTeamLogo(actor);
+    },
+    onSuccess: async () => {
+      await invalidateQueries.teams(client);
+    },
+  });
+}
+
+export function useAssignPaymentCollector() {
+  const actor = useActor();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: AssignPaymentCollectorDto) => {
+      requireActor(actor);
+      const team = await getTeamService().assignPaymentCollector(input, actor);
+      await getPaymentService().autoSettleCollectorDues(actor);
+      return team;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        invalidateQueries.teams(client),
+        invalidateQueries.payments(client),
+      ]);
+    },
+  });
+}
+
 export function useMatches() {
   const actor = useActor();
   return useQuery({
@@ -136,15 +185,33 @@ export function useTournaments() {
   });
 }
 
-export function useTournament(tournamentId: string | null | undefined) {
+export function useTournamentSummaries() {
   const actor = useActor();
   return useQuery({
-    queryKey: queryKeys.tournaments.detail(tournamentId ?? ""),
+    queryKey: [...queryKeys.tournaments.list(), "summaries"] as const,
     queryFn: () => {
       requireActor(actor);
-      return getMatchService().getTournament(tournamentId!, actor);
+      return getMatchService().listTournamentSummaries(actor);
     },
-    enabled: Boolean(tournamentId && actor),
+    enabled: Boolean(actor),
+  });
+}
+
+export function useMatchTournamentContext(
+  matchId: string | null | undefined,
+  enabled = true,
+) {
+  const actor = useActor();
+  return useQuery({
+    queryKey: [
+      ...queryKeys.matches.detail(matchId ?? ""),
+      "tournament-context",
+    ] as const,
+    queryFn: () => {
+      requireActor(actor);
+      return getMatchService().getMatchTournamentContext(matchId!, actor);
+    },
+    enabled: Boolean(matchId && actor && enabled),
   });
 }
 
@@ -162,6 +229,21 @@ export function useCreateTournament() {
   });
 }
 
+export function useUpdateTournament() {
+  const actor = useActor();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateTournamentDto) => {
+      requireActor(actor);
+      return getMatchService().updateTournament(input, actor);
+    },
+    onSuccess: async () => {
+      await invalidateQueries.tournaments(client);
+      await invalidateQueries.matches(client);
+    },
+  });
+}
+
 export function useCreateWeekendMatches() {
   const actor = useActor();
   const client = useQueryClient();
@@ -173,23 +255,6 @@ export function useCreateWeekendMatches() {
     onSuccess: async () => {
       await invalidateQueries.matches(client);
       await invalidateQueries.dashboard(client);
-    },
-  });
-}
-
-export function useConfirmMatch() {
-  const actor = useActor();
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (matchId: string) => {
-      requireActor(actor);
-      return getMatchService().confirmMatch(matchId, actor);
-    },
-    onSuccess: async (_data, matchId) => {
-      await invalidateQueries.match(client, matchId);
-      await invalidateQueries.matches(client);
-      await invalidateQueries.dashboard(client);
-      await invalidateQueries.notifications(client);
     },
   });
 }
@@ -268,22 +333,6 @@ export function useCastCarpoolVote() {
     onSettled: (_data, _error, input) => {
       void invalidateQueries.matchPolls(client, input.matchId);
       void invalidateQueries.dashboard(client);
-    },
-  });
-}
-
-export function useOverrideVote() {
-  const actor = useActor();
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (input: OverrideVoteDto) => {
-      requireActor(actor);
-      return getMatchService().overrideVote(input, actor);
-    },
-    onSuccess: async (_data, input) => {
-      await invalidateQueries.matchPolls(client, input.matchId);
-      await invalidateQueries.dashboard(client);
-      await invalidateQueries.notifications(client);
     },
   });
 }
@@ -420,6 +469,25 @@ export function useSaveCarpoolAssignments() {
         queryKey: queryKeys.matches.carpoolAssignments(input.matchId),
       });
       await invalidateQueries.matchPolls(client, input.matchId);
+      await invalidateQueries.dashboard(client);
+    },
+  });
+}
+
+export function useSeedDemoCarpool() {
+  const actor = useActor();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (matchId: string) => {
+      requireActor(actor);
+      return getMatchService().seedDemoCarpool(matchId, actor);
+    },
+    onSuccess: async (_data, matchId) => {
+      await invalidateQueries.match(client, matchId);
+      await client.invalidateQueries({
+        queryKey: queryKeys.matches.carpoolAssignments(matchId),
+      });
+      await invalidateQueries.matchPolls(client, matchId);
       await invalidateQueries.dashboard(client);
     },
   });

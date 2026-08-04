@@ -1,27 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
-import { Body, BodySm, SectionHeader, StatusChip } from "@/components/common";
+import { SectionHeader } from "@/components/common";
 import { EmptyState, ErrorState, LoadingState } from "@/components/feedback";
-import { AppCard, AppCardContent } from "@/components/cards";
+import { SegmentedControl } from "@/components/forms";
 import { Button } from "@/components/ui/button";
-import {
-  MATCH_CLASSIFICATION_LABELS,
-  MATCH_STATUS_LABELS,
-} from "@/constants/domain/labels";
 import {
   hasPermission,
   PERMISSIONS,
 } from "@/constants/domain/team-permissions";
-import {
-  formatMatchDate,
-  formatMatchTime,
-  matchOpposition,
-} from "@/features/team/lib/match-format";
+import { WeekendMatchGroup } from "@/features/team/components/weekend-match-group";
+import { TournamentsListView } from "@/features/team/components/tournaments-list-view";
+import { useMatchCollectionStatuses } from "@/features/payments/hooks";
+import { groupMatchesByWeekend } from "@/features/team/lib/weekend-match-groups";
+import type { WeekendMatchBucket } from "@/features/team/lib/weekend-match-groups";
 import { useMatches, useMyMembership } from "@/features/team/hooks";
-import { todayIsoDate } from "@/utils";
+import { nextWeekendDates, todayIsoDate } from "@/utils";
 import type { Match } from "@/types/models";
+
+type MainTab = "matches" | "tournaments";
 
 function isUpcomingMatch(match: Match, today: string): boolean {
   return match.matchDate >= today && match.status !== "cancelled";
@@ -32,11 +31,61 @@ function isPastMatch(match: Match, today: string): boolean {
 }
 
 function MatchesListView() {
+  const [tab, setTab] = useState<MainTab>("matches");
   const membershipQuery = useMyMembership();
-  const matchesQuery = useMatches();
   const canCreate = hasPermission(
     membershipQuery.data?.role,
     PERMISSIONS.MATCH_CREATE,
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <SectionHeader
+          title={tab === "matches" ? "Matches" : "Tournaments"}
+          description={
+            tab === "matches"
+              ? "Upcoming and past weekend fixtures"
+              : "Active and past tournaments · remaining after fees settle"
+          }
+        />
+        {tab === "matches" && canCreate ? (
+          <Button
+            asChild
+            variant="tonal"
+            className="touch-target h-12 shrink-0"
+          >
+            <Link href="/matches/new">Create</Link>
+          </Button>
+        ) : null}
+      </div>
+
+      <SegmentedControl
+        aria-label="Matches or tournaments"
+        value={tab}
+        onValueChange={(value) => setTab(value as MainTab)}
+        options={[
+          { value: "matches", label: "Matches" },
+          { value: "tournaments", label: "Tournaments" },
+        ]}
+      />
+
+      {tab === "matches" ? <MatchesTabBody /> : <TournamentsListView />}
+    </div>
+  );
+}
+
+function MatchesTabBody() {
+  const membershipQuery = useMyMembership();
+  const matchesQuery = useMatches();
+  const collectionQuery = useMatchCollectionStatuses();
+  const canCreate = hasPermission(
+    membershipQuery.data?.role,
+    PERMISSIONS.MATCH_CREATE,
+  );
+  const canManageSettlement = hasPermission(
+    membershipQuery.data?.role,
+    PERMISSIONS.SETTLEMENT_MANAGE,
   );
 
   if (matchesQuery.isLoading || membershipQuery.isLoading) {
@@ -53,71 +102,72 @@ function MatchesListView() {
   }
 
   const today = todayIsoDate();
+  const thisSaturday = nextWeekendDates().saturday;
   const matches = matchesQuery.data?.items ?? [];
-  const upcoming = matches
-    .filter((match) => isUpcomingMatch(match, today))
-    .sort((a, b) => a.matchDate.localeCompare(b.matchDate));
-  const past = matches
-    .filter((match) => isPastMatch(match, today))
-    .sort((a, b) => b.matchDate.localeCompare(a.matchDate));
+  const collection = collectionQuery.data ?? [];
+  const feesPendingMatchIds = new Set(
+    collection.filter((row) => row.feesPending).map((row) => row.matchId),
+  );
+  const settlementIdByMatchId = new Map(
+    collection.map((row) => [row.matchId, row.settlementId]),
+  );
+  const upcoming = groupMatchesByWeekend(
+    matches.filter((match) => isUpcomingMatch(match, today)),
+  ).sort((a, b) => a.saturday.localeCompare(b.saturday));
+  const past = groupMatchesByWeekend(
+    matches.filter((match) => isPastMatch(match, today)),
+  ).sort((a, b) => b.saturday.localeCompare(a.saturday));
+
+  if (matches.length === 0) {
+    return (
+      <EmptyState
+        title="No matches yet"
+        description={
+          canCreate
+            ? "Create Saturday and/or Sunday matches for any upcoming weekend."
+            : "Your admin will publish weekend matches here."
+        }
+        actionLabel={canCreate ? "Create match" : undefined}
+        onAction={
+          canCreate
+            ? () => {
+                window.location.href = "/matches/new";
+              }
+            : undefined
+        }
+      />
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <SectionHeader
-          title="Matches"
-          description="Upcoming and past weekend fixtures"
-        />
-        {canCreate ? (
-          <Button
-            asChild
-            variant="tonal"
-            className="touch-target h-12 shrink-0"
-          >
-            <Link href="/matches/new">Create</Link>
-          </Button>
-        ) : null}
-      </div>
-
-      {matches.length === 0 ? (
-        <EmptyState
-          title="No matches yet"
-          description={
-            canCreate
-              ? "Create Saturday and/or Sunday matches for any upcoming weekend."
-              : "Your admin will publish weekend matches here."
-          }
-          actionLabel={canCreate ? "Create match" : undefined}
-          onAction={
-            canCreate
-              ? () => {
-                  window.location.href = "/matches/new";
-                }
-              : undefined
-          }
-        />
-      ) : (
-        <>
-          <MatchSection
-            title="Upcoming"
-            emptyTitle="No upcoming matches"
-            emptyDescription={
-              canCreate
-                ? "Create fixtures for this weekend or a later weekend."
-                : "Nothing scheduled yet."
-            }
-            matches={upcoming}
-            highlight
-          />
-          <MatchSection
-            title="Past"
-            emptyTitle="No past matches"
-            emptyDescription="Completed weekends will appear here."
-            matches={past}
-          />
-        </>
-      )}
-    </div>
+    <>
+      <MatchSection
+        title="Upcoming"
+        emptyTitle="No upcoming matches"
+        emptyDescription={
+          canCreate
+            ? "Create fixtures for this weekend or a later weekend."
+            : "Nothing scheduled yet."
+        }
+        weekends={upcoming}
+        thisSaturday={thisSaturday}
+        feesPendingMatchIds={feesPendingMatchIds}
+        settlementIdByMatchId={settlementIdByMatchId}
+        showSummary={false}
+        defaultOpenAll
+        highlight
+      />
+      <MatchSection
+        title="Past"
+        emptyTitle="No past matches"
+        emptyDescription="Completed weekends will appear here."
+        weekends={past}
+        thisSaturday={thisSaturday}
+        feesPendingMatchIds={feesPendingMatchIds}
+        settlementIdByMatchId={settlementIdByMatchId}
+        showSummary={canManageSettlement}
+      />
+    </>
   );
 }
 
@@ -125,7 +175,12 @@ type MatchSectionProps = {
   title: string;
   emptyTitle: string;
   emptyDescription: string;
-  matches: Match[];
+  weekends: WeekendMatchBucket[];
+  thisSaturday: string;
+  feesPendingMatchIds: ReadonlySet<string>;
+  settlementIdByMatchId: ReadonlyMap<string, string>;
+  showSummary: boolean;
+  defaultOpenAll?: boolean;
   highlight?: boolean;
 };
 
@@ -133,9 +188,16 @@ function MatchSection({
   title,
   emptyTitle,
   emptyDescription,
-  matches,
+  weekends,
+  thisSaturday,
+  feesPendingMatchIds,
+  settlementIdByMatchId,
+  showSummary,
+  defaultOpenAll = false,
   highlight = false,
 }: MatchSectionProps) {
+  const matchCount = weekends.reduce((sum, w) => sum + w.matches.length, 0);
+
   return (
     <section
       aria-labelledby={`${title.toLowerCase()}-matches`}
@@ -146,60 +208,36 @@ function MatchSection({
         className="text-[0.65rem] font-bold tracking-[0.08em] text-muted-foreground uppercase"
       >
         {title}
-        {matches.length > 0 ? ` · ${matches.length}` : ""}
+        {matchCount > 0 ? ` · ${matchCount}` : ""}
       </h2>
 
-      {matches.length === 0 ? (
+      {weekends.length === 0 ? (
         <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <ul className="space-y-3">
-          {matches.map((match) => (
-            <li key={match.id}>
-              <Link href={`/matches/${match.id}`} className="block">
-                <AppCard
-                  interactive
-                  variant={
-                    highlight &&
-                    (match.status === "confirmed" ||
-                      match.status === "pending_confirm")
-                      ? "hero"
-                      : "default"
+          {weekends.map((weekend, index) => {
+            const settlementId =
+              weekend.matches
+                .map((match) => settlementIdByMatchId.get(String(match.id)))
+                .find(Boolean) ?? null;
+            return (
+              <li key={weekend.saturday}>
+                <WeekendMatchGroup
+                  weekend={weekend}
+                  thisSaturday={thisSaturday}
+                  defaultOpen={
+                    defaultOpenAll ||
+                    weekend.saturday === thisSaturday ||
+                    index === 0
                   }
-                >
-                  <AppCardContent className="space-y-2 py-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <Body className="font-semibold tracking-tight">
-                        {formatMatchDate(match.matchDate)}
-                      </Body>
-                      <StatusChip
-                        status={
-                          match.status === "confirmed"
-                            ? "success"
-                            : match.status === "cancelled"
-                              ? "danger"
-                              : "pending"
-                        }
-                      >
-                        {MATCH_STATUS_LABELS[match.status]}
-                      </StatusChip>
-                    </div>
-                    <BodySm>
-                      {MATCH_CLASSIFICATION_LABELS[match.classification]}
-                      {" · "}
-                      {matchOpposition(match)}
-                    </BodySm>
-                    <BodySm>
-                      {formatMatchTime(match.startTime)}
-                      {match.matchFeesInr != null
-                        ? ` · ₹${match.matchFeesInr}`
-                        : ""}
-                      {match.pollsEnabled ? " · Polls on" : " · Polls off"}
-                    </BodySm>
-                  </AppCardContent>
-                </AppCard>
-              </Link>
-            </li>
-          ))}
+                  highlight={highlight}
+                  feesPendingMatchIds={feesPendingMatchIds}
+                  settlementId={settlementId}
+                  showSummary={showSummary && Boolean(settlementId)}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

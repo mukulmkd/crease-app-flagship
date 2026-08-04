@@ -23,8 +23,8 @@ Supersedes Athletic Precision / Roboto Flex. Do not revert to the old DS.
 
 | Role | Face | Via |
 |---|---|---|
-| Headlines, match titles, dates, fees, counts, scores | **Barlow Condensed** | `font-heading` + `Display` / `Title` / `Heading` / `typography.statValue` |
-| Body, labels, forms, nav | **Manrope** | `--font-sans` / `Body` / `LabelText` |
+| Headlines, match titles, dates, fees, counts, scores | **Barlow Condensed** | `font-heading` + `Title` / `typography.statValue` |
+| Body, labels, forms, nav | **Manrope** | `--font-sans` / `Body` / `BodySm` |
 
 Never use Inter or Roboto as brand voice.
 

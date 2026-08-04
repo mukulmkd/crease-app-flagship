@@ -12,11 +12,7 @@ const SW_PATH = "/sw.js";
  */
 function PwaUpdateProvider() {
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      process.env.NODE_ENV === "development" ||
-      !("serviceWorker" in navigator)
-    ) {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       return;
     }
 

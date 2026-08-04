@@ -23,6 +23,7 @@ import {
 import type { Tables } from "@/types/database";
 import type {
   Expense,
+  FundContribution,
   FundContributionAsk,
   FundTransaction,
   Match,
@@ -33,6 +34,7 @@ import type {
   PollVote,
   Profile,
   SettlementCharge,
+  SettlementOrganizerPayout,
   SettlementReimbursement,
   Team,
   TeamFundAccount,
@@ -62,6 +64,8 @@ export function mapTeam(row: Tables<"teams">): Team {
     upiVpa: row.upi_vpa,
     whatsappNotifyUrl: row.whatsapp_notify_url,
     carpoolFeeInr: Number(row.carpool_fee_inr),
+    demoMode: Boolean(row.demo_mode),
+    collectorUserId: brandIdOrNull<"ProfileId">(row.collector_user_id),
     archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -91,6 +95,7 @@ export function mapTournament(row: Tables<"tournaments">): Tournament {
     plannedMatchCount: row.planned_match_count,
     totalFeesInr: Number(row.total_fees_inr),
     status: row.status as TournamentStatus,
+    feesPaidByUserId: brandIdOrNull<"ProfileId">(row.fees_paid_by_user_id),
     createdBy: brandIdOrNull<"ProfileId">(row.created_by),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -116,6 +121,7 @@ export function mapMatch(row: Tables<"matches">): Match {
     squadFinalizedAt: row.squad_finalized_at,
     carpoolAssignedAt: row.carpool_assigned_at,
     carpoolAssignmentRemindedAt: row.carpool_assignment_reminded_at,
+    feesSettledAt: row.fees_settled_at,
     confirmedAt: row.confirmed_at,
     createdBy: brandIdOrNull<"ProfileId">(row.created_by),
     createdAt: row.created_at,
@@ -154,6 +160,26 @@ export function mapSettlementReimbursement(
     settlementId: brandId<"WeekendSettlementId">(row.settlement_id),
     teamId: brandId<"TeamId">(row.team_id),
     userId: brandId<"ProfileId">(row.user_id),
+    amountInr: Number(row.amount_inr),
+    status: row.status as ReimbursementStatus,
+    utr: row.utr,
+    screenshotPath: row.screenshot_path,
+    paidAt: row.paid_at,
+    markedPaidBy: brandIdOrNull<"ProfileId">(row.marked_paid_by),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function mapSettlementOrganizerPayout(
+  row: Tables<"settlement_organizer_payouts">,
+): SettlementOrganizerPayout {
+  return {
+    id: brandId<"SettlementOrganizerPayoutId">(row.id),
+    settlementId: brandId<"WeekendSettlementId">(row.settlement_id),
+    teamId: brandId<"TeamId">(row.team_id),
+    matchId: brandIdOrNull<"MatchId">(row.match_id),
+    payeeName: row.payee_name,
     amountInr: Number(row.amount_inr),
     status: row.status as ReimbursementStatus,
     utr: row.utr,
@@ -204,19 +230,6 @@ export function mapNotification(row: Tables<"notifications">): Notification {
   };
 }
 
-export function mapAuditLog(row: Tables<"audit_logs">) {
-  return {
-    id: brandId<"AuditLogId">(row.id),
-    teamId: brandIdOrNull<"TeamId">(row.team_id),
-    actorId: brandIdOrNull<"ProfileId">(row.actor_id),
-    action: row.action,
-    entityType: row.entity_type,
-    entityId: row.entity_id,
-    metadata: asJsonValue(row.metadata),
-    createdAt: row.created_at,
-  };
-}
-
 export function mapWeekendSettlement(
   row: Tables<"weekend_settlements">,
 ): WeekendSettlement {
@@ -226,6 +239,7 @@ export function mapWeekendSettlement(
     weekStartDate: row.week_start_date,
     status: row.status as SettlementStatus,
     notifiedAt: row.notified_at,
+    organizerPayoutRemindedAt: row.organizer_payout_reminded_at ?? null,
     settledAt: row.settled_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -244,12 +258,14 @@ export function mapSettlementCharge(
     matchFeeShareInr: Number(row.match_fee_share_inr),
     carpoolFeeInr: Number(row.carpool_fee_inr),
     carpoolCreditInr: Number(row.carpool_credit_inr),
+    tournamentCreditInr: Number(row.tournament_credit_inr),
     totalInr: Number(row.total_inr),
     status: row.status as ChargeStatus,
     utr: row.utr,
     screenshotPath: row.screenshot_path,
     paidAt: row.paid_at,
     markedPaidBy: brandIdOrNull<"ProfileId">(row.marked_paid_by),
+    note: row.note ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -291,6 +307,7 @@ export function mapFundTransaction(
     amountInr: Number(row.amount_inr),
     note: row.note,
     expenseId: brandIdOrNull<"ExpenseId">(row.expense_id),
+    contributionId: brandIdOrNull<"FundContributionId">(row.contribution_id),
     createdBy: brandIdOrNull<"ProfileId">(row.created_by),
     createdAt: row.created_at,
   };
@@ -306,6 +323,22 @@ export function mapFundContributionAsk(
     note: row.note,
     status: row.status as ContributionAskStatus,
     sentAt: row.sent_at,
+    createdBy: brandIdOrNull<"ProfileId">(row.created_by),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function mapFundContribution(
+  row: Tables<"fund_contributions">,
+): FundContribution {
+  return {
+    id: brandId<"FundContributionId">(row.id),
+    teamId: brandId<"TeamId">(row.team_id),
+    userId: brandId<"ProfileId">(row.user_id),
+    amountInr: Number(row.amount_inr),
+    askId: brandIdOrNull<"FundContributionAskId">(row.ask_id),
+    note: row.note,
     createdBy: brandIdOrNull<"ProfileId">(row.created_by),
     createdAt: row.created_at,
     updatedAt: row.updated_at,

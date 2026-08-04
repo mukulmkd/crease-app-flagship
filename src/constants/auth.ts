@@ -8,13 +8,6 @@ export const AUTH_ROUTES = {
 
 export const POST_AUTH_ROUTE = "/home";
 
-export const AUTH_PUBLIC_ROUTES = [
-  AUTH_ROUTES.splash,
-  AUTH_ROUTES.login,
-  AUTH_ROUTES.otp,
-  AUTH_ROUTES.accessDenied,
-] as const;
-
 /** Supabase SMS OTP default length */
 export const OTP_LENGTH = 6;
 

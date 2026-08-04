@@ -1,14 +1,8 @@
+import { isAppError } from "@/lib/errors";
 import {
   DEFAULT_COUNTRY_CODE,
   ONBOARDING_METADATA_KEY,
 } from "@/constants/auth";
-import { isAppError } from "@/lib/errors";
-import { isSupabaseConfigured as envIsSupabaseConfigured } from "@/lib/env";
-
-/** Re-export canonical env check so auth helpers stay in sync with platform env. */
-export function isSupabaseConfigured(): boolean {
-  return envIsSupabaseConfigured();
-}
 
 /** Normalize to E.164 (+91…) for Indian mobiles. */
 export function normalizePhoneNumber(input: string): string {

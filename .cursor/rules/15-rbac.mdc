@@ -21,8 +21,9 @@ No other roles.
 ## Admin can
 
 - Add / remove / suspend players
-- Create / edit weekend matches and tournaments
-- Confirm matches (triggers polls + notifications)
+- Create / edit weekend matches and tournaments (immediate weekend publishes;
+  future weekends auto-publish Monday 09:00 IST; polls follow `polls_enabled`)
+- Cancel matches (no fees)
 - Edit polls after freeze (match day − 1)
 - Mark offline payments paid
 - Manage team fund, expenses, contribution asks

@@ -2,8 +2,10 @@
 
 import type { NotificationType } from "@/constants/domain/enums";
 import { MVP_TEAM } from "@/constants/domain/enums";
+import { ALERTS_OPEN_HREF } from "@/constants/alerts";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logging/logger";
+import { sendWebPushToUsers } from "@/lib/push/send-web-push";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminNotificationRepository } from "@/repositories/admin";
 import { createServerTeamRepository } from "@/repositories/server";
@@ -25,6 +27,8 @@ export type BroadcastTeamNotificationInput = {
   adminOnly?: boolean;
   /** Default all active members; use admins for pick-needed / incomplete alerts. */
   recipients?: "all" | "admins";
+  /** When set, only these user ids receive the row (e.g. unpaid fee nudge). */
+  userIds?: string[];
 };
 
 /**
@@ -56,8 +60,12 @@ export async function broadcastTeamNotificationAction(
     status: "active",
     limit: 100,
   });
+  const allow = input.userIds?.length
+    ? new Set(input.userIds.map(String))
+    : null;
   const recipients = members.items.filter((member) => {
     if (String(member.userId) === input.excludeUserId) return false;
+    if (allow && !allow.has(String(member.userId))) return false;
     if (input.recipients === "admins") return member.role === "admin";
     return true;
   });
@@ -65,7 +73,7 @@ export async function broadcastTeamNotificationAction(
 
   try {
     const notifications = createAdminNotificationRepository();
-    return await notifications.createMany(
+    const count = await notifications.createMany(
       recipients.map((member) => ({
         user_id: String(member.userId),
         team_id: MVP_TEAM.id,
@@ -75,6 +83,19 @@ export async function broadcastTeamNotificationAction(
         data: toDbJson(input.data ?? {}),
       })),
     );
+
+    // OS push when PWA is backgrounded — never block the inbox insert.
+    void sendWebPushToUsers(
+      recipients.map((member) => String(member.userId)),
+      {
+        title: input.title,
+        body: input.body,
+        url: ALERTS_OPEN_HREF,
+        tag: `crease-${input.type}`,
+      },
+    );
+
+    return count;
   } catch (error) {
     // Notification delivery never fails the primary mutation.
     logger.warn("notification.broadcast_failed", {

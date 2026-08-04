@@ -4,6 +4,7 @@ import type { TypedSupabaseClient } from "@/lib/supabase/types";
 import { BaseRepository } from "@/repositories/base.repository";
 import {
   mapSettlementCharge,
+  mapSettlementOrganizerPayout,
   mapSettlementReimbursement,
   mapWeekendSettlement,
 } from "@/repositories/shared/mappers";
@@ -15,6 +16,7 @@ import type {
 } from "@/constants/domain/enums";
 import type {
   SettlementCharge,
+  SettlementOrganizerPayout,
   SettlementReimbursement,
   WeekendSettlement,
 } from "@/types/models";
@@ -155,6 +157,11 @@ export class PaymentRepository extends BaseRepository {
     return row;
   }
 
+  /**
+   * Regeneration write. Settled rows are protected in the statement itself —
+   * an app-level read-then-write check could clobber a payment that lands
+   * between the read and the update.
+   */
   async upsertCharge(
     input: TablesInsert<"settlement_charges">,
   ): Promise<SettlementCharge> {
@@ -162,13 +169,21 @@ export class PaymentRepository extends BaseRepository {
       String(input.match_id),
       String(input.user_id),
     );
-    if (
-      existing &&
-      (existing.status === "paid" ||
-        existing.status === "offline_paid" ||
-        existing.status === "waived")
-    ) {
-      return existing;
+
+    if (existing) {
+      if (existing.status !== "pending") return existing;
+
+      const { data, error } = await this.client
+        .from("settlement_charges")
+        .update(input)
+        .eq("id", String(existing.id))
+        .eq("status", "pending")
+        .select("*")
+        .maybeSingle();
+      this.assertOk(error, "charge.upsert.update");
+      if (data) return mapSettlementCharge(data);
+      // Paid concurrently — keep the settled row.
+      return this.findChargeByIdOrThrow(String(existing.id));
     }
 
     const { data, error } = await this.client
@@ -228,6 +243,25 @@ export class PaymentRepository extends BaseRepository {
       .single();
     this.assertOk(error, "charge.update");
     return mapSettlementCharge(this.requireData(data, "charge.update"));
+  }
+
+  /**
+   * One statement for a whole weekend payment, so a player's match lines can
+   * never end up half paid. Only rows still pending are touched.
+   */
+  async updatePendingCharges(
+    ids: string[],
+    input: TablesUpdate<"settlement_charges">,
+  ): Promise<SettlementCharge[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await this.client
+      .from("settlement_charges")
+      .update(input)
+      .in("id", ids)
+      .eq("status", "pending")
+      .select("*");
+    this.assertOk(error, "charge.updatePendingMany");
+    return (data ?? []).map(mapSettlementCharge);
   }
 
   async listOpenSettlements(
@@ -354,6 +388,79 @@ export class PaymentRepository extends BaseRepository {
       .delete()
       .in("id", orphanIds);
     this.assertOk(error, "reimbursement.deletePendingOrphans");
+  }
+
+  async listOrganizerPayoutsForSettlement(
+    settlementId: string,
+  ): Promise<SettlementOrganizerPayout[]> {
+    const { data, error } = await this.client
+      .from("settlement_organizer_payouts")
+      .select("*")
+      .eq("settlement_id", settlementId)
+      .order("created_at", { ascending: true });
+    this.assertOk(error, "organizerPayout.listForSettlement");
+    return (data ?? []).map(mapSettlementOrganizerPayout);
+  }
+
+  async findOrganizerPayoutById(
+    id: string,
+  ): Promise<SettlementOrganizerPayout | null> {
+    const { data, error } = await this.client
+      .from("settlement_organizer_payouts")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    this.assertOk(error, "organizerPayout.findById");
+    return data ? mapSettlementOrganizerPayout(data) : null;
+  }
+
+  async findOrganizerPayoutByIdOrThrow(
+    id: string,
+  ): Promise<SettlementOrganizerPayout> {
+    const row = await this.findOrganizerPayoutById(id);
+    if (!row) {
+      throw new AppError("NOT_FOUND", "Organizer payout not found", 404);
+    }
+    return row;
+  }
+
+  async createOrganizerPayout(
+    input: TablesInsert<"settlement_organizer_payouts">,
+  ): Promise<SettlementOrganizerPayout> {
+    const { data, error } = await this.client
+      .from("settlement_organizer_payouts")
+      .insert(input)
+      .select("*")
+      .single();
+    this.assertOk(error, "organizerPayout.create");
+    return mapSettlementOrganizerPayout(
+      this.requireData(data, "organizerPayout.create"),
+    );
+  }
+
+  async updateOrganizerPayout(
+    id: string,
+    input: TablesUpdate<"settlement_organizer_payouts">,
+  ): Promise<SettlementOrganizerPayout> {
+    const { data, error } = await this.client
+      .from("settlement_organizer_payouts")
+      .update(input)
+      .eq("id", id)
+      .select("*")
+      .single();
+    this.assertOk(error, "organizerPayout.update");
+    return mapSettlementOrganizerPayout(
+      this.requireData(data, "organizerPayout.update"),
+    );
+  }
+
+  async deletePendingOrganizerPayouts(settlementId: string): Promise<void> {
+    const { error } = await this.client
+      .from("settlement_organizer_payouts")
+      .delete()
+      .eq("settlement_id", settlementId)
+      .eq("status", "pending");
+    this.assertOk(error, "organizerPayout.deletePending");
   }
 }
 

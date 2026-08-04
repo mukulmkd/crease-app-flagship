@@ -4,6 +4,7 @@ import type { TypedSupabaseClient } from "@/lib/supabase/types";
 import { BaseRepository } from "@/repositories/base.repository";
 import {
   mapExpense,
+  mapFundContribution,
   mapFundContributionAsk,
   mapFundTransaction,
   mapTeamFundAccount,
@@ -12,13 +13,14 @@ import type { TablesInsert } from "@/types/database";
 import type { Paginated, TeamId } from "@/types/common";
 import type {
   Expense,
+  FundContribution,
   FundContributionAsk,
   FundTransaction,
   TeamFundAccount,
 } from "@/types/models";
 
 /**
- * Team fund account, expenses, asks — CRUD only.
+ * Team fund account, expenses, asks, contributions — CRUD only.
  */
 export class FundRepository extends BaseRepository {
   constructor(client: TypedSupabaseClient) {
@@ -87,9 +89,9 @@ export class FundRepository extends BaseRepository {
       .select("*")
       .eq("team_id", teamId)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(200);
     this.assertOk(error, "fund.listTransactions");
-    return this.paginate((data ?? []).map(mapFundTransaction), 50, 0);
+    return this.paginate((data ?? []).map(mapFundTransaction), 200, 0);
   }
 
   async listExpenses(teamId: TeamId | string): Promise<Paginated<Expense>> {
@@ -98,9 +100,9 @@ export class FundRepository extends BaseRepository {
       .select("*")
       .eq("team_id", teamId)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(200);
     this.assertOk(error, "fund.listExpenses");
-    return this.paginate((data ?? []).map(mapExpense), 50, 0);
+    return this.paginate((data ?? []).map(mapExpense), 200, 0);
   }
 
   async createContributionAsk(
@@ -127,6 +129,33 @@ export class FundRepository extends BaseRepository {
       .single();
     this.assertOk(error, "fund.updateAsk");
     return mapFundContributionAsk(this.requireData(data, "fund.updateAsk"));
+  }
+
+  async createContribution(
+    input: TablesInsert<"fund_contributions">,
+  ): Promise<FundContribution> {
+    const { data, error } = await this.client
+      .from("fund_contributions")
+      .insert(input)
+      .select("*")
+      .single();
+    this.assertOk(error, "fund.createContribution");
+    return mapFundContribution(
+      this.requireData(data, "fund.createContribution"),
+    );
+  }
+
+  async listContributions(
+    teamId: TeamId | string,
+  ): Promise<Paginated<FundContribution>> {
+    const { data, error } = await this.client
+      .from("fund_contributions")
+      .select("*")
+      .eq("team_id", teamId)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    this.assertOk(error, "fund.listContributions");
+    return this.paginate((data ?? []).map(mapFundContribution), 500, 0);
   }
 }
 

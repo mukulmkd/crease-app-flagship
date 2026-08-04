@@ -29,9 +29,6 @@ function AppFooter({ className }: AppFooterProps) {
           <Link href="/settings" className="hover:text-foreground">
             Settings
           </Link>
-          <Link href="/notifications" className="hover:text-foreground">
-            Notifications
-          </Link>
         </nav>
       </div>
     </footer>

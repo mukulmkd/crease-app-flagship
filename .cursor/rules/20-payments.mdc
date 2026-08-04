@@ -13,7 +13,7 @@ assignment**, then sends exactly **one** weekend payment notification to the
 charged players (in-app + individual WhatsApp). The eligible set may contain
 Saturday only, Sunday only, or both. **Cancelled** matches attract no fees.
 
-1. Pay via UPI
+1. Pay via UPI deeplink (`upi://pay` from team VPA + amount) or any UPI app
 2. Copy UTR
 3. Upload payment screenshot (compress aggressively; keep legible)
 4. Mark payment done in-app
@@ -24,14 +24,27 @@ must not send another payment notification.
 
 ## Amount
 
-Per **squad member** per match (from post-match assignment, not poll votes):
+Per **squad member** per match:
 
-- Match fee share (`matchFees ÷ squad size`)
+- **Warmup:** match fee share (`matchFees ÷ squad size`)
+- **Tournament:** prepaid entry pool
+  (`tournament.totalFees ÷ plannedMatchCount`) ÷ squad size **plus** separate
+  match/ground fees (`matchFees ÷ squad size`). Tournament create/edit records
+  which **Admin prepaid** entry (`fees_paid_by_user_id`). That Admin is credited
+  the full per-match pool on settlement (offsets their share and other dues);
+  leftover credit becomes a reimbursement settled with UTR + screenshot. Ground
+  fees still need organizer payout proof.
+
+Plus from post-match carpool assignment (**any active player** may drive or ride):
+
 - \+ ₹100 if passenger on a ride
 - Driver credit ₹100 × passenger count
 
-Weekend netting: credits offset that user’s other dues the same weekend; leftover
-credit becomes a `settlement_reimbursements` row (money owed to the driver).
+Non-squad riders/drivers still get a charge line for carpool fee/credit only
+(match fee share stays ₹0). The tournament prepaid Admin always gets a charge
+line when the pool is &gt; 0 so credits can reimburse even if they did not play.
+Weekend netting: carpool + tournament credits offset that user’s other dues the
+same weekend; leftover credit becomes a `settlement_reimbursements` row.
 
 ## Notification idempotency
 
@@ -46,7 +59,15 @@ credit becomes a `settlement_reimbursements` row (money owed to the driver).
 - Generate settlement manually from `/payments` (same completed + assigned rules)
 - May mark player payment(s) as paid **offline**
 - Settles driver reimbursements offline with UTR + screenshot
-- Confirms settlement complete when charges and reimbursements are cleared
+- Uploads organizer payout proof for **match / ground fees**. When the weekend
+  has two matches, Admin confirms **same organizer** (one payment) or
+  **different organizers** (one proof per match). Prepaid tournament entry
+  stays with the collector. Settlement stays **collecting** until proofs are
+  done.
+- Confirms settlement complete when charges, reimbursements, and organizer
+  payouts are cleared
+- When player fees are collected but organizer proof is missing, Admin is
+  reminded once (in-app + WhatsApp group)
 - Re-generate must not reset paid / offline_paid / waived charges
 
 ## Storage

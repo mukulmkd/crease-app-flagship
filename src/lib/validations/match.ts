@@ -5,16 +5,46 @@ import {
   carpoolVoteSchema,
   matchClassificationSchema,
   matchStartTimeSchema,
-  matchStatusSchema,
-  pollTypeSchema,
-  tournamentStatusSchema,
 } from "@/lib/validations/enums";
 
-export const createTournamentSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  plannedMatchCount: z.number().int().positive(),
-  totalFeesInr: z.number().nonnegative(),
-});
+export const createTournamentSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    plannedMatchCount: z.number().int().positive(),
+    totalFeesInr: z.number().nonnegative(),
+    feesPaidByUserId: z.string().uuid().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.totalFeesInr > 0 && !value.feesPaidByUserId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["feesPaidByUserId"],
+        message: "Select which Admin prepaid the tournament fees",
+      });
+    }
+  });
+
+export const updateTournamentSchema = z
+  .object({
+    tournamentId: z.string().uuid(),
+    name: z.string().trim().min(2).max(120).optional(),
+    plannedMatchCount: z.number().int().positive().optional(),
+    totalFeesInr: z.number().nonnegative().optional(),
+    feesPaidByUserId: z.string().uuid().nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.totalFeesInr !== undefined &&
+      value.totalFeesInr > 0 &&
+      value.feesPaidByUserId === null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["feesPaidByUserId"],
+        message: "Select which Admin prepaid the tournament fees",
+      });
+    }
+  });
 
 export const createMatchSchema = z.object({
   matchDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -29,12 +59,12 @@ export const createMatchSchema = z.object({
   pollsEnabled: z.boolean().optional(),
 });
 
-export const confirmMatchSchema = z.object({
-  matchId: z.string().uuid(),
-});
-
 export const updateMatchSchema = z.object({
   matchId: z.string().uuid(),
+  matchDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   classification: matchClassificationSchema.optional(),
   tournamentId: z.string().uuid().nullable().optional(),
   opposition: z.string().trim().max(120).nullable().optional(),
@@ -60,25 +90,17 @@ export const castCarpoolVoteSchema = z.object({
   vote: carpoolVoteSchema,
 });
 
-export const overrideVoteSchema = z.object({
-  matchId: z.string().uuid(),
-  userId: z.string().uuid(),
-  availability: availabilityVoteSchema.optional(),
-  carpool: carpoolVoteSchema.optional(),
-});
-
 export const freezePollsSchema = z.object({
   matchId: z.string().uuid(),
 });
 
-export const unfreezePollsSchema = freezePollsSchema;
-
 export const finalizePlayingSquadSchema = z.object({
   matchId: z.string().uuid(),
-  userIds: z.array(z.string().uuid()).min(11).max(12),
+  // Bounds enforced in MatchService against production vs demo_mode limits.
+  userIds: z.array(z.string().uuid()).min(1).max(12),
 });
 
-export const carpoolRideInputSchema = z.object({
+const carpoolRideInputSchema = z.object({
   driverUserId: z.string().uuid(),
   passengerUserIds: z.array(z.string().uuid()),
 });
@@ -88,6 +110,11 @@ export const saveCarpoolAssignmentsSchema = z.object({
   rides: z.array(carpoolRideInputSchema),
 });
 
+/** Demo mode: one-tap dummy driver + passengers from the playing squad. */
+export const seedDemoCarpoolSchema = z.object({
+  matchId: z.string().uuid(),
+});
+
 export const completeMatchSchema = z.object({
   matchId: z.string().uuid(),
 });
@@ -95,11 +122,3 @@ export const completeMatchSchema = z.object({
 export const cancelMatchSchema = z.object({
   matchId: z.string().uuid(),
 });
-
-export const matchStatusUpdateSchema = z.object({
-  matchId: z.string().uuid(),
-  status: matchStatusSchema,
-});
-
-export const pollTypeOnlySchema = pollTypeSchema;
-export const tournamentStatusOnlySchema = tournamentStatusSchema;

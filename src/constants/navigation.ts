@@ -5,8 +5,8 @@ import {
   Home,
   Users,
   UserRound,
-  Bell,
   Settings,
+  WalletCards,
 } from "lucide-react";
 
 import type { Permission } from "@/constants/domain/team-permissions";
@@ -69,11 +69,14 @@ export const secondaryNav: NavItem[] = [
     desktop: true,
   },
   {
-    id: "notifications",
-    label: "Alerts",
-    href: "/notifications",
-    icon: Bell,
+    id: "expenses",
+    label: "Expenses",
+    mobileLabel: "Fund",
+    href: "/expenses",
+    icon: WalletCards,
+    mobile: true,
     desktop: true,
+    permission: PERMISSIONS.FUND_EXPENSE_ADD,
   },
   {
     id: "settings",
@@ -85,5 +88,3 @@ export const secondaryNav: NavItem[] = [
     permission: PERMISSIONS.TEAM_SETTINGS_EDIT,
   },
 ];
-
-export const desktopOnlyNav: NavItem[] = [];

@@ -1,4 +1,5 @@
 import { MVP_TEAM } from "@/constants/domain/enums";
+import { rollupCharges } from "@/features/payments/lib/charge-rollup";
 import {
   createBrowserFundRepository,
   createBrowserMatchRepository,
@@ -15,12 +16,25 @@ import { BaseService, type ServiceActor } from "@/services/base.service";
 import { requireActiveMembership } from "@/services/shared/membership";
 import type { ProfileId } from "@/types/common";
 import type { Match, Notification, TeamMembership } from "@/types/models";
-import { nextWeekendDates, todayIsoDate } from "@/utils";
+import { nextWeekendDates, todayIsoDate, weekendDatesAtOffset } from "@/utils";
 
-export type DashboardPollSummary = {
+type DashboardPollSummary = {
   matchId: string;
   yesCount: number;
   carpoolCount: number;
+};
+
+export type DashboardMatchPaymentSummary = {
+  matchId: string;
+  matchDate: string;
+  opposition: string | null;
+  status: Match["status"];
+  billedInr: number;
+  paidInr: number;
+  pendingInr: number;
+  pendingCount: number;
+  playerCount: number;
+  hasCharges: boolean;
 };
 
 export type DashboardSnapshot = {
@@ -34,6 +48,11 @@ export type DashboardSnapshot = {
   unpaidTotalInr: number;
   fundBalanceInr: number;
   recentNotifications: Notification[];
+  /** Previous Sat/Sun fixtures (Admin payment overview). */
+  pastWeekendMatches: Match[];
+  pastWeekendWeekStart: string;
+  /** Admin-only per-match payment rollups for the past weekend. */
+  pastWeekendPaymentSummaries: DashboardMatchPaymentSummary[];
 };
 
 type Actor = ServiceActor | { actorId: ProfileId | string };
@@ -63,16 +82,19 @@ export class DashboardService extends BaseService {
       );
 
       const weekend = nextWeekendDates();
+      const pastWeekend = weekendDatesAtOffset(-1);
       const page = await this.matches.listMatches({
         teamId: MVP_TEAM.id,
-        fromDate: todayIsoDate(),
+        fromDate: pastWeekend.saturday,
         limit: 40,
         sortBy: "match_date",
         sortDirection: "asc",
       });
 
       const upcomingMatches = page.items.filter(
-        (m) => m.status === "confirmed" || m.status === "pending_confirm",
+        (m) =>
+          m.matchDate >= todayIsoDate() &&
+          (m.status === "confirmed" || m.status === "pending_confirm"),
       );
 
       const weekendMatches = upcomingMatches.filter(
@@ -83,6 +105,15 @@ export class DashboardService extends BaseService {
         (m) =>
           m.matchDate !== weekend.saturday && m.matchDate !== weekend.sunday,
       );
+
+      const pastWeekendMatches = page.items
+        .filter(
+          (m) =>
+            (m.matchDate === pastWeekend.saturday ||
+              m.matchDate === pastWeekend.sunday) &&
+            m.status !== "cancelled",
+        )
+        .sort((a, b) => a.matchDate.localeCompare(b.matchDate));
 
       const pollSummaries: DashboardPollSummary[] = [];
       for (const match of [...weekendMatches, ...moreUpcomingMatches]) {
@@ -111,6 +142,26 @@ export class DashboardService extends BaseService {
         });
       }
 
+      const pastWeekendPaymentSummaries: DashboardMatchPaymentSummary[] = [];
+      if (membership.role === "admin") {
+        for (const match of pastWeekendMatches) {
+          const charges = await this.payments.listChargesByMatch(match.id);
+          const rollup = rollupCharges(charges);
+          pastWeekendPaymentSummaries.push({
+            matchId: String(match.id),
+            matchDate: match.matchDate,
+            opposition: match.opposition,
+            status: match.status,
+            billedInr: rollup.billedInr,
+            paidInr: rollup.paidInr,
+            pendingInr: rollup.pendingInr,
+            pendingCount: rollup.pendingCount,
+            playerCount: rollup.playerCount,
+            hasCharges: charges.length > 0,
+          });
+        }
+      }
+
       const pending = await this.payments.listTeamCharges(
         MVP_TEAM.id,
         "pending",
@@ -134,6 +185,9 @@ export class DashboardService extends BaseService {
         unpaidTotalInr: pending.reduce((s, c) => s + c.totalInr, 0),
         fundBalanceInr: account?.balanceInr ?? 0,
         recentNotifications: notifPage.items,
+        pastWeekendMatches,
+        pastWeekendWeekStart: pastWeekend.saturday,
+        pastWeekendPaymentSummaries,
       };
     });
   }

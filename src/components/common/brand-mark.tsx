@@ -13,7 +13,7 @@ type BrandMarkProps = {
 
 /**
  * Crease brand lockup — scorebook crease mark + condensed wordmark.
- * Prefer this over ad-hoc “C” squares so chrome stays consistent.
+ * Team identity is shown separately in the centered top-bar logo.
  */
 function BrandMark({
   showWordmark = true,
@@ -62,6 +62,7 @@ function BrandMark({
     <Link
       href={href}
       data-slot="brand-mark"
+      aria-label="Crease home"
       className={cn(
         "inline-flex items-center gap-2 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
         className,

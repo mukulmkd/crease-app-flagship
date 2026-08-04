@@ -25,8 +25,3 @@ export function createBrowserSupabaseClient(): TypedSupabaseClient {
     NEXT_PUBLIC_SUPABASE_ANON_KEY,
   );
 }
-
-/** @deprecated Prefer createBrowserSupabaseClient() */
-export function createClient() {
-  return createBrowserSupabaseClient();
-}

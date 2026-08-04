@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandMark } from "@/components/common/brand-mark";
+import { TeamLogoBadge } from "@/components/common/team-logo-badge";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { cn } from "@/utils";
@@ -44,6 +45,11 @@ function TopAppBar({
           <h1 className="sr-only">{title || "Crease"}</h1>
         )}
       </div>
+
+      <TeamLogoBadge
+        className="absolute left-1/2 -translate-x-1/2"
+        imageClassName="size-9 md:size-11 md:rounded-lg"
+      />
 
       <div className="flex items-center gap-0.5">
         <ProfileMenu className="h-10 px-1 md:h-12 md:px-2" />

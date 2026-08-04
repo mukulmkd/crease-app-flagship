@@ -17,14 +17,27 @@ Matches are the operational center of Crease.
   `(team_id, match_date)`, not UI alone.
 - Each day is configured **independently** (classification, opposition, maps, time, fees, tournament, polls flag) — never clubbed into one shared form
 - UI: weekend picker + `WeekendDaySection` per day + `CreateTournamentSheet` bottom sheet
-- **`polls_enabled`**: default on for this weekend, off for later weekends; confirm only opens polls when enabled
+- **`polls_enabled`** defaults on; immediate-weekend polls open now, while
+  future-weekend polls remain draft until Monday 09:00 IST of match week
 
 ## Classification
 
 - `warmup` — friendly / practice game
 - `tournament` — Admin must select a tournament
-  - If none exists, create via **bottom sheet**: name, number of matches, tournament fees
-  - Tournament fees are allocated per match, then divided equally among players who played that match
+  - If none exists, create via **bottom sheet**: name, number of matches,
+    tournament fees, **which Admin prepaid** entry
+  - Tournament **entry** fees are **prepaid** by that Admin; each match pool =
+    `totalFees ÷ plannedMatchCount`, then divided equally among that match's
+    playing squad. The prepaid Admin is credited the full per-match pool on
+    settlement (offsets their share / other dues); leftover credit is reimbursed
+    with UTR + screenshot. Players still pay their entry share to the collector.
+  - Tournament fixtures also have separate **match / ground fees**
+    (`matchFees`) collected the same way as warmup and paid onward to organizers.
+  - `/matches` has **Matches** and **Tournaments** tabs. Active tournaments show
+    planned / settled / remaining. When a weekend is Confirm settled, that
+    tournament match counts as settled and remaining decreases. When remaining
+    hits 0, the tournament moves to **Past tournaments**. Admin may edit
+    details only while the tournament is active.
 
 ## Create fields (TBD allowed)
 
@@ -40,12 +53,20 @@ Placeholders / nulls are allowed until Admin fills them.
 
 ## Confirm
 
-While draft/pending:
+There is no manual Confirm step. Details can be edited later; Admin may
+**cancel** any scheduled/confirmed match before completion (no fees).
 
-1. System initializes **availability poll** and **carpool poll**
-2. Admin verifies details on a clubhouse fixture poster → **Confirm**
-3. On confirm: WhatsApp group notify + PWA push asking players to participate
-4. Admin may also vote (Admin is a player)
+While creating:
+
+1. System initializes **availability poll** and **carpool poll** (draft)
+2. **Immediate weekend:** publishes as confirmed immediately; when
+   `polls_enabled` is on, polls activate and the squad is notified
+3. **Future weekend:** remains scheduled (`pending_confirm`) until **Monday
+   09:00 IST of match week**, then auto-confirms; if `polls_enabled` is on,
+   polls activate and the squad is notified at that point
+4. `polls_enabled` off means the fixture confirms without voting; Admin may
+   later tap **Enable polls now**
+5. Admin may also vote (Admin is a player)
 
 ## Squad targets
 

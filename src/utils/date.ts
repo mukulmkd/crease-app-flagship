@@ -70,13 +70,33 @@ export function weekendDatesAtOffset(
 }
 
 /** Next N weekends starting at this weekend (offset 0). */
-export function listUpcomingWeekends(
+function listUpcomingWeekends(
   count = 6,
   from: Date = new Date(),
 ): WeekendDates[] {
   return Array.from({ length: count }, (_, offset) =>
     weekendDatesAtOffset(offset, from),
   );
+}
+
+/**
+ * Weekend picker for create flow. When `pastCount` > 0 (demo mode), includes
+ * recent past weekends before the upcoming ones so Admin can run payment E2E.
+ */
+export function listWeekendsForCreate(options?: {
+  upcomingCount?: number;
+  pastCount?: number;
+  from?: Date;
+}): WeekendDates[] {
+  const from = options?.from ?? new Date();
+  const upcomingCount = options?.upcomingCount ?? 8;
+  const pastCount = options?.pastCount ?? 0;
+  const upcoming = listUpcomingWeekends(upcomingCount, from);
+  if (pastCount <= 0) return upcoming;
+  const past = Array.from({ length: pastCount }, (_, i) =>
+    weekendDatesAtOffset(-(i + 1), from),
+  ).reverse();
+  return [...past, ...upcoming];
 }
 
 export function isImmediateWeekendDate(

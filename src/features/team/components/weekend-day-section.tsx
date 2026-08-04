@@ -18,7 +18,12 @@ import type {
   WeekendMatchFormValues,
 } from "@/features/team/lib/weekend-match-form";
 
-type TournamentOption = { id: string; name: string };
+type TournamentOption = {
+  id: string;
+  name: string;
+  plannedMatchCount: number;
+  totalFeesInr: number;
+};
 
 type WeekendDaySectionProps = {
   day: WeekendDayKey;
@@ -119,6 +124,9 @@ function WeekendDaySection({
                         {tournaments.map((tournament) => (
                           <SelectItem key={tournament.id} value={tournament.id}>
                             {tournament.name}
+                            {tournament.plannedMatchCount > 0
+                              ? ` · ₹${Math.round((tournament.totalFeesInr / tournament.plannedMatchCount) * 100) / 100}/match`
+                              : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -134,6 +142,11 @@ function WeekendDaySection({
               >
                 Create tournament
               </Button>
+              <p className="text-sm leading-5 text-muted-foreground">
+                Tournament entry fees are prepaid (total ÷ planned matches,
+                split by squad). Set match fees separately below for ground /
+                day costs — those are collected and paid to organizers.
+              </p>
             </div>
           ) : null}
 
@@ -171,7 +184,13 @@ function WeekendDaySection({
             control={form.control}
             name={`${day}.matchFeesInr`}
             render={({ field }) => (
-              <FormField label="Match fees (₹, optional)">
+              <FormField
+                label={
+                  classification === "tournament"
+                    ? "Match fees (₹, ground / day — optional)"
+                    : "Match fees (₹, optional)"
+                }
+              >
                 <Input
                   type="number"
                   inputMode="decimal"
@@ -205,8 +224,8 @@ function WeekendDaySection({
                     Enable polls
                   </span>
                   <span className="mt-0.5 block text-[0.7rem] leading-4 text-muted-foreground">
-                    Opens availability + carpool when the match is confirmed.
-                    Leave on for this weekend; usually off for later weekends.
+                    Current weekend: opens immediately. Future weekend: opens
+                    Monday at 9 AM IST when the fixture publishes.
                   </span>
                 </span>
               </label>

@@ -31,10 +31,14 @@ Channels:
 
 - Prefer scheduled jobs (Supabase Cron / Edge Functions) in **Asia/Kolkata**
 - Persist notification rows for in-app inbox
-- Never block core mutations if WhatsApp delivery fails — log and retry
+- **Web Push:** members enable in Settings; subscriptions in `push_subscriptions`;
+  `broadcastTeamNotificationAction` + Cron (`APP_URL` → `/api/internal/push`)
+  send OS notifications when the PWA is backgrounded. Foreground uses Realtime
+  + Crease chime (no duplicate OS banner).
+- Never block core mutations if WhatsApp or Web Push delivery fails — log and retry
 - RLS: members read only their own rows; only Admin may insert from a session
 - Team fan-out from the app goes through `broadcastTeamNotificationAction`
- (Server Action → membership re-check → service-role **batch** insert)
+  (Server Action → membership re-check → service-role **batch** insert)
 - Never loop per-member notification inserts from a browser service
 - Player-triggered fan-out (availability flip) is fire-and-forget — do not make
- the voter wait on it
+  the voter wait on it
