@@ -13,7 +13,10 @@ import {
   isPushSupported,
   isStandalonePwa,
 } from "@/lib/push/browser";
-import { enrollPushSubscription } from "@/lib/push/client-subscribe";
+import {
+  enrollPushSubscription,
+  pushEnrollErrorMessage,
+} from "@/lib/push/client-subscribe";
 import { isPushOptedOut } from "@/lib/push/preference";
 
 const DISMISS_KEY = "crease.push.bannerDismissed";
@@ -92,7 +95,7 @@ function PushEnrollmentBanner() {
   async function allow() {
     setBusy(true);
     try {
-      const result = await enrollPushSubscription();
+      const result = await enrollPushSubscription({ force: true });
       if (result === "subscribed") {
         toast.success({ title: "Push alerts on" });
         setMode("hidden");
@@ -100,19 +103,18 @@ function PushEnrollmentBanner() {
       }
       if (result === "denied") {
         setMode("denied");
-        toast.error({
-          title: "Permission blocked",
-          description: "Allow Crease in iOS Settings → Notifications.",
-        });
-        return;
-      }
-      if (result === "no_service_worker") {
+      } else if (result === "no_service_worker") {
         setMode("no_service_worker");
-        return;
       }
-      toast.error({ title: "Couldn’t enable push alerts" });
+      toast.error({
+        title: "Couldn’t enable push alerts",
+        description: pushEnrollErrorMessage(result),
+      });
     } catch (error) {
-      toast.error({ title: getMutationErrorMessage(error) });
+      toast.error({
+        title: "Couldn’t enable push alerts",
+        description: getMutationErrorMessage(error),
+      });
     } finally {
       setBusy(false);
     }

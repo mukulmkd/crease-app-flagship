@@ -16,6 +16,7 @@ import {
 import {
   enrollPushSubscription,
   optOutPushSubscription,
+  pushEnrollErrorMessage,
 } from "@/lib/push/client-subscribe";
 import { isPushOptedOut } from "@/lib/push/preference";
 
@@ -78,38 +79,20 @@ function PushAlertsSection() {
       setOptedOut(isPushOptedOut());
       if (result === "subscribed") {
         setSubscribed(true);
+        setSwReady(true);
         toast.success({ title: "Push alerts on" });
         return;
       }
-      if (result === "denied") {
-        toast.error({
-          title: "Permission blocked",
-          description: "Allow notifications for Crease in system settings.",
-        });
-        return;
-      }
-      if (result === "no_vapid") {
-        toast.error({
-          title: "Push not configured",
-          description: "Missing VAPID public key on the server.",
-        });
-        return;
-      }
-      if (result === "no_service_worker") {
-        toast.error({
-          title: "Service worker missing",
-          description: "Run npm run dev:pwa (or a production build) for push.",
-        });
-        setSwReady(false);
-        return;
-      }
-      if (result === "unsupported") {
-        toast.error({ title: "This browser cannot receive Web Push" });
-        return;
-      }
-      toast.error({ title: "Couldn’t enable push alerts" });
+      toast.error({
+        title: "Couldn’t enable push alerts",
+        description: pushEnrollErrorMessage(result),
+      });
+      if (result === "no_service_worker") setSwReady(false);
     } catch (error) {
-      toast.error({ title: getMutationErrorMessage(error) });
+      toast.error({
+        title: "Couldn’t enable push alerts",
+        description: getMutationErrorMessage(error),
+      });
     } finally {
       setBusy(false);
     }

@@ -5,6 +5,10 @@ export function getVapidPublicKey(): string | null {
   return key || null;
 }
 
+/**
+ * Decode a VAPID public key for PushManager.subscribe.
+ * Returns a tightly packed Uint8Array — Chrome rejects some ArrayBuffer views.
+ */
 export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -13,7 +17,8 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   for (let i = 0; i < rawData.length; i += 1) {
     output[i] = rawData.charCodeAt(i);
   }
-  return output;
+  // Fresh copy — avoids Cross-realm / detached-buffer subscribe failures.
+  return new Uint8Array(output);
 }
 
 export function isPushSupported(): boolean {
@@ -40,15 +45,33 @@ export function isStandalonePwa(): boolean {
   return nav.standalone === true;
 }
 
-/** True when /sw.js is registered (false in default `next dev`). */
-export async function hasServiceWorkerRegistration(): Promise<boolean> {
+const SW_PATH = "/sw.js";
+
+/** Register (or reuse) the Crease service worker required for push. */
+export async function ensureServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
-    return false;
+    return null;
   }
   try {
     const existing = await navigator.serviceWorker.getRegistration();
-    if (existing) return true;
-    const res = await fetch("/sw.js", { method: "HEAD", cache: "no-store" });
+    if (existing) {
+      await navigator.serviceWorker.ready;
+      return existing;
+    }
+    const reg = await navigator.serviceWorker.register(SW_PATH, { scope: "/" });
+    await navigator.serviceWorker.ready;
+    return reg;
+  } catch {
+    return null;
+  }
+}
+
+/** True when a service worker is available (registered or /sw.js reachable). */
+export async function hasServiceWorkerRegistration(): Promise<boolean> {
+  const reg = await ensureServiceWorkerRegistration();
+  if (reg) return true;
+  try {
+    const res = await fetch(SW_PATH, { method: "HEAD", cache: "no-store" });
     return res.ok;
   } catch {
     return false;
