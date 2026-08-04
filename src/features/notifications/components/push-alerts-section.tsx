@@ -6,7 +6,13 @@ import { BodySm, StatusChip } from "@/components/common";
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
 import { getMutationErrorMessage } from "@/features/auth/hooks/use-auth-mutations";
-import { getVapidPublicKey, isPushSupported } from "@/lib/push/browser";
+import {
+  getVapidPublicKey,
+  hasServiceWorkerRegistration,
+  isAppleTouchDevice,
+  isPushSupported,
+  isStandalonePwa,
+} from "@/lib/push/browser";
 import {
   enrollPushSubscription,
   optOutPushSubscription,
@@ -32,20 +38,33 @@ function PushAlertsSection() {
   const [optedOut, setOptedOut] = useState(() =>
     typeof window === "undefined" ? false : isPushOptedOut(),
   );
+  const [swReady, setSwReady] = useState<boolean | null>(null);
+  const [standalone] = useState(() =>
+    typeof window === "undefined" ? true : isStandalonePwa(),
+  );
   const [busy, setBusy] = useState(false);
   const vapidPublic = getVapidPublicKey();
+  const apple = typeof window !== "undefined" && isAppleTouchDevice();
 
   useEffect(() => {
     if (!isPushSupported()) return;
     let cancelled = false;
-    void navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => {
+    void (async () => {
+      const ok = await hasServiceWorkerRegistration();
+      if (cancelled) return;
+      setSwReady(ok);
+      if (!ok) {
+        setSubscribed(false);
+        return;
+      }
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        const sub = await reg?.pushManager.getSubscription();
         if (!cancelled) setSubscribed(Boolean(sub));
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setSubscribed(false);
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -76,6 +95,14 @@ function PushAlertsSection() {
         });
         return;
       }
+      if (result === "no_service_worker") {
+        toast.error({
+          title: "Service worker missing",
+          description: "Run npm run dev:pwa (or a production build) for push.",
+        });
+        setSwReady(false);
+        return;
+      }
       if (result === "unsupported") {
         toast.error({ title: "This browser cannot receive Web Push" });
         return;
@@ -103,6 +130,7 @@ function PushAlertsSection() {
   };
 
   const isOn = subscribed && !optedOut && permission === "granted";
+  const needsInstall = apple && !standalone;
 
   return (
     <section className="space-y-3 rounded-xl bg-surface-container-low p-4">
@@ -133,6 +161,17 @@ function PushAlertsSection() {
       ) : !vapidPublic ? (
         <BodySm className="text-muted-foreground">
           Server is missing VAPID keys — ask Admin to configure env.
+        </BodySm>
+      ) : swReady === false ? (
+        <BodySm className="text-muted-foreground">
+          No service worker on this build. For local iPhone testing run{" "}
+          <span className="font-medium text-foreground">npm run dev:pwa</span>,
+          reinstall the Home Screen app, then Allow.
+        </BodySm>
+      ) : needsInstall ? (
+        <BodySm className="text-muted-foreground">
+          Open Crease from the Home Screen icon (not a Safari tab) before
+          allowing notifications.
         </BodySm>
       ) : isOn ? (
         <Button

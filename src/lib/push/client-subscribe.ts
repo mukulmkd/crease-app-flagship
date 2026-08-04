@@ -1,5 +1,6 @@
 import {
   getVapidPublicKey,
+  hasServiceWorkerRegistration,
   isPushSupported,
   urlBase64ToUint8Array,
 } from "@/lib/push/browser";
@@ -14,12 +15,28 @@ export type PushEnrollResult =
   | "opted_out"
   | "unsupported"
   | "no_vapid"
+  | "no_service_worker"
   | "denied"
   | "dismissed";
+
+async function getPushRegistration(): Promise<ServiceWorkerRegistration> {
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (existing) return existing;
+
+  const ready = navigator.serviceWorker.ready;
+  const timedOut = new Promise<never>((_, reject) => {
+    window.setTimeout(
+      () => reject(new Error("Service worker not ready")),
+      4000,
+    );
+  });
+  return Promise.race([ready, timedOut]);
+}
 
 /**
  * Ensure this device is subscribed for OS push (default-on path).
  * Skips when the player opted out. May prompt for Notification permission.
+ * Call from a direct button tap on iOS — window listeners often never show the dialog.
  */
 export async function enrollPushSubscription(opts?: {
   /** When true, clear opt-out first (Settings "Turn on"). */
@@ -31,6 +48,8 @@ export async function enrollPushSubscription(opts?: {
   const vapidPublic = getVapidPublicKey();
   if (!vapidPublic) return "no_vapid";
 
+  if (!(await hasServiceWorkerRegistration())) return "no_service_worker";
+
   if (opts?.force) setPushOptedOut(false);
 
   if (Notification.permission === "denied") return "denied";
@@ -41,7 +60,7 @@ export async function enrollPushSubscription(opts?: {
     if (result !== "granted") return "dismissed";
   }
 
-  const registration = await navigator.serviceWorker.ready;
+  const registration = await getPushRegistration();
   const existing = await registration.pushManager.getSubscription();
   const subscription =
     existing ??
@@ -69,12 +88,15 @@ export async function optOutPushSubscription(): Promise<void> {
   setPushOptedOut(true);
   if (!isPushSupported()) return;
 
-  const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.getSubscription();
-  if (!subscription) return;
-
-  await deletePushSubscriptionAction(subscription.endpoint);
-  await subscription.unsubscribe();
+  try {
+    const registration = await getPushRegistration();
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return;
+    await deletePushSubscriptionAction(subscription.endpoint);
+    await subscription.unsubscribe();
+  } catch {
+    // Preference is already opted out even if unsubscribe fails.
+  }
 }
 
 /** Re-save subscription when OS permission is already granted (no prompt). */

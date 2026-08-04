@@ -24,3 +24,33 @@ export function isPushSupported(): boolean {
     "Notification" in window
   );
 }
+
+export function isAppleTouchDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/i.test(ua)) return true;
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
+/** Home Screen / installed PWA — required for Web Push on iOS. */
+export function isStandalonePwa(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return nav.standalone === true;
+}
+
+/** True when /sw.js is registered (false in default `next dev`). */
+export async function hasServiceWorkerRegistration(): Promise<boolean> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
+    return false;
+  }
+  try {
+    const existing = await navigator.serviceWorker.getRegistration();
+    if (existing) return true;
+    const res = await fetch("/sw.js", { method: "HEAD", cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

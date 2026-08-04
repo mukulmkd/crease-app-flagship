@@ -14,6 +14,7 @@ import {
   useEnsureDefaultPush,
 } from "@/features/notifications";
 import { NotificationsSheet } from "@/features/notifications/components/notifications-sheet";
+import { PushEnrollmentBanner } from "@/features/notifications/components/push-enrollment-banner";
 import { NotificationsUiProvider } from "@/features/notifications/providers/notifications-ui-provider";
 import { cn } from "@/utils";
 
@@ -119,6 +120,7 @@ function AppShell({
           <BottomNav />
         </div>
       </div>
+      <PushEnrollmentBanner />
       <NotificationsSheet />
     </NotificationsUiProvider>
   );

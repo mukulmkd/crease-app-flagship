@@ -121,8 +121,17 @@ export function useNotificationAlerts() {
       .catch(() => undefined);
 
     const onMessage = (event: MessageEvent) => {
-      if (event.data?.type !== "CREASE_PUSH") return;
-      onInsert();
+      const type = event.data?.type;
+      if (type === "CREASE_PUSH_REFRESH") {
+        void invalidateQueries.notifications(client);
+        void invalidateQueries.dashboard(client);
+        return;
+      }
+      // Legacy SW payloads — treat as refresh only (Realtime owns toast/chime).
+      if (type === "CREASE_PUSH") {
+        void invalidateQueries.notifications(client);
+        void invalidateQueries.dashboard(client);
+      }
     };
     navigator.serviceWorker?.addEventListener("message", onMessage);
 

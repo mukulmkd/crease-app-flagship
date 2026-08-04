@@ -33,14 +33,16 @@ self.addEventListener("push", (event) => {
           "visibilityState" in client && client.visibilityState === "visible",
       );
 
-      // App already open — Realtime + in-app chime handle it; avoid duplicate OS banner.
+      // Foreground: Realtime already toasts + chimes. Only nudge a refresh —
+      // do not play a second sound via postMessage.
       if (visible) {
         for (const client of clients) {
-          client.postMessage({ type: "CREASE_PUSH", payload: raw });
+          client.postMessage({ type: "CREASE_PUSH_REFRESH", payload: raw });
         }
         return;
       }
 
+      // Background / locked / killed: OS banner via the service worker.
       await self.registration.showNotification(title, {
         body,
         icon: "/icons/icon-192.png",
