@@ -1,11 +1,15 @@
 "use client";
 
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy } from "lucide-react";
 
 import { toast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
-import { formatInrAmount } from "@/utils";
-import { buildUpiPayUrl, isLikelyUpiVpa } from "@/utils/upi";
+import { cn, formatInrAmount } from "@/utils";
+import {
+  buildUpiAppOptions,
+  isAppleTouchDevice,
+  isLikelyUpiVpa,
+} from "@/utils/upi";
 
 type UpiPayActionsProps = {
   vpa: string | null | undefined;
@@ -15,7 +19,8 @@ type UpiPayActionsProps = {
 };
 
 /**
- * Opens the device UPI app via deeplink, with copy-VPA fallback.
+ * Opens a chosen UPI app via deeplink, with copy-VPA fallback.
+ * Uses named-app schemes so iOS does not dump the player into WhatsApp.
  */
 function UpiPayActions({
   vpa,
@@ -25,14 +30,15 @@ function UpiPayActions({
 }: UpiPayActionsProps) {
   const trimmedVpa = vpa?.trim() ?? "";
   const ready = isLikelyUpiVpa(trimmedVpa) && amountInr > 0;
-  const href = ready
-    ? buildUpiPayUrl({
+  const options = ready
+    ? buildUpiAppOptions({
         vpa: trimmedVpa,
         amountInr,
         payeeName,
         note,
       })
-    : null;
+    : [];
+  const apple = isAppleTouchDevice();
 
   async function copyVpa() {
     if (!trimmedVpa) return;
@@ -44,7 +50,7 @@ function UpiPayActions({
     }
   }
 
-  if (!ready || !href) {
+  if (!ready || options.length === 0) {
     return (
       <p className="rounded-xl bg-surface-container-low px-3 py-3 text-[0.7rem] text-muted-foreground">
         Ask Admin to set a valid UPI VPA in Settings before paying.
@@ -54,12 +60,27 @@ function UpiPayActions({
 
   return (
     <div className="space-y-2">
-      <Button asChild className="w-full" size="lg">
-        <a href={href}>
-          <ExternalLink aria-hidden />
-          Pay ₹{formatInrAmount(amountInr)} with UPI
-        </a>
-      </Button>
+      <p className="text-[0.7rem] font-medium text-foreground">
+        Pay ₹{formatInrAmount(amountInr)} with
+      </p>
+      <div
+        className={cn(
+          "grid gap-2",
+          options.length <= 3 ? "grid-cols-3" : "grid-cols-2",
+        )}
+      >
+        {options.map((app) => (
+          <Button
+            key={app.id}
+            asChild
+            variant={app.id === "generic" ? "secondary" : "default"}
+            size="lg"
+            className="min-h-12 px-2 text-[0.75rem]"
+          >
+            <a href={app.href}>{app.label}</a>
+          </Button>
+        ))}
+      </div>
       <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low px-3 py-2">
         <p className="min-w-0 truncate text-[0.7rem] text-muted-foreground">
           <span className="font-medium text-foreground">{trimmedVpa}</span>
@@ -77,7 +98,9 @@ function UpiPayActions({
         </Button>
       </div>
       <p className="text-[0.65rem] text-muted-foreground">
-        After paying in your UPI app, return here and submit UTR + screenshot.
+        {apple
+          ? "Pick your UPI app above (iPhone won’t show a chooser). Then return here with UTR + screenshot."
+          : "After paying in your UPI app, return here and submit UTR + screenshot."}
       </p>
     </div>
   );
