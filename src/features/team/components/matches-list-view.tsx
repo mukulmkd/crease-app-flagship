@@ -86,17 +86,7 @@ function MatchesListView() {
         ]}
       />
 
-      {tab === "matches" ? (
-        <MatchesTabBody />
-      ) : (
-        <TournamentsListView
-          onCreate={
-            canCreateTournament
-              ? () => setCreateTournamentOpen(true)
-              : undefined
-          }
-        />
-      )}
+      {tab === "matches" ? <MatchesTabBody /> : <TournamentsListView />}
 
       {canCreateTournament ? (
         <CreateTournamentSheet
@@ -159,14 +149,6 @@ function MatchesTabBody() {
           canCreate
             ? "Create Saturday and/or Sunday matches for any upcoming weekend."
             : "Your admin will publish weekend matches here."
-        }
-        actionLabel={canCreate ? "Create match" : undefined}
-        onAction={
-          canCreate
-            ? () => {
-                window.location.href = "/matches/new";
-              }
-            : undefined
         }
       />
     );

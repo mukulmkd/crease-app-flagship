@@ -2,6 +2,9 @@
 
 Channels: in-app alerts sheet + Web Push (OS) + WhatsApp webhook.
 
+Full system audit (entry points, Cron readiness, gaps):
+[NOTIFICATIONS.md](../../NOTIFICATIONS.md) at the repo root.
+
 ## UI
 
 - Top-right **bell** opens an alerts **bottom sheet** (mark-read)

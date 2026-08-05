@@ -82,7 +82,9 @@ Functions under `supabase/functions/`:
 | `unpaid-reminders`             | Disabled                        | Deprecated no-op; payment CTA is Sunday-only                                      |
 
 Auth: `Authorization: Bearer $CRON_SECRET` or `x-cron-secret`.  
-Migration `20260729120000_enable_cron_extensions.sql` enables `pg_cron` + `pg_net`. Wire Dashboard Cron (or `cron.schedule` + `net.http_post`) after deploy. Secrets: `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`.
+Migration `20260729120000_enable_cron_extensions.sql` enables `pg_cron` + `pg_net`. Wire Dashboard Cron (or `cron.schedule` + `net.http_post`) after deploy. Secrets: `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `APP_URL`.
+
+OS push stays in the Next.js app so the VAPID private key never reaches Deno: functions POST `$APP_URL/api/internal/push` with the same `CRON_SECRET`. The route returns 503 when the secret is unset, and the function skips the hop when either value is missing — so a mismatch fails silently. Keep the secret identical in Supabase secrets and Vercel, and redeploy the app after rotating it.
 
 ## Database
 

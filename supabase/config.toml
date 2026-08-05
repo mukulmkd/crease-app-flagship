@@ -393,6 +393,27 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Scheduled jobs authenticate with CRON_SECRET, not a Supabase JWT. Leaving
+# verify_jwt on makes the gateway reject pg_cron / Dashboard Cron calls with 401
+# before the function runs, so pin it here instead of per-deploy CLI flags.
+[functions.activate-weekend-matches]
+verify_jwt = false
+
+[functions.freeze-polls]
+verify_jwt = false
+
+[functions.strength-reminders]
+verify_jwt = false
+
+[functions.carpool-assignment-reminders]
+verify_jwt = false
+
+[functions.weekend-settlement]
+verify_jwt = false
+
+[functions.unpaid-reminders]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

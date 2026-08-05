@@ -20,12 +20,16 @@ import {
 import { formatInrAmount } from "@/utils";
 import type { TournamentSummary } from "@/types/models";
 
-function TournamentsListView({ onCreate }: { onCreate?: () => void }) {
+function TournamentsListView() {
   const membershipQuery = useMyMembership();
   const summariesQuery = useTournamentSummaries();
   const canEdit = hasPermission(
     membershipQuery.data?.role,
     PERMISSIONS.TOURNAMENT_EDIT,
+  );
+  const canCreate = hasPermission(
+    membershipQuery.data?.role,
+    PERMISSIONS.TOURNAMENT_CREATE,
   );
   const [editTarget, setEditTarget] = useState<TournamentSummary | null>(null);
 
@@ -59,12 +63,10 @@ function TournamentsListView({ onCreate }: { onCreate?: () => void }) {
         title="Active"
         emptyTitle="No active tournaments"
         emptyDescription={
-          onCreate
+          canCreate
             ? "Create a tournament in advance, then link fixtures when you schedule weekend matches."
             : "Your admin will publish tournaments here."
         }
-        emptyActionLabel={onCreate ? "Create tournament" : undefined}
-        onEmptyAction={onCreate}
         rows={active}
         canEdit={canEdit}
         onEdit={setEditTarget}
@@ -95,8 +97,6 @@ type TournamentSectionProps = {
   title: string;
   emptyTitle: string;
   emptyDescription: string;
-  emptyActionLabel?: string;
-  onEmptyAction?: () => void;
   rows: TournamentSummary[];
   canEdit: boolean;
   onEdit: (row: TournamentSummary) => void;
@@ -106,8 +106,6 @@ function TournamentSection({
   title,
   emptyTitle,
   emptyDescription,
-  emptyActionLabel,
-  onEmptyAction,
   rows,
   canEdit,
   onEdit,
@@ -122,12 +120,7 @@ function TournamentSection({
         {rows.length > 0 ? ` · ${rows.length}` : ""}
       </h2>
       {rows.length === 0 ? (
-        <EmptyState
-          title={emptyTitle}
-          description={emptyDescription}
-          actionLabel={emptyActionLabel}
-          onAction={onEmptyAction}
-        />
+        <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (

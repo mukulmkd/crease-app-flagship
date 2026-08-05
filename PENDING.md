@@ -57,7 +57,9 @@ Still pending:
 
 ### Cron activation checklist
 
-- Confirm `CRON_SECRET` is set in Supabase secrets
+- `CRON_SECRET` is set in Supabase secrets, Vercel (production + preview), and
+  `.env.local`; `APP_URL` is set in Supabase secrets — all four must hold the
+  same secret or Cron pushes silently no-op
 - Verify each function returns successful JSON on manual `curl`
 - Add schedules in Supabase Dashboard Cron (or `pg_cron`):
   - `activate-weekend-matches` Monday **09:00 IST** (`30 3 * * 1` UTC)
@@ -86,7 +88,9 @@ Still pending:
 - Core Admin flows are implemented and can be tested without scheduled Cron jobs
 - Inbox + WhatsApp paths are the active notification channels
 - Web Push / VAPID is live — Settings → Push alerts; OS banners when PWA is
-  backgrounded. Cron needs `APP_URL` + `CRON_SECRET` pointing at the app.
+  backgrounded. Cron `APP_URL` + `CRON_SECRET` are wired at
+  `https://crease-app-flagship.vercel.app`; rotating the secret means updating
+  Supabase secrets and Vercel together, then redeploying.
 - App fan-out requires `SUPABASE_SERVICE_ROLE_KEY` on the server
   (`broadcastTeamNotificationAction`); without it broadcasts log a warning and skip
 
