@@ -17,6 +17,9 @@
 ## UI (Modern Scorebook Utility)
 
 - `AuthShell` + official C-hand-and-ball app icon
+- Splash (`/splash`): clubhouse-black canvas in both themes with the app icon,
+  Oswald wordmark, amber team overline, and amber progress bar — matches the PWA
+  `background_color` so the launch screen does not flash
 - Login: Oswald headline, Plus Jakarta Sans body, +91 field, members-only trust panel
 - Complete profile: name + +91 mobile (both required)
 - Access denied: invite-only copy + sign out

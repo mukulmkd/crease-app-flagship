@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import appIcon from "../../../../public/icons/icon-512.png";
 
 import { AUTH_ROUTES, POST_AUTH_ROUTE } from "@/constants/auth";
 import { useAuth } from "@/providers/auth-provider";
@@ -52,20 +55,21 @@ function SplashView() {
   ]);
 
   return (
-    <div className="flex min-h-dvh flex-col bg-surface-container-lowest px-8 text-primary">
-      <div className="flex flex-1 flex-col items-center justify-center">
-        <div className="flex size-28 items-center justify-center rounded-full border border-primary/20">
-          <span className="relative block size-14" aria-hidden>
-            <span className="absolute top-3 left-2 h-4 w-9 -rotate-45 rounded-sm border-[3px] border-primary" />
-            <span className="absolute top-7 left-7 h-4 w-4 rounded-full border-[3px] border-primary bg-surface-container-lowest" />
-            <span className="absolute right-1 bottom-2 h-1 w-6 rotate-45 rounded-full bg-primary" />
-          </span>
-        </div>
-        <div className="-mt-1 text-center">
-          <h1 className="font-heading text-3xl leading-none font-bold tracking-tight">
+    // Clubhouse black in both themes so the OS launch screen and the installed
+    // app icon flow into this view without a color flash.
+    <div className="flex min-h-dvh flex-col bg-clubhouse px-8 text-white">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6">
+        <Image
+          src={appIcon}
+          alt=""
+          priority
+          className="size-24 rounded-3xl object-cover"
+        />
+        <div className="text-center">
+          <h1 className="font-heading text-4xl leading-none font-semibold tracking-tight">
             Crease
           </h1>
-          <p className="mt-2 text-xs font-semibold tracking-[0.24em] text-primary/45 uppercase">
+          <p className="mt-2 text-xs font-semibold tracking-[0.24em] text-tertiary uppercase">
             Ranches Thunders
           </p>
         </div>
@@ -78,10 +82,10 @@ function SplashView() {
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progress}
-          className="h-px overflow-hidden bg-primary/15"
+          className="h-0.5 overflow-hidden rounded-full bg-white/15"
         >
           <div
-            className="h-full bg-primary transition-[width] duration-100"
+            className="h-full rounded-full bg-tertiary transition-[width] duration-100 motion-reduce:transition-none"
             style={{ width: `${progress}%` }}
           />
         </div>

@@ -17,7 +17,8 @@ export const brandColors = {
   themeLight: "#1a1a1a",
   /** Neutral Night chrome — PWA theme-color in dark */
   themeDark: "#0c0e0d",
-  splash: "#f2f2f1",
+  /** PWA launch background — matches the splash view and app icon canvas. */
+  splash: "#0a0c0b",
   clubhouse: "#0a0c0b",
 } as const;
 

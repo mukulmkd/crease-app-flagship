@@ -63,9 +63,32 @@ function DashboardShell() {
 
   const role = snap.membership.role;
   const canCreate = hasPermission(role, PERMISSIONS.MATCH_CREATE);
-  const canAdd = hasPermission(role, PERMISSIONS.TEAM_MEMBER_ADD);
   // Ops status rail is Admin-only (team unpaid total + fund control surface).
   const showAdminStatus = hasPermission(role, PERMISSIONS.SETTLEMENT_MANAGE);
+  // Funds has no mobile nav destination, so Home is its admin entry point.
+  const adminActions = [
+    {
+      id: "create-match",
+      href: "/matches/new",
+      icon: Plus,
+      label: "Create match",
+      allowed: canCreate,
+    },
+    {
+      id: "add-player",
+      href: "/team",
+      icon: Users,
+      label: "Add player",
+      allowed: hasPermission(role, PERMISSIONS.TEAM_MEMBER_ADD),
+    },
+    {
+      id: "funds",
+      href: "/expenses",
+      icon: WalletCards,
+      label: "Funds",
+      allowed: hasPermission(role, PERMISSIONS.FUND_EXPENSE_ADD),
+    },
+  ].filter((action) => action.allowed);
   const weekendMatches = snap.weekendMatches;
   const moreUpcomingMatches = snap.moreUpcomingMatches;
   const pastWeekendSummaries = snap.pastWeekendPaymentSummaries;
@@ -240,38 +263,30 @@ function DashboardShell() {
         </button>
       </section>
 
-      {(canCreate || canAdd) && (
+      {adminActions.length > 0 ? (
         <section aria-label="Admin actions">
+          {/* A trailing odd chip stretches so the row never ends half-empty. */}
           <div className="grid grid-cols-2 gap-2">
-            {canCreate ? (
-              <Button
-                asChild
-                variant="tonal"
-                size="sm"
-                className="min-h-12 w-full rounded-xl text-xs"
-              >
-                <Link href="/matches/new">
-                  <Plus aria-hidden />
-                  Create match
-                </Link>
-              </Button>
-            ) : null}
-            {canAdd ? (
-              <Button
-                asChild
-                variant="tonal"
-                size="sm"
-                className="min-h-12 w-full rounded-xl text-xs"
-              >
-                <Link href="/team">
-                  <Users aria-hidden />
-                  Add player
-                </Link>
-              </Button>
-            ) : null}
+            {adminActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Button
+                  key={action.id}
+                  asChild
+                  variant="tonal"
+                  size="sm"
+                  className="min-h-12 w-full rounded-xl text-xs [&:last-child:nth-child(odd)]:col-span-2"
+                >
+                  <Link href={action.href}>
+                    <Icon aria-hidden />
+                    {action.label}
+                  </Link>
+                </Button>
+              );
+            })}
           </div>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }
