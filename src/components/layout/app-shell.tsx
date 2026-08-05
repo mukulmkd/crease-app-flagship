@@ -16,6 +16,7 @@ import {
 import { NotificationsSheet } from "@/features/notifications/components/notifications-sheet";
 import { PushEnrollmentBanner } from "@/features/notifications/components/push-enrollment-banner";
 import { NotificationsUiProvider } from "@/features/notifications/providers/notifications-ui-provider";
+import { PullToRefresh } from "@/components/feedback/pull-to-refresh";
 import { cn } from "@/utils";
 
 const TITLE_BY_PATH: Record<string, string> = {
@@ -113,7 +114,7 @@ function AppShell({
               pathname === "/home" && "max-w-md py-2 md:max-w-6xl md:py-6",
             )}
           >
-            {children}
+            <PullToRefresh>{children}</PullToRefresh>
           </main>
 
           <AppFooter />

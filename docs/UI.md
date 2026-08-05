@@ -171,6 +171,9 @@ input on recoverable failure.
   geometry tokens and never obscure content.
 - Service-worker updates require user confirmation; never reload an active form.
 - Offline UI explains limitations, offers retry, and returns to Home.
+- Mobile shell supports pull-to-refresh: at the top of the page, pull down to
+  refetch active TanStack Query observers. Disabled under open sheets/dialogs
+  and while a form field is focused.
 - Installed PWA must work in portrait and landscape where the OS supports it.
 
 ## Agent checklist for UI changes

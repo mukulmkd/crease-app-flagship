@@ -20,5 +20,7 @@ Honor `prefers-reduced-motion` in CSS and programmatic scrolling.
 
 Every data route needs loading, empty, error, permission, and offline behavior.
 Service-worker updates must not discard active form input.
+Mobile pull-to-refresh (AppShell) refetches active queries; ignore it when a
+sheet is open or a form field is focused.
 
 Optimize for Lighthouse.

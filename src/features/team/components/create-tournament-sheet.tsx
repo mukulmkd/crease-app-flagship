@@ -47,7 +47,8 @@ type FormValues = z.infer<typeof schema>;
 type CreateTournamentSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated: (tournamentId: string) => void;
+  /** Optional — weekend create flow selects the new tournament immediately. */
+  onCreated?: (tournamentId: string) => void;
 };
 
 function CreateTournamentSheet({
@@ -81,7 +82,7 @@ function CreateTournamentSheet({
         feesPaidByUserId:
           values.totalFeesInr > 0 ? values.feesPaidByUserId : null,
       });
-      onCreated(tournament.id);
+      onCreated?.(tournament.id);
       form.reset();
       onOpenChange(false);
       toast.success({ title: "Tournament created" });

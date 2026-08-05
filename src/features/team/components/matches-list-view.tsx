@@ -11,6 +11,7 @@ import {
   hasPermission,
   PERMISSIONS,
 } from "@/constants/domain/team-permissions";
+import { CreateTournamentSheet } from "@/features/team/components/create-tournament-sheet";
 import { WeekendMatchGroup } from "@/features/team/components/weekend-match-group";
 import { TournamentsListView } from "@/features/team/components/tournaments-list-view";
 import { useMatchCollectionStatuses } from "@/features/payments/hooks";
@@ -32,10 +33,15 @@ function isPastMatch(match: Match, today: string): boolean {
 
 function MatchesListView() {
   const [tab, setTab] = useState<MainTab>("matches");
+  const [createTournamentOpen, setCreateTournamentOpen] = useState(false);
   const membershipQuery = useMyMembership();
-  const canCreate = hasPermission(
+  const canCreateMatch = hasPermission(
     membershipQuery.data?.role,
     PERMISSIONS.MATCH_CREATE,
+  );
+  const canCreateTournament = hasPermission(
+    membershipQuery.data?.role,
+    PERMISSIONS.TOURNAMENT_CREATE,
   );
 
   return (
@@ -49,13 +55,23 @@ function MatchesListView() {
               : "Active and past tournaments · remaining after fees settle"
           }
         />
-        {tab === "matches" && canCreate ? (
+        {tab === "matches" && canCreateMatch ? (
           <Button
             asChild
             variant="tonal"
             className="touch-target h-12 shrink-0"
           >
             <Link href="/matches/new">Create</Link>
+          </Button>
+        ) : null}
+        {tab === "tournaments" && canCreateTournament ? (
+          <Button
+            type="button"
+            variant="tonal"
+            className="touch-target h-12 shrink-0"
+            onClick={() => setCreateTournamentOpen(true)}
+          >
+            Create
           </Button>
         ) : null}
       </div>
@@ -70,7 +86,24 @@ function MatchesListView() {
         ]}
       />
 
-      {tab === "matches" ? <MatchesTabBody /> : <TournamentsListView />}
+      {tab === "matches" ? (
+        <MatchesTabBody />
+      ) : (
+        <TournamentsListView
+          onCreate={
+            canCreateTournament
+              ? () => setCreateTournamentOpen(true)
+              : undefined
+          }
+        />
+      )}
+
+      {canCreateTournament ? (
+        <CreateTournamentSheet
+          open={createTournamentOpen}
+          onOpenChange={setCreateTournamentOpen}
+        />
+      ) : null}
     </div>
   );
 }
